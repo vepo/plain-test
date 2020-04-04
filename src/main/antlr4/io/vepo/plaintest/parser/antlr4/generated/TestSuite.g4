@@ -4,6 +4,7 @@ testSuite
 	: 	'TestSuite' IDENTIFIER '{'
 			testSuite*
 			testStep*
+			testSuite*
 	    '}' 
 	;
 

@@ -7,4 +7,8 @@ public record TestSuite(String name, List<TestSuite> subSuites, List<TestStep> s
 	public void addStep(TestStep step) {
 		this.steps.add(step);
 	}
+
+	public void addSubSuite(TestSuite testSuite) {
+		this.subSuites.add(testSuite);
+	}
 }

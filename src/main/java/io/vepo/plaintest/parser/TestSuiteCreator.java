@@ -6,6 +6,8 @@ import static org.apache.commons.text.StringEscapeUtils.unescapeJava;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
@@ -26,11 +28,12 @@ public class TestSuiteCreator implements TestSuiteListener {
 
 	private TestSuite testSuite;
 	private TestSuite currentTestSuite;
-
+	private Queue<TestSuite> suites;
 	private TestStep currentStep;
 
 	public TestSuiteCreator() {
 		this.currentTestSuite = this.testSuite = null;
+		this.suites = new LinkedList<>();
 	}
 
 	@Override
@@ -56,15 +59,26 @@ public class TestSuiteCreator implements TestSuiteListener {
 	@Override
 	public void enterTestSuite(TestSuiteContext ctx) {
 		logger.debug("Enter Test Suite: {}", ctx);
+		var previousTestSuite = this.currentTestSuite;
 		this.currentTestSuite = new TestSuite(ctx.IDENTIFIER().getText(), new ArrayList<>(), new ArrayList<>());
+
+		this.suites.offer(currentTestSuite);
+
 		if (isNull(this.testSuite)) {
 			this.testSuite = this.currentTestSuite;
+		}
+
+		if (nonNull(previousTestSuite)) {
+			previousTestSuite.addSubSuite(this.currentTestSuite);
 		}
 	}
 
 	@Override
 	public void exitTestSuite(TestSuiteContext ctx) {
 		logger.debug("Exit Test Suite: {}", ctx);
+		
+		this.suites.poll();
+		this.currentTestSuite = this.suites.peek();
 	}
 
 	public TestSuite getTestSuite() {
