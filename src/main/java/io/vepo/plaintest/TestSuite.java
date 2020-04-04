@@ -1,13 +1,10 @@
 package io.vepo.plaintest;
 
-public class TestSuite {
-	private String name;
+import java.util.List;
 
-	public String getName() {
-		return name;
-	}
+public record TestSuite(String name, List<TestSuite> subSuites, List<TestStep> steps) {
 
-	public void setName(String name) {
-		this.name = name;
+	public void addStep(TestStep step) {
+		this.steps.add(step);
 	}
 }
