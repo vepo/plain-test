@@ -31,15 +31,15 @@ import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.StepContext;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.SuiteContext;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.ValueContext;
 
-public class TestSuiteCreator implements TestSuiteListener {
-	private static final Logger logger = LoggerFactory.getLogger(TestSuiteCreator.class);
+public class SuiteCreator implements TestSuiteListener {
+	private static final Logger logger = LoggerFactory.getLogger(SuiteCreator.class);
 	private static final Pattern LINE_START_PATTERN = Pattern.compile("^(\\s+)");
 	private Suite testSuite;
 	private Suite currentSuite;
 	private Deque<Suite> suites;
 	private Step currentStep;
 
-	public TestSuiteCreator() {
+	public SuiteCreator() {
 		this.currentSuite = this.testSuite = null;
 		this.suites = new LinkedList<>();
 	}
@@ -79,7 +79,7 @@ public class TestSuiteCreator implements TestSuiteListener {
 		}
 
 		if (nonNull(previousTestSuite)) {
-			previousTestSuite.addSubSuite(this.currentSuite);
+			previousTestSuite.addSuite(this.currentSuite);
 		}
 	}
 
