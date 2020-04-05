@@ -19,6 +19,7 @@
 
 	<modules>
 		<module>plain-test-parser</module>
+		<module>plain-test-runner</module>
 	</modules>
 
 	<dependencies>
