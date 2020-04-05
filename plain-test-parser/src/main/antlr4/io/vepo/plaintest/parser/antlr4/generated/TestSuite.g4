@@ -2,9 +2,7 @@ grammar TestSuite;
 
 suite
     :     'Suite' IDENTIFIER '{'
-            suite*
-            step*
-            suite*
+            (suite | step)*
         '}'
     ;
 
@@ -29,7 +27,7 @@ value
     ;
 
 IDENTIFIER
-    : [A-Za-z][A-Za-z0-9]*
+    : [A-Za-z][._\-A-Za-z0-9]*
     ;
 
 STRING

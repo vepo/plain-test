@@ -1,15 +1,15 @@
-package io.vepo.plaintest.parser;
+package io.vepo.plaintest;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
-import io.vepo.plaintest.Suite;
+import io.vepo.plaintest.parser.TestSuiteCreator;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteLexer;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser;
 
-public class TestSuiteFactory {
-	private TestSuiteFactory() {
+public class SuiteFactory {
+	private SuiteFactory() {
 	}
 
 	public static Suite parseSuite(String contents) {

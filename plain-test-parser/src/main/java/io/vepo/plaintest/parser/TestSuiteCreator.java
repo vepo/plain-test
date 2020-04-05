@@ -7,9 +7,10 @@ import static org.apache.commons.text.StringEscapeUtils.unescapeJava;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Queue;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -34,12 +35,12 @@ public class TestSuiteCreator implements TestSuiteListener {
 	private static final Logger logger = LoggerFactory.getLogger(TestSuiteCreator.class);
 	private static final Pattern LINE_START_PATTERN = Pattern.compile("^(\\s+)");
 	private Suite testSuite;
-	private Suite currentTestSuite;
-	private Queue<Suite> suites;
+	private Suite currentSuite;
+	private Deque<Suite> suites;
 	private Step currentStep;
 
 	public TestSuiteCreator() {
-		this.currentTestSuite = this.testSuite = null;
+		this.currentSuite = this.testSuite = null;
 		this.suites = new LinkedList<>();
 	}
 
@@ -66,17 +67,19 @@ public class TestSuiteCreator implements TestSuiteListener {
 	@Override
 	public void enterSuite(SuiteContext ctx) {
 		logger.debug("Enter Suite: {}", ctx);
-		var previousTestSuite = this.currentTestSuite;
-		this.currentTestSuite = new Suite(ctx.IDENTIFIER().getText(), new ArrayList<>(), new ArrayList<>());
+		var previousTestSuite = this.currentSuite;
+		this.currentSuite = new Suite(
+				Optional.ofNullable(previousTestSuite).map(Suite::lastIndex).map(i -> i + 1).orElse(0),
+				ctx.IDENTIFIER().getText(), new ArrayList<>(), new ArrayList<>());
 
-		this.suites.offer(currentTestSuite);
+		this.suites.addLast(currentSuite);
 
 		if (isNull(this.testSuite)) {
-			this.testSuite = this.currentTestSuite;
+			this.testSuite = this.currentSuite;
 		}
 
 		if (nonNull(previousTestSuite)) {
-			previousTestSuite.addSubSuite(this.currentTestSuite);
+			previousTestSuite.addSubSuite(this.currentSuite);
 		}
 	}
 
@@ -84,8 +87,8 @@ public class TestSuiteCreator implements TestSuiteListener {
 	public void exitSuite(SuiteContext ctx) {
 		logger.debug("Exit Suite: {}", ctx);
 
-		this.suites.poll();
-		this.currentTestSuite = this.suites.peek();
+		this.suites.pollLast();
+		this.currentSuite = this.suites.peekLast();
 	}
 
 	public Suite getTestSuite() {
@@ -95,10 +98,11 @@ public class TestSuiteCreator implements TestSuiteListener {
 	@Override
 	public void enterStep(StepContext ctx) {
 		logger.debug("Enter Step: {}", ctx);
+		int lastIndex = this.currentSuite.lastIndex();
 		if (ctx.IDENTIFIER().size() == 2) {
-			this.currentStep = new Step(ctx.IDENTIFIER(0).getText(), ctx.IDENTIFIER(1).getText(), new HashMap<>(),
-					new HashMap<>());
-			this.currentTestSuite.addStep(currentStep);
+			this.currentStep = new Step(lastIndex + 1, ctx.IDENTIFIER(0).getText(), ctx.IDENTIFIER(1).getText(),
+					new HashMap<>(), new HashMap<>());
+			this.currentSuite.addStep(currentStep);
 		} else {
 			logger.warn("Could not intantiate Step: context={}", ctx);
 		}

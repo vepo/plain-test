@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -19,6 +20,7 @@
 
 	<modules>
 		<module>plain-test-parser</module>
+		<module>plain-test-executor</module>
 		<module>plain-test-runner</module>
 	</modules>
 
@@ -62,7 +64,11 @@
 					<artifactId>maven-surefire-plugin</artifactId>
 					<version>3.0.0-M4</version>
 					<configuration>
-						<argLine>--enable-preview --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED</argLine>
+						<argLine>--enable-preview --add-opens
+							java.base/java.lang=ALL-UNNAMED --add-opens
+							java.base/java.util=ALL-UNNAMED --add-opens
+							java.base/java.io=ALL-UNNAMED --add-opens
+							java.base/java.math=ALL-UNNAMED</argLine>
 					</configuration>
 				</plugin>
 				<plugin>
@@ -70,7 +76,11 @@
 					<artifactId>maven-failsafe-plugin</artifactId>
 					<version>3.0.0-M4</version>
 					<configuration>
-						<argLine>--enable-preview --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED</argLine>
+						<argLine>--enable-preview --add-opens
+							java.base/java.lang=ALL-UNNAMED --add-opens
+							java.base/java.util=ALL-UNNAMED --add-opens
+							java.base/java.io=ALL-UNNAMED --add-opens
+							java.base/java.math=ALL-UNNAMED</argLine>
 					</configuration>
 				</plugin>
 				<plugin>
