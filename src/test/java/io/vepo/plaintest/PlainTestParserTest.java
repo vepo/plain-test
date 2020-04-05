@@ -1,25 +1,23 @@
 package io.vepo.plaintest;
 
-import static io.vepo.plaintest.parser.TestSuiteFactory.parseTestSuite;
+import static io.vepo.plaintest.parser.TestSuiteFactory.parseSuite;
 import static java.util.Arrays.asList;
 import static java.util.Map.entry;
-import static org.assertj.core.util.Maps.newHashMap;
+import static java.util.Map.ofEntries;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
 public class PlainTestParserTest {
 	@Test
-	public void emptyTestSuiteParseTest() {
-		assertEquals(parseTestSuite("TestSuite T1 { }"), new TestSuite("T1", asList(), asList()));
+	public void emptySuiteParseTest() {
+		assertEquals(parseSuite("Suite T1 { }"), new Suite("T1", asList(), asList()));
 	}
 
 	@Test
-	public void testSuiteWithPluginParseTest() {
-		assertEquals(parseTestSuite("""
-					TestSuite T1 {
+	public void suiteWithPluginParseTest() {
+		assertEquals(parseSuite("""
+				Suite T1 {
 					HTTP Step1 {
 						method: "GET"
 						timeout: 1000
@@ -27,23 +25,22 @@ public class PlainTestParserTest {
 						maxValue: 1500000000
 					}
 				}
-				"""),
-				new TestSuite("T1", asList(), asList(new TestStep("HTTP", "Step1", Map.ofEntries(entry("method", "GET"),
-						entry("timeout", 1000L), entry("minValue", -5L), entry("maxValue", 1500000000L))))));
+				"""), new Suite("T1", asList(), asList(new Step("HTTP", "Step1", ofEntries(entry("method", "GET"),
+				entry("timeout", 1000L), entry("minValue", -5L), entry("maxValue", 1500000000L)), ofEntries()))));
 	}
 
 	@Test
-	public void innerTestSuiteTest() {
-		assertEquals(parseTestSuite("""
-				TestSuite T1 {
+	public void innerSuiteTest() {
+		assertEquals(parseSuite("""
+				Suite T1 {
 					HTTP Step1 {
 						method: "GET"
 					}
-					TestSuite T2 {
+					Suite T2 {
 						HTTP Step2 {
 							method: "POST"
 						}
-						TestSuite T3 {
+						Suite T3 {
 							HTTP Step3 {
 								method: "PUT"
 							}
@@ -51,12 +48,55 @@ public class PlainTestParserTest {
 					}
 				}
 				"""),
-				new TestSuite("T1",
-						asList(new TestSuite("T2",
-								asList(new TestSuite("T3", asList(),
-										asList(new TestStep("HTTP", "Step3", newHashMap("method", "PUT"))))),
-								asList(new TestStep("HTTP", "Step2", newHashMap("method", "POST"))))),
-						asList(new TestStep("HTTP", "Step1", newHashMap("method", "GET")))));
+				new Suite("T1",
+						asList(new Suite("T2", asList(new Suite("T3", asList(),
+								asList(new Step("HTTP", "Step3", ofEntries(entry("method", "PUT")), ofEntries())))),
+								asList(new Step("HTTP", "Step2", ofEntries(entry("method", "POST")), ofEntries())))),
+						asList(new Step("HTTP", "Step1", ofEntries(entry("method", "GET")), ofEntries()))));
 
+	}
+
+	@Test
+	void multilineStringTest() {
+		assertEquals(parseSuite("""
+				Suite T1 {
+					HTTP Step1 {
+						method  : "POST"
+						body    : \"\"\"
+						          {
+						              "id": 1,
+						              "username": "vepo"
+						          }
+						          \"\"\"
+						assert responseCode   : 200
+					}
+				}
+				"""), new Suite("T1", asList(),
+				asList(new Step("HTTP", "Step1", ofEntries(entry("method", "POST"), entry("body", """
+						{
+						    "id": 1,
+						    "username": "vepo"
+						}""")), ofEntries(entry("responseCode", 200L))))));
+	}
+
+	@Test
+	void testStepWithAssertion() {
+		assertEquals(parseSuite("""
+				Suite T1 {
+					HTTP Step1 {
+						method  : "GET"
+						timeout : 1000
+						minValue: -5
+						maxValue: 1500000000
+						assert responseCode   : 200
+						assert responseMessage: "OK"
+					}
+				}
+				"""),
+				new Suite("T1", asList(),
+						asList(new Step("HTTP", "Step1",
+								ofEntries(entry("method", "GET"), entry("timeout", 1000L), entry("minValue", -5L),
+										entry("maxValue", 1500000000L)),
+								ofEntries(entry("responseCode", 200L), entry("responseMessage", "OK"))))));
 	}
 }

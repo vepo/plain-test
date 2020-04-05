@@ -2,12 +2,18 @@ package io.vepo.plaintest.parser;
 
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static java.util.stream.IntStream.range;
 import static org.apache.commons.text.StringEscapeUtils.unescapeJava;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
@@ -15,21 +21,22 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vepo.plaintest.TestStep;
-import io.vepo.plaintest.TestSuite;
+import io.vepo.plaintest.Step;
+import io.vepo.plaintest.Suite;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteListener;
-import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.PropertyDefinitionContext;
-import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.PropertyValueContext;
-import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.TestStepContext;
-import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.TestSuiteContext;
+import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.AssertionContext;
+import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.AttributeContext;
+import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.StepContext;
+import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.SuiteContext;
+import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.ValueContext;
 
 public class TestSuiteCreator implements TestSuiteListener {
 	private static final Logger logger = LoggerFactory.getLogger(TestSuiteCreator.class);
-
-	private TestSuite testSuite;
-	private TestSuite currentTestSuite;
-	private Queue<TestSuite> suites;
-	private TestStep currentStep;
+	private static final Pattern LINE_START_PATTERN = Pattern.compile("^(\\s+)");
+	private Suite testSuite;
+	private Suite currentTestSuite;
+	private Queue<Suite> suites;
+	private Step currentStep;
 
 	public TestSuiteCreator() {
 		this.currentTestSuite = this.testSuite = null;
@@ -57,10 +64,10 @@ public class TestSuiteCreator implements TestSuiteListener {
 	}
 
 	@Override
-	public void enterTestSuite(TestSuiteContext ctx) {
-		logger.debug("Enter Test Suite: {}", ctx);
+	public void enterSuite(SuiteContext ctx) {
+		logger.debug("Enter Suite: {}", ctx);
 		var previousTestSuite = this.currentTestSuite;
-		this.currentTestSuite = new TestSuite(ctx.IDENTIFIER().getText(), new ArrayList<>(), new ArrayList<>());
+		this.currentTestSuite = new Suite(ctx.IDENTIFIER().getText(), new ArrayList<>(), new ArrayList<>());
 
 		this.suites.offer(currentTestSuite);
 
@@ -74,61 +81,116 @@ public class TestSuiteCreator implements TestSuiteListener {
 	}
 
 	@Override
-	public void exitTestSuite(TestSuiteContext ctx) {
-		logger.debug("Exit Test Suite: {}", ctx);
-		
+	public void exitSuite(SuiteContext ctx) {
+		logger.debug("Exit Suite: {}", ctx);
+
 		this.suites.poll();
 		this.currentTestSuite = this.suites.peek();
 	}
 
-	public TestSuite getTestSuite() {
+	public Suite getTestSuite() {
 		return testSuite;
 	}
 
 	@Override
-	public void enterTestStep(TestStepContext ctx) {
-		logger.debug("Enter Test Step: {}", ctx);
-		this.currentStep = new TestStep(ctx.IDENTIFIER(0).getText(), ctx.IDENTIFIER(1).getText(), new HashMap<>());
-		this.currentTestSuite.addStep(currentStep);
+	public void enterStep(StepContext ctx) {
+		logger.debug("Enter Step: {}", ctx);
+		if (ctx.IDENTIFIER().size() == 2) {
+			this.currentStep = new Step(ctx.IDENTIFIER(0).getText(), ctx.IDENTIFIER(1).getText(), new HashMap<>(),
+					new HashMap<>());
+			this.currentTestSuite.addStep(currentStep);
+		} else {
+			logger.warn("Could not intantiate Step: context={}", ctx);
+		}
 	}
 
 	@Override
-	public void exitTestStep(TestStepContext ctx) {
-		logger.debug("Exit Test Step: {}", ctx);
+	public void exitStep(StepContext ctx) {
+		logger.debug("Exit Step: {}", ctx);
 	}
 
 	@Override
-	public void enterPropertyDefinition(PropertyDefinitionContext ctx) {
-		logger.debug("Enter Property Definition: {}", ctx);
+	public void enterAttribute(AttributeContext ctx) {
+		logger.debug("Enter Attribute: {}", ctx);
 	}
 
 	@Override
-	public void exitPropertyDefinition(PropertyDefinitionContext ctx) {
-		logger.debug("Exit Property Definition: {}", ctx);
+	public void exitAttribute(AttributeContext ctx) {
+		logger.debug("Exit Attribute: {}", ctx);
 
-		if (nonNull(ctx.propertyValue().STRING())) {
+		if (nonNull(ctx.value().STRING())) {
+			this.currentStep.addStringAttribute(ctx.IDENTIFIER().getText(), processString(ctx.value().getText()));
+		} else if (nonNull(ctx.value().MULTILINE_STRING())) {
 			this.currentStep.addStringAttribute(ctx.IDENTIFIER().getText(),
-					unescapeJava(removeQuotes(ctx.propertyValue().getText())));
-		} else if (nonNull(ctx.propertyValue().NUMBER())) {
-			this.currentStep.addNumberAttribute(ctx.IDENTIFIER().getText(),
-					Long.valueOf((ctx.propertyValue().getText())));
+					processMultiLineString(ctx.value().getText()));
+		} else if (nonNull(ctx.value().NUMBER())) {
+			this.currentStep.addNumberAttribute(ctx.IDENTIFIER().getText(), Long.valueOf((ctx.value().getText())));
 		} else {
 			logger.warn("Invalid value! ctx={}", ctx);
 		}
 	}
 
-	private String removeQuotes(String text) {
-		return text.substring(1, text.length() - 1);
+	private String processString(String text) {
+		return unescapeJava(text.substring(1, text.length() - 1));
+	}
+
+	private String processMultiLineString(String text) {
+		String[] lines = text.substring(3, text.length() - 3).split("\n");
+		if (lines.length > 0) {
+
+			if (lines[0].isBlank()) {
+				lines = Arrays.copyOfRange(lines, 1, lines.length);
+			}
+
+			if (lines[lines.length - 1].isBlank()) {
+				lines = Arrays.copyOfRange(lines, 0, lines.length - 1);
+			}
+
+			removeTabs(lines);
+		}
+		return Stream.of(lines).collect(Collectors.joining("\n"));
+	}
+
+	private void removeTabs(String[] lines) {
+		Matcher tabMatcher = LINE_START_PATTERN.matcher(lines[0]);
+		if (tabMatcher.find()) {
+			var tabPattern = tabMatcher.group(1);
+			range(0, lines.length).filter(index -> lines[index].startsWith(tabPattern))
+					.forEach(index -> lines[index] = lines[index].substring(tabPattern.length()));
+		}
 	}
 
 	@Override
-	public void enterPropertyValue(PropertyValueContext ctx) {
-		logger.debug("Enter Property Value: {}", ctx);
+	public void enterValue(ValueContext ctx) {
+		logger.debug("Enter Value: {}", ctx);
 	}
 
 	@Override
-	public void exitPropertyValue(PropertyValueContext ctx) {
-		logger.debug("Exit Property Value: {}", ctx);
+	public void exitValue(ValueContext ctx) {
+		logger.debug("Exit Value: {}", ctx);
+	}
+
+	@Override
+	public void enterAssertion(AssertionContext ctx) {
+		logger.debug("Enter Assertion: {}", ctx);
+	}
+
+	@Override
+	public void exitAssertion(AssertionContext ctx) {
+		logger.debug("Enter Assertion: {}", ctx);
+
+		if (nonNull(ctx.value().STRING())) {
+			this.currentStep.addStringAssertionAttribute(ctx.IDENTIFIER().getText(),
+					processString(ctx.value().getText()));
+		} else if (nonNull(ctx.value().MULTILINE_STRING())) {
+			this.currentStep.addStringAssertionAttribute(ctx.IDENTIFIER().getText(),
+					processMultiLineString(ctx.value().getText()));
+		} else if (nonNull(ctx.value().NUMBER())) {
+			this.currentStep.addNumberAssertionAttribute(ctx.IDENTIFIER().getText(),
+					Long.valueOf((ctx.value().getText())));
+		} else {
+			logger.warn("Invalid value! ctx={}", ctx);
+		}
 	}
 
 }
