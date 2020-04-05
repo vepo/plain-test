@@ -7,11 +7,17 @@ import io.vepo.plaintest.SuiteFactory;
 public class BashCommandTest {
 
 	@Test
-	void listCommandTest() {
+	public void listCommandTest() {
 		var suite = SuiteFactory.parseSuite("""
 				Suite BashTest {
-				    CMD ListFolder {
-				        cmd   : "ls"
+				    CMD EnterDir {
+				        cmd    : "cd src"
+				        timeout: 500
+				        assert returnCode: 0
+				    }
+				    CMD EnterSubFolder {
+				        cmd    : "cd main"
+				        timeout: 500
 				        assert returnCode: 0
 				    }
 				}

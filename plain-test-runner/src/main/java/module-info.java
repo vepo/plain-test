@@ -1,6 +1,9 @@
 module io.vepo.plaintest.runner {
 
-	requires org.slf4j;
 	requires info.picocli;
+
+	requires org.slf4j;
+	requires ch.qos.logback.classic;
+
 	requires io.vepo.plaintest.parser;
 }

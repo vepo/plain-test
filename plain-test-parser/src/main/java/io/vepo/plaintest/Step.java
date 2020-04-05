@@ -19,4 +19,11 @@ public record Step(int index, String plugin, String name, Map<String, Object> at
 	public void addNumberAssertionAttribute(String key, Long value) {
 		this.asserts.put(key, value);
 	}
+
+	public String attribute(String key) {
+		if (!this.attributes.containsKey(key)) {
+			throw new IllegalStateException("Missing attribute: " + key);
+		}
+		return (String) this.attributes.get(key);
+	}
 }

@@ -8,9 +8,7 @@ suite
 
 step
     : IDENTIFIER IDENTIFIER '{'
-            attribute*
-            assertion*
-            attribute*
+            (attribute | assertion)*
       '}'
     ;
 

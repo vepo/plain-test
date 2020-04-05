@@ -62,7 +62,7 @@ public class SuiteParserTest {
 
 	@Test
 	@DisplayName("It SHOULD parse parameter value Multi Line String")
-	void multilineStringTest() {
+	public void multilineStringTest() {
 		assertEquals(parseSuite("""
 				Suite T1 {
 					HTTP Step1 {
@@ -86,7 +86,7 @@ public class SuiteParserTest {
 
 	@Test
 	@DisplayName("It SHOULD parse Step assertion")
-	void stepWithAssertionTest() {
+	public void stepWithAssertionTest() {
 		assertEquals(parseSuite("""
 				Suite T1 {
 					HTTP Step1 {
@@ -108,7 +108,7 @@ public class SuiteParserTest {
 
 	@Test
 	@DisplayName("It SHOULD parse index of inner Steps")
-	void indexTest() {
+	public void indexTest() {
 		assertEquals(parseSuite("""
 				Suite T1 {
 					HTTP Step1 {
