@@ -1,9 +1,13 @@
 package io.vepo.plaintest;
 
+import static io.vepo.plaintest.SuiteAttributes.EXECUTION_PATH;
+
 import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 
-public record Suite(int index, String name, List<Suite> suites, List<Step> steps) {
+public record Suite(int index, String name, List<Suite> suites, List<Step> steps,
+		Map<SuiteAttributes, Object> attributes) {
 
 	public void addStep(Step step) {
 		this.steps.add(step);
@@ -37,5 +41,9 @@ public record Suite(int index, String name, List<Suite> suites, List<Step> steps
 		} else {
 			throw new RuntimeException("Unexpected type: " + requiredClass);
 		}
+	}
+
+	public void setExecDirectory(String execDirectory) {
+		this.attributes.put(EXECUTION_PATH, execDirectory);
 	}
 }

@@ -27,6 +27,7 @@ import io.vepo.plaintest.Suite;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteListener;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.AssertionContext;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.AttributeContext;
+import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.ExecDirectoryContext;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.StepContext;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.SuiteContext;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.ValueContext;
@@ -70,7 +71,7 @@ public class SuiteCreator implements TestSuiteListener {
 		var previousTestSuite = this.currentSuite;
 		this.currentSuite = new Suite(
 				Optional.ofNullable(previousTestSuite).map(Suite::lastIndex).map(i -> i + 1).orElse(0),
-				ctx.IDENTIFIER().getText(), new ArrayList<>(), new ArrayList<>());
+				ctx.IDENTIFIER().getText(), new ArrayList<>(), new ArrayList<>(), new HashMap<>());
 
 		this.suites.addLast(currentSuite);
 
@@ -192,6 +193,21 @@ public class SuiteCreator implements TestSuiteListener {
 		} else if (nonNull(ctx.value().NUMBER())) {
 			this.currentStep.addNumberAssertionAttribute(ctx.IDENTIFIER().getText(),
 					Long.valueOf((ctx.value().getText())));
+		} else {
+			logger.warn("Invalid value! ctx={}", ctx);
+		}
+	}
+
+	@Override
+	public void enterExecDirectory(ExecDirectoryContext ctx) {
+	}
+
+	@Override
+	public void exitExecDirectory(ExecDirectoryContext ctx) {
+		if (nonNull(ctx.FILE_PATH())) {
+			this.currentSuite.setExecDirectory(ctx.FILE_PATH().toString());
+		} else if (nonNull(ctx.IDENTIFIER())) {
+			this.currentSuite.setExecDirectory(ctx.IDENTIFIER().toString());
 		} else {
 			logger.warn("Invalid value! ctx={}", ctx);
 		}

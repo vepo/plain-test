@@ -3,8 +3,11 @@ package io.vepo.plaintest.runner.executor.plugins;
 import static java.util.Map.entry;
 import static java.util.Map.ofEntries;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Map;
+import java.util.StringJoiner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,12 +30,19 @@ public class CommandExecutor implements StepExecutor {
 	@Override
 	public Result execute(Step step, Context context) {
 		try {
-			Runtime runtime = Runtime.getRuntime();
-			logger.info("PWD Before: {}", new String(runtime.exec("pwd").getInputStream().readAllBytes()));
-			Process process = runtime.exec(step.attribute("cmd"), new String[] {}, context.getWorkingDirectory());
-			int returnCode = process.waitFor();
-			logger.info("Return Code: {}", returnCode);
-			logger.info("PWD After: {}", new String(runtime.exec("pwd").getInputStream().readAllBytes()));
+			var pb = new ProcessBuilder("pwd", step.attribute("cmd"), "pwd");
+			logger.info("CMDs: {}", pb.command());
+			var p = pb.start();
+			try (var reader = new BufferedReader(new InputStreamReader(p.getInputStream()));) {
+
+				var sj = new StringJoiner(System.getProperty("line.separator"));
+				reader.lines().iterator().forEachRemaining(sj::add);
+				var result = sj.toString();
+				logger.info("STDOUT: {}", result);
+				logger.info("STDOUT: {}", pb.directory());
+			}
+			p.waitFor();
+
 			return new StepResult(step.name(), ExecutionStatus.EXECUTED, "");
 		} catch (IOException e) {
 			return new StepResult(step.name(), ExecutionStatus.FAILED, e.getMessage());

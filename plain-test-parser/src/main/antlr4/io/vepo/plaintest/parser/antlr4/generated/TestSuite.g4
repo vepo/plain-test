@@ -2,6 +2,7 @@ grammar TestSuite;
 
 suite
     :     'Suite' IDENTIFIER '{'
+            execDirectory?
             (suite | step)*
         '}'
     ;
@@ -12,6 +13,10 @@ step
       '}'
     ;
 
+execDirectory
+	: 'exec-dir' ':' (FILE_PATH | IDENTIFIER) 
+	;
+		
 assertion
     : 'assert' IDENTIFIER ':' value
     ;
@@ -28,6 +33,19 @@ IDENTIFIER
     : [A-Za-z][._\-A-Za-z0-9]*
     ;
 
+FILE_PATH
+	: WINDOWS_FILE_PATH | UNIX_FILE_PATH
+	;
+
+WINDOWS_FILE_PATH
+	: ([A-Z] ':\\' (FILENAME '\\')*)? (FILENAME '\\')+ FILENAME?
+	;
+
+UNIX_FILE_PATH
+	: ('/' (FILENAME '/')*)? (FILENAME '/')+ FILENAME?
+	;
+
+
 STRING
     : DQUOTE (ESC | ~ ["\\])* DQUOTE
     ;
@@ -35,7 +53,9 @@ STRING
 MULTILINE_STRING
     : DQUOTE DQUOTE DQUOTE (ESC | '"' | ~["\\])* DQUOTE DQUOTE DQUOTE
     ;
-
+fragment FILENAME
+	: [._\-A-Za-z0-9]+
+	;
 fragment DQUOTE
     : '"'
     ;

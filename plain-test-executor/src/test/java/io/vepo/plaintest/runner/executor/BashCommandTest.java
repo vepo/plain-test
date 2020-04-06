@@ -10,15 +10,21 @@ public class BashCommandTest {
 	public void listCommandTest() {
 		var suite = SuiteFactory.parseSuite("""
 				Suite BashTest {
+				    exec-dir: src
+
 				    CMD EnterDir {
-				        cmd    : "cd src"
+				        cmd    : "ls"
 				        timeout: 500
 				        assert returnCode: 0
 				    }
-				    CMD EnterSubFolder {
-				        cmd    : "cd main"
-				        timeout: 500
-				        assert returnCode: 0
+				
+				    Suite MainTest {
+				        exec-dir: main
+				        CMD EnterSubFolder {
+				            cmd    : "ls"
+				            timeout: 500
+				            assert returnCode: 0
+				        }
 				    }
 				}
 								""");
