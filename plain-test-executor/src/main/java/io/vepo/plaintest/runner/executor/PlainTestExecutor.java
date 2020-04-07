@@ -1,12 +1,21 @@
 package io.vepo.plaintest.runner.executor;
 
+import static io.vepo.plaintest.SuiteAttributes.EXECUTION_PATH;
+import static java.lang.System.currentTimeMillis;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.stream.IntStream.rangeClosed;
 
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.ServiceLoader;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.vepo.plaintest.Step;
 import io.vepo.plaintest.Suite;
@@ -16,6 +25,7 @@ import io.vepo.plaintest.runner.executor.context.RootSuiteContext;
 import io.vepo.plaintest.runner.executor.plugins.StepExecutor;
 
 public class PlainTestExecutor {
+	private static final Logger logger = LoggerFactory.getLogger(PlainTestExecutor.class);
 	private Map<String, StepExecutor> stepExecutors;
 
 	public PlainTestExecutor() {
@@ -25,19 +35,33 @@ public class PlainTestExecutor {
 	}
 
 	public Result execute(Suite suite) {
-		return executeSuite(suite, new RootSuiteContext());
+		return executeSuite(suite, new RootSuiteContext(
+				Paths.get(suite.attribute(EXECUTION_PATH, String.class).orElse(".")).toAbsolutePath()));
 	}
 
 	private Result executeSuite(Suite suite, Context context) {
-		var results = new Result();
+		long start = currentTimeMillis();
+		var results = new ArrayList<Result>();
 		rangeClosed(0, suite.lastIndex()).forEachOrdered(index -> {
 			if (suite.isStep(index)) {
-				context.addResult(executeStep(suite.at(index, Step.class), context));
+				var stepResult = executeStep(suite.at(index, Step.class), context);
+				logger.debug("Step Executed! results={}", stepResult);
+				results.add(stepResult);
+				context.addResult(stepResult);
 			} else {
-				executeSuite(suite.at(index, Suite.class), new InnerSuiteContext(context));
+				Suite innerSuite = suite.at(index, Suite.class);
+				var innerContext = new InnerSuiteContext(context,
+						innerSuite.attribute(EXECUTION_PATH, String.class)
+								.map(path -> context.getWorkingDirectory().resolve(path).toAbsolutePath())
+								.orElse(context.getWorkingDirectory()));
+				var suiteResult = executeSuite(innerSuite, innerContext);
+				logger.debug("Suite Executed! results={}", suiteResult);
+				results.add(suiteResult);
+				context.addResult(suiteResult);
 			}
 		});
-		return results;
+		return new Result(suite.name(), start, currentTimeMillis(), results.stream().allMatch(Result::success), "", "",
+				results, emptyList());
 	}
 
 	private Result executeStep(Step step, Context context) {
@@ -47,14 +71,14 @@ public class PlainTestExecutor {
 					.filter(entry -> !step.attributes().containsKey(entry.getKey()))
 					.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 			if (!missingAttributes.isEmpty()) {
-				return new StepResult(step.name(), ExecutionStatus.MISSING_ATTRIBUTES,
-						"Missing attributes: " + missingAttributes);
+				return new Result(step.name(), currentTimeMillis(), currentTimeMillis(), false, "", "", emptyList(),
+						asList(new Fail(FailReason.MISSING_ATTRIBUTES, "Missing attributes: " + missingAttributes)));
 			} else {
 				return executor.execute(step, context);
 			}
 		} else {
-			return new StepResult(step.name(), ExecutionStatus.PLUGIN_NOT_FOUND,
-					"Could not find plugin: " + step.plugin());
+			return new Result(step.name(), currentTimeMillis(), currentTimeMillis(), false, "", "", emptyList(),
+					asList(new Fail(FailReason.PLUGIN_NOT_FOUND, "Could not find plugin: " + step.plugin())));
 		}
 	}
 }

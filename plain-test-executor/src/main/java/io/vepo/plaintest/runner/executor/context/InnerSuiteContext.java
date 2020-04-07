@@ -1,12 +1,17 @@
 package io.vepo.plaintest.runner.executor.context;
 
-import java.io.File;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 
 import io.vepo.plaintest.runner.executor.Result;
 
 public class InnerSuiteContext implements Context {
-	public InnerSuiteContext(Context parentContext) {
+
+	private Path workingDirectory;
+	private Context parentContext;
+
+	public InnerSuiteContext(Context parentContext, Path workingDirectory) {
+		this.parentContext = parentContext;
+		this.workingDirectory = workingDirectory;
 	}
 
 	@Override
@@ -14,7 +19,12 @@ public class InnerSuiteContext implements Context {
 	}
 
 	@Override
-	public File getWorkingDirectory() {
-		return Paths.get(".").toFile();
+	public Path getWorkingDirectory() {
+		return workingDirectory;
+	}
+
+	@Override
+	public String toString() {
+		return "InnerSuiteContext [parentContext=" + parentContext + ", workingDirectory=" + workingDirectory + "]";
 	}
 }

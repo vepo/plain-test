@@ -22,6 +22,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vepo.plaintest.Assertion;
 import io.vepo.plaintest.Step;
 import io.vepo.plaintest.Suite;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteListener;
@@ -102,7 +103,7 @@ public class SuiteCreator implements TestSuiteListener {
 		int lastIndex = this.currentSuite.lastIndex();
 		if (ctx.IDENTIFIER().size() == 2) {
 			this.currentStep = new Step(lastIndex + 1, ctx.IDENTIFIER(0).getText(), ctx.IDENTIFIER(1).getText(),
-					new HashMap<>(), new HashMap<>());
+					new HashMap<>(), new ArrayList<>());
 			this.currentSuite.addStep(currentStep);
 		} else {
 			logger.warn("Could not intantiate Step: context={}", ctx);
@@ -185,14 +186,14 @@ public class SuiteCreator implements TestSuiteListener {
 		logger.debug("Enter Assertion: {}", ctx);
 
 		if (nonNull(ctx.value().STRING())) {
-			this.currentStep.addStringAssertionAttribute(ctx.IDENTIFIER().getText(),
-					processString(ctx.value().getText()));
+			this.currentStep.addAssertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
+					processString(ctx.value().getText())));
 		} else if (nonNull(ctx.value().MULTILINE_STRING())) {
-			this.currentStep.addStringAssertionAttribute(ctx.IDENTIFIER().getText(),
-					processMultiLineString(ctx.value().getText()));
+			this.currentStep.addAssertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
+					processMultiLineString(ctx.value().getText())));
 		} else if (nonNull(ctx.value().NUMBER())) {
-			this.currentStep.addNumberAssertionAttribute(ctx.IDENTIFIER().getText(),
-					Long.valueOf((ctx.value().getText())));
+			this.currentStep.addAssertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
+					Long.valueOf((ctx.value().getText()))));
 		} else {
 			logger.warn("Invalid value! ctx={}", ctx);
 		}

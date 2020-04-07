@@ -14,11 +14,11 @@ step
     ;
 
 execDirectory
-	: 'exec-dir' ':' (FILE_PATH | IDENTIFIER) 
+	: 'exec-dir' ':' (FILE_PATH | IDENTIFIER)
 	;
-		
+
 assertion
-    : 'assert' IDENTIFIER ':' value
+    : 'assert' IDENTIFIER VERB value
     ;
 
 attribute
@@ -26,7 +26,12 @@ attribute
     ;
 
 value
-    : NUMBER | MULTILINE_STRING | STRING 
+    : NUMBER | MULTILINE_STRING | STRING
+    ;
+
+VERB
+    : 'Contains'
+    | 'Equals'
     ;
 
 IDENTIFIER
@@ -45,7 +50,6 @@ UNIX_FILE_PATH
 	: ('/' (FILENAME '/')*)? (FILENAME '/')+ FILENAME?
 	;
 
-
 STRING
     : DQUOTE (ESC | ~ ["\\])* DQUOTE
     ;
@@ -53,9 +57,11 @@ STRING
 MULTILINE_STRING
     : DQUOTE DQUOTE DQUOTE (ESC | '"' | ~["\\])* DQUOTE DQUOTE DQUOTE
     ;
+
 fragment FILENAME
 	: [._\-A-Za-z0-9]+
 	;
+
 fragment DQUOTE
     : '"'
     ;

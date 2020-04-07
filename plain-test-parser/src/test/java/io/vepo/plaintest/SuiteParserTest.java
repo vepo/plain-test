@@ -34,7 +34,7 @@ public class SuiteParserTest {
 					"""), new Suite(0, "T1", asList(), asList(),
 					ofEntries(entry(SuiteAttributes.EXECUTION_PATH, "C:\\user\\xyx"))));
 		}
-		
+
 		@Test
 		@DisplayName("It SHOULD parse a Suite with execution directory relative Unix Path")
 		public void relativeUnixPathTest() {
@@ -56,7 +56,7 @@ public class SuiteParserTest {
 					"""), new Suite(0, "T1", asList(), asList(),
 					ofEntries(entry(SuiteAttributes.EXECUTION_PATH, ".\\src\\main\\java"))));
 		}
-		
+
 		@Test
 		@DisplayName("It SHOULD parse a Suite with execution directory  Unix Path")
 		public void unixPathTest() {
@@ -78,7 +78,7 @@ public class SuiteParserTest {
 					"""), new Suite(0, "T1", asList(), asList(),
 					ofEntries(entry(SuiteAttributes.EXECUTION_PATH, "src\\main\\java"))));
 		}
-		
+
 		@Test
 		@DisplayName("It SHOULD parse a Suite with execution directory simple filename")
 		public void simpleTest() {
@@ -89,8 +89,7 @@ public class SuiteParserTest {
 					"""),
 					new Suite(0, "T1", asList(), asList(), ofEntries(entry(SuiteAttributes.EXECUTION_PATH, "src"))));
 		}
-		
-		
+
 	}
 
 	@Test
@@ -106,7 +105,7 @@ public class SuiteParserTest {
 				Suite T1 {
 					HTTP Step1 {
 						method  : "GET"
-						assert responseCode: 200
+						assert responseCode Equals 200
 					}
 					CMD Step2 {
 						cmd: "ls"
@@ -123,13 +122,14 @@ public class SuiteParserTest {
 						cmd: "ls *.txt"
 					}
 				}
-				"""), new Suite(0, "T1", asList(new Suite(3, "T2", asList(),
-				asList(new Step(0, "CMD", "Step2.1", ofEntries(entry("cmd", "ls")), ofEntries())), ofEntries())),
+				"""), new Suite(0, "T1",
+				asList(new Suite(3, "T2", asList(),
+						asList(new Step(0, "CMD", "Step2.1", ofEntries(entry("cmd", "ls")), asList())), ofEntries())),
 				asList(new Step(0, "HTTP", "Step1", ofEntries(entry("method", "GET")),
-						ofEntries(entry("responseCode", 200L))),
-						new Step(1, "CMD", "Step2", ofEntries(entry("cmd", "ls")), ofEntries()),
-						new Step(2, "CMD", "Step3", ofEntries(entry("cmd", "cd new-folder")), ofEntries()),
-						new Step(4, "CMD", "Step4", ofEntries(entry("cmd", "ls *.txt")), ofEntries())),
+						asList(new Assertion<>("responseCode", "Equals", 200L))),
+						new Step(1, "CMD", "Step2", ofEntries(entry("cmd", "ls")), asList()),
+						new Step(2, "CMD", "Step3", ofEntries(entry("cmd", "cd new-folder")), asList()),
+						new Step(4, "CMD", "Step4", ofEntries(entry("cmd", "ls *.txt")), asList())),
 				ofEntries()));
 	}
 
@@ -153,9 +153,9 @@ public class SuiteParserTest {
 					}
 				}
 				"""), new Suite(0, "T1", asList(new Suite(1, "T2", asList(new Suite(1, "T3", asList(),
-				asList(new Step(0, "HTTP", "Step3", ofEntries(entry("method", "PUT")), ofEntries())), ofEntries())),
-				asList(new Step(0, "HTTP", "Step2", ofEntries(entry("method", "POST")), ofEntries())), ofEntries())),
-				asList(new Step(0, "HTTP", "Step1", ofEntries(entry("method", "GET")), ofEntries())), ofEntries()));
+				asList(new Step(0, "HTTP", "Step3", ofEntries(entry("method", "PUT")), asList())), ofEntries())),
+				asList(new Step(0, "HTTP", "Step2", ofEntries(entry("method", "POST")), asList())), ofEntries())),
+				asList(new Step(0, "HTTP", "Step1", ofEntries(entry("method", "GET")), asList())), ofEntries()));
 
 	}
 
@@ -172,7 +172,7 @@ public class SuiteParserTest {
 						              "username": "vepo"
 						          }
 						          \"\"\"
-						assert responseCode   : 200
+						assert responseCode Equals 200
 					}
 				}
 				"""), new Suite(0, "T1", asList(),
@@ -180,7 +180,7 @@ public class SuiteParserTest {
 						{
 						    "id": 1,
 						    "username": "vepo"
-						}""")), ofEntries(entry("responseCode", 200L)))), ofEntries()));
+						}""")), asList(new Assertion<>("responseCode", "Equals", 200L)))), ofEntries()));
 	}
 
 	@Test
@@ -193,8 +193,8 @@ public class SuiteParserTest {
 						timeout : 1000
 						minValue: -5
 						maxValue: 1500000000
-						assert responseCode   : 200
-						assert responseMessage: "OK"
+						assert responseCode    Equals 200
+						assert responseMessage Equals "OK"
 					}
 				}
 				"""),
@@ -202,7 +202,8 @@ public class SuiteParserTest {
 						asList(new Step(0, "HTTP", "Step1",
 								ofEntries(entry("method", "GET"), entry("timeout", 1000L), entry("minValue", -5L),
 										entry("maxValue", 1500000000L)),
-								ofEntries(entry("responseCode", 200L), entry("responseMessage", "OK")))),
+								asList(new Assertion<>("responseCode", "Equals", 200L),
+										new Assertion<>("responseMessage", "Equals", "OK")))),
 						ofEntries()));
 	}
 
@@ -224,7 +225,7 @@ public class SuiteParserTest {
 								new Step(0, "HTTP", "Step1",
 										ofEntries(entry("method", "GET"), entry("timeout", 1000L),
 												entry("minValue", -5L), entry("maxValue", 1500000000L)),
-										ofEntries())),
+										asList())),
 						ofEntries()));
 	}
 }

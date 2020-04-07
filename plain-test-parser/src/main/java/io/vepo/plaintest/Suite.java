@@ -4,6 +4,7 @@ import static io.vepo.plaintest.SuiteAttributes.EXECUTION_PATH;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 public record Suite(int index, String name, List<Suite> suites, List<Step> steps,
@@ -28,6 +29,19 @@ public record Suite(int index, String name, List<Suite> suites, List<Step> steps
 
 	public boolean isSuite(int position) {
 		return this.suites.stream().filter(step -> step.index() == position).count() == 1L;
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> Optional<T> attribute(SuiteAttributes key) {
+		if (this.attributes.containsKey(key)) {
+			return Optional.of((T) this.attributes.get(key));
+		} else {
+			return Optional.empty();
+		}
+	}
+
+	public <T> Optional<T> attribute(SuiteAttributes key, Class<T> requiredClass) {
+		return attribute(key);
 	}
 
 	@SuppressWarnings("unchecked")

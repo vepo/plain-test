@@ -1,19 +1,31 @@
 package io.vepo.plaintest.runner.executor.context;
 
-import java.io.File;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 
 import io.vepo.plaintest.runner.executor.Result;
 
 public class RootSuiteContext implements Context {
+
+	private Path workingDirectory;
+
+	public RootSuiteContext(Path workingDirectory) {
+		this.workingDirectory = workingDirectory;
+	}
+
+	public RootSuiteContext() {
+	}
 
 	@Override
 	public void addResult(Result result) {
 	}
 
 	@Override
-	public File getWorkingDirectory() {
-		return Paths.get(".").toFile();
+	public Path getWorkingDirectory() {
+		return workingDirectory;
 	}
 
+	@Override
+	public String toString() {
+		return "RootSuiteContext [workingDirectory=" + workingDirectory + "]";
+	}
 }
