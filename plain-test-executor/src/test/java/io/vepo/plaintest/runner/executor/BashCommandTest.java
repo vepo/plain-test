@@ -166,20 +166,22 @@ public class BashCommandTest {
 	}
 
 	@Nested
-	class MissingAttributeTest {
+	public class MissingAttributeTest {
 		@Test
 		public void stringSuccessTest() {
 			var suite = SuiteFactory.parseSuite(BASH_ASSERTION_MISSING_ATTRIBUTE);
 			var executor = new PlainTestExecutor();
 			assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.success()))
 					.satisfies(result -> assertThat(find(result, "EchoSomeString")).isPresent().get()
-							.satisfies(r -> assertFalse(r.success())).satisfies(
-									r -> assertEquals(asList(new Fail(FailReason.MISSING_ATTRIBUTES, "Missing attributes: [cmd]")), r.fails())));
+							.satisfies(r -> assertFalse(r.success()))
+							.satisfies(r -> assertEquals(
+									asList(new Fail(FailReason.MISSING_ATTRIBUTES, "Missing attributes: [cmd]")),
+									r.fails())));
 		}
 	}
 
 	@Nested
-	class AssertContainsTest {
+	public class AssertContainsTest {
 
 		@Test
 		public void stringSuccessTest() {
@@ -201,7 +203,7 @@ public class BashCommandTest {
 	}
 
 	@Nested
-	class AssertEqualsTest {
+	public class AssertEqualsTest {
 
 		@Test
 		public void stringSuccessTest() {
