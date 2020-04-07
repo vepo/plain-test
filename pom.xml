@@ -90,7 +90,11 @@
 					<artifactId>maven-surefire-plugin</artifactId>
 					<version>3.0.0-M4</version>
 					<configuration>
-						<argLine>--enable-preview --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED</argLine>
+						<argLine>--enable-preview --add-opens
+							java.base/java.lang=ALL-UNNAMED --add-opens
+							java.base/java.util=ALL-UNNAMED --add-opens
+							java.base/java.io=ALL-UNNAMED --add-opens
+							java.base/java.math=ALL-UNNAMED</argLine>
 					</configuration>
 				</plugin>
 				<plugin>
@@ -98,7 +102,11 @@
 					<artifactId>maven-failsafe-plugin</artifactId>
 					<version>3.0.0-M4</version>
 					<configuration>
-						<argLine>--enable-preview --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED</argLine>
+						<argLine>--enable-preview --add-opens
+							java.base/java.lang=ALL-UNNAMED --add-opens
+							java.base/java.util=ALL-UNNAMED --add-opens
+							java.base/java.io=ALL-UNNAMED --add-opens
+							java.base/java.math=ALL-UNNAMED</argLine>
 					</configuration>
 				</plugin>
 				<plugin>
@@ -132,6 +140,9 @@
 							</goals>
 						</execution>
 					</executions>
+					<configuration>
+						<outputDirectory>${basedir}</outputDirectory>
+					</configuration>
 				</plugin>
 			</plugins>
 		</pluginManagement>

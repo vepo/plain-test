@@ -4,11 +4,13 @@ import static io.vepo.plaintest.SuiteAttributes.EXECUTION_PATH;
 import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.IntStream.rangeClosed;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.ServiceLoader;
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vepo.plaintest.Assertion;
 import io.vepo.plaintest.Step;
 import io.vepo.plaintest.Suite;
 import io.vepo.plaintest.runner.executor.context.Context;
@@ -72,13 +75,56 @@ public class PlainTestExecutor {
 					.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 			if (!missingAttributes.isEmpty()) {
 				return new Result(step.name(), currentTimeMillis(), currentTimeMillis(), false, "", "", emptyList(),
-						asList(new Fail(FailReason.MISSING_ATTRIBUTES, "Missing attributes: " + missingAttributes)));
+						asList(new Fail(FailReason.MISSING_ATTRIBUTES, "Missing attributes: ["
+								+ missingAttributes.entrySet().stream().map(Entry::getKey).collect(joining(", "))
+								+ "]")));
 			} else {
-				return executor.execute(step, context);
+				return checkAssertions(step, executor.execute(step, context));
 			}
 		} else {
 			return new Result(step.name(), currentTimeMillis(), currentTimeMillis(), false, "", "", emptyList(),
 					asList(new Fail(FailReason.PLUGIN_NOT_FOUND, "Could not find plugin: " + step.plugin())));
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private Result checkAssertions(Step step, Result result) {
+		List<Assertion<?>> assertions = step.assertions();
+		var fails = result.fails();
+		assertions.forEach(assertion -> {
+			switch (assertion.verb()) {
+			case "Contains": {
+				if (assertion.value() instanceof String) {
+					String value = result.get(assertion.property(), String.class);
+					if (!value.contains((String) assertion.value())) {
+						fails.add(new Fail(FailReason.ASSERTION,
+								assertion.property() + " does not contains " + assertion.value()));
+					}
+				} else {
+					fails.add(new Fail(FailReason.RUNTIME_EXCEPTION,
+							assertion.property() + " cannot check contains for numbers. value:" + assertion.value()));
+				}
+				break;
+			}
+			case "Equals": {
+				if (assertion.value() instanceof String) {
+					String value = result.get(assertion.property(), String.class);
+					if (value.compareTo((String) assertion.value()) != 0) {
+						fails.add(new Fail(FailReason.ASSERTION,
+								assertion.property() + " is not equal to " + assertion.value()));
+					}
+				} else if (assertion.value() instanceof Long) {
+					Long value = result.get(assertion.property(), Long.class);
+					if (value.longValue() == ((Long) assertion.value()).longValue()) {
+						fails.add(new Fail(FailReason.ASSERTION,
+								assertion.property() + " is not equal to " + assertion.value()));
+					}
+				}
+				break;
+			}
+			}
+		});
+		return new Result(result.name(), result.start(), result.end(), result.success() && fails.isEmpty(),
+				result.stdout(), result.stderr(), result.results(), fails);
 	}
 }
