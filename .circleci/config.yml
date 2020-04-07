@@ -10,3 +10,9 @@ jobs:
       - run: mvn test 
       - store_test_results: 
           path: target/surefire-reports
+  build:
+    docker:
+      - image: circleci/openjdk:14-buster
+    steps:
+      - checkout
+      - run: mvn clean package
