@@ -1,9 +1,12 @@
-version: 2.1
+version: 2.1 
+## Reference: https://github.com/monti-dev/API/blob/3cf1d066793edfcf892666a82c2f6393f17b712c/.circleci/config.yml
+jobs:
+  test:
+    docker:
+      - image: circleci/openjdk:14-buster
 
-orbs:
-  maven: circleci/maven@0.0.12
-
-workflows:
-  maven_test:
-    jobs:
-      - maven/test # checkout, build, test, and upload test results
+    steps:
+      - checkout
+      - run: mvn test 
+      - store_test_results: 
+          path: target/surefire-reports
