@@ -1,6 +1,5 @@
 package io.vepo.plaintest.runner.executor;
 
-import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -10,6 +9,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import io.vepo.plaintest.Suite;
 import io.vepo.plaintest.SuiteFactory;
 import io.vepo.plaintest.runner.utils.MockOs;
 
@@ -26,40 +26,38 @@ public class FailsTest {
 
 	@Test
 	public void unknownPluginTest() {
-		var suite = SuiteFactory.parseSuite("""
-				Suite UnknownTest {
-				        Unknown DoNothing {
-				            cmd    : "xyz"
-				            timeout: 500
-				            assert stdout Equals "other string"
-				       }
-				    }
-				""");
-		var executor = new PlainTestExecutor();
+		Suite suite = SuiteFactory.parseSuite("Suite UnknownTest {\n" + //
+				"        Unknown DoNothing {\n" + //
+				"            cmd    : \"xyz\"\n" + //
+				"            timeout: 500\n" + //
+				"            assert stdout Equals \"other string\"\n" + //
+				"        }\n" + //
+				"    }\n" + //
+				"}");
+		PlainTestExecutor executor = new PlainTestExecutor();
 		Result result = executor.execute(suite);
-		Result doNothingResult = (Result) result.results().stream().filter(r -> ((Result) r).name().equals("DoNothing"))
-				.findFirst().orElse(null);
+		Result doNothingResult = (Result) result.getResults().stream()
+				.filter(r -> ((Result) r).getName().equals("DoNothing")).findFirst().orElse(null);
 		assertNotNull(doNothingResult);
 		assertEquals(Arrays.asList(new Fail(FailReason.PLUGIN_NOT_FOUND, "Could not find plugin: Unknown")),
-				doNothingResult.fails());
+				doNothingResult.getFails());
 	}
 
 	@Test
 	public void unknownCommandPluginTest() {
-		var suite = SuiteFactory.parseSuite("""
-				Suite UnknownTest {
-				        CMD DoNothing {
-				            cmd    : "unknownCommand"
-				            timeout: 500
-				       }
-				    }
-				""");
-		var executor = new PlainTestExecutor();
+		Suite suite = SuiteFactory.parseSuite("Suite UnknownTest {\n" + //
+				"        CMD DoNothing {\n" + //
+				"            cmd    : \"unknownCommand\"\n" + //
+				"            timeout: 500\n" + //
+				"       }\n" + //
+				"    }\n" + //
+				"}");
+		PlainTestExecutor executor = new PlainTestExecutor();
 		Result result = executor.execute(suite);
-		Result doNothingResult = (Result) result.results().stream().filter(r -> ((Result) r).name().equals("DoNothing"))
-				.findFirst().orElse(null);
+		Result doNothingResult = (Result) result.getResults().stream()
+				.filter(r -> ((Result) r).getName().equals("DoNothing")).findFirst().orElse(null);
 		assertNotNull(doNothingResult);
-		assertEquals(doNothingResult.fails().size(), 1);
-		assertEquals(FailReason.FAILED, ((Fail) doNothingResult.fails().get(0)).reason());
+		assertEquals(doNothingResult.getFails().size(), 1);
+		assertEquals(FailReason.FAILED, ((Fail) doNothingResult.getFails().get(0)).getReason());
 	}
 }

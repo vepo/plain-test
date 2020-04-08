@@ -44,37 +44,37 @@ public class PlainTestExecutor {
 
 	private Result executeSuite(Suite suite, Context context) {
 		long start = currentTimeMillis();
-		var results = new ArrayList<Result>();
+		List<Result> results = new ArrayList<>();
 		rangeClosed(0, suite.lastIndex()).forEachOrdered(index -> {
 			if (suite.isStep(index)) {
-				var stepResult = executeStep(suite.at(index, Step.class), context);
+				Result stepResult = executeStep(suite.at(index, Step.class), context);
 				logger.debug("Step Executed! results={}", stepResult);
 				results.add(stepResult);
 				context.addResult(stepResult);
 			} else {
 				Suite innerSuite = suite.at(index, Suite.class);
-				var innerContext = new InnerSuiteContext(context,
+				Context innerContext = new InnerSuiteContext(context,
 						innerSuite.attribute(EXECUTION_PATH, String.class)
 								.map(path -> context.getWorkingDirectory().resolve(path).toAbsolutePath())
 								.orElse(context.getWorkingDirectory()));
-				var suiteResult = executeSuite(innerSuite, innerContext);
+				Result suiteResult = executeSuite(innerSuite, innerContext);
 				logger.debug("Suite Executed! results={}", suiteResult);
 				results.add(suiteResult);
 				context.addResult(suiteResult);
 			}
 		});
-		return new Result(suite.name(), start, currentTimeMillis(), results.stream().allMatch(Result::success), "", "",
-				results, asList());
+		return new Result(suite.getName(), start, currentTimeMillis(), results.stream().allMatch(Result::isSuccess), "",
+				"", results, asList());
 	}
 
 	private Result executeStep(Step step, Context context) {
-		if (stepExecutors.containsKey(step.plugin())) {
-			var executor = stepExecutors.get(step.plugin());
+		if (stepExecutors.containsKey(step.getPlugin())) {
+			StepExecutor executor = stepExecutors.get(step.getPlugin());
 			Map<String, Object> missingAttributes = executor.requiredAttribute().entrySet().stream()
-					.filter(entry -> !step.attributes().containsKey(entry.getKey()))
+					.filter(entry -> !step.getAttributes().containsKey(entry.getKey()))
 					.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 			if (!missingAttributes.isEmpty()) {
-				return new Result(step.name(), currentTimeMillis(), currentTimeMillis(), false, "", "", emptyList(),
+				return new Result(step.getName(), currentTimeMillis(), currentTimeMillis(), false, "", "", emptyList(),
 						asList(new Fail(FailReason.MISSING_ATTRIBUTES, "Missing attributes: ["
 								+ missingAttributes.entrySet().stream().map(Entry::getKey).collect(joining(", "))
 								+ "]")));
@@ -82,49 +82,48 @@ public class PlainTestExecutor {
 				return checkAssertions(step, executor.execute(step, context));
 			}
 		} else {
-			return new Result(step.name(), currentTimeMillis(), currentTimeMillis(), false, "", "", emptyList(),
-					asList(new Fail(FailReason.PLUGIN_NOT_FOUND, "Could not find plugin: " + step.plugin())));
+			return new Result(step.getName(), currentTimeMillis(), currentTimeMillis(), false, "", "", emptyList(),
+					asList(new Fail(FailReason.PLUGIN_NOT_FOUND, "Could not find plugin: " + step.getPlugin())));
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private Result checkAssertions(Step step, Result result) {
-		List<Assertion<?>> assertions = step.assertions();
-		var fails =result.fails();
+		List<Assertion<?>> assertions = step.getAssertions();
+		List<Fail> fails = result.getFails();
 		assertions.forEach(assertion -> {
-			switch (assertion.verb()) {
+			switch (assertion.getVerb()) {
 			case "Contains": {
-				if (assertion.value() instanceof String) {
-					String value = result.get(assertion.property(), String.class);
-					if (!value.contains((String) assertion.value())) {
+				if (assertion.getValue() instanceof String) {
+					String value = result.get(assertion.getProperty(), String.class);
+					if (!value.contains((String) assertion.getValue())) {
 						fails.add(new Fail(FailReason.ASSERTION,
-								assertion.property() + " does not contains " + assertion.value()));
+								assertion.getProperty() + " does not contains " + assertion.getValue()));
 					}
 				} else {
-					fails.add(new Fail(FailReason.RUNTIME_EXCEPTION,
-							assertion.property() + " cannot check contains for numbers. value:" + assertion.value()));
+					fails.add(new Fail(FailReason.RUNTIME_EXCEPTION, assertion.getProperty()
+							+ " cannot check contains for numbers. value:" + assertion.getValue()));
 				}
 				break;
 			}
 			case "Equals": {
-				if (assertion.value() instanceof String) {
-					String value = result.get(assertion.property(), String.class);
-					if (value.compareTo((String) assertion.value()) != 0) {
+				if (assertion.getValue() instanceof String) {
+					String value = result.get(assertion.getProperty(), String.class);
+					if (value.compareTo((String) assertion.getValue()) != 0) {
 						fails.add(new Fail(FailReason.ASSERTION,
-								assertion.property() + " is not equal to " + assertion.value()));
+								assertion.getProperty() + " is not equal to " + assertion.getValue()));
 					}
-				} else if (assertion.value() instanceof Long) {
-					Long value = result.get(assertion.property(), Long.class);
-					if (value.longValue() == ((Long) assertion.value()).longValue()) {
+				} else if (assertion.getValue() instanceof Long) {
+					Long value = result.get(assertion.getProperty(), Long.class);
+					if (value.longValue() == ((Long) assertion.getValue()).longValue()) {
 						fails.add(new Fail(FailReason.ASSERTION,
-								assertion.property() + " is not equal to " + assertion.value()));
+								assertion.getProperty() + " is not equal to " + assertion.getValue()));
 					}
 				}
 				break;
 			}
 			}
 		});
-		return new Result(result.name(), result.start(), result.end(), result.success() && fails.isEmpty(),
-				result.stdout(), result.stderr(), result.results(), fails);
+		return new Result(result.getName(), result.getStart(), result.getEnd(), result.isSuccess() && fails.isEmpty(),
+				result.getStdout(), result.getStderr(), result.getResults(), fails);
 	}
 }

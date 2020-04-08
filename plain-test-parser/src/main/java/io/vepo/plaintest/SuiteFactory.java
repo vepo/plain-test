@@ -25,7 +25,8 @@ public class SuiteFactory {
 	}
 
 	public static Suite parseSuite(String contents) {
-		var parser = new TestSuiteParser(new CommonTokenStream(new TestSuiteLexer(CharStreams.fromString(contents))));
+		TestSuiteParser parser = new TestSuiteParser(
+				new CommonTokenStream(new TestSuiteLexer(CharStreams.fromString(contents))));
 		parser.addErrorListener(new ANTLRErrorListener() {
 
 			@Override

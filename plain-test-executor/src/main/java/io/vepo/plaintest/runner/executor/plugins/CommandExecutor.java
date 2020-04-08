@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 
@@ -45,21 +45,21 @@ public class CommandExecutor implements StepExecutor {
 			pb.directory(context.getWorkingDirectory().toFile());
 			pb.environment().putAll(System.getenv());
 			logger.info("Executing command: step={} context={}", step, context);
-			var p = pb.start();
-			var stdout = captureOutpu(p.getInputStream());
-			var stderr = captureOutpu(p.getErrorStream());
+			Process p = pb.start();
+			String stdout = captureOutpu(p.getInputStream());
+			String stderr = captureOutpu(p.getErrorStream());
 			p.waitFor();
 
-			var fails = new ArrayList<Fail>();
+			List<Fail> fails = new ArrayList<>();
 
 			if (p.exitValue() != 0) {
 				fails.add(new Fail(FailReason.FAILED, "Exit code: " + p.exitValue()));
 			}
-			return new Result(step.name(), start, currentTimeMillis(), fails.isEmpty(), stdout, stderr, emptyList(),
+			return new Result(step.getName(), start, currentTimeMillis(), fails.isEmpty(), stdout, stderr, emptyList(),
 					fails);
 		} catch (IOException e) {
 			logger.warn("Execution error!", e);
-			return new Result(step.name(), start, currentTimeMillis(), false, "", "", emptyList(),
+			return new Result(step.getName(), start, currentTimeMillis(), false, "", "", emptyList(),
 					asList(new Fail(FailReason.FAILED, e.getMessage())));
 		} catch (InterruptedException e) {
 			throw new RuntimeException("Execution Stopped!");
@@ -67,8 +67,8 @@ public class CommandExecutor implements StepExecutor {
 	}
 
 	private String captureOutpu(InputStream inputStream) throws IOException {
-		try (var reader = new BufferedReader(new InputStreamReader(inputStream));) {
-			var sj = new StringJoiner(System.getProperty("line.separator"));
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));) {
+			StringJoiner sj = new StringJoiner(System.getProperty("line.separator"));
 			reader.lines().iterator().forEachRemaining(sj::add);
 			return sj.toString();
 		}

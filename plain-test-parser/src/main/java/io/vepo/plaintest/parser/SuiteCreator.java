@@ -69,7 +69,7 @@ public class SuiteCreator implements TestSuiteListener {
 	@Override
 	public void enterSuite(SuiteContext ctx) {
 		logger.debug("Enter Suite: {}", ctx);
-		var previousTestSuite = this.currentSuite;
+		Suite previousTestSuite = this.currentSuite;
 		this.currentSuite = new Suite(
 				Optional.ofNullable(previousTestSuite).map(Suite::lastIndex).map(i -> i + 1).orElse(0),
 				ctx.IDENTIFIER().getText(), new ArrayList<>(), new ArrayList<>(), new HashMap<>());
@@ -144,11 +144,11 @@ public class SuiteCreator implements TestSuiteListener {
 		String[] lines = text.substring(3, text.length() - 3).split("\n");
 		if (lines.length > 0) {
 
-			if (lines[0].isBlank()) {
+			if (lines[0].trim().isEmpty()) {
 				lines = Arrays.copyOfRange(lines, 1, lines.length);
 			}
 
-			if (lines[lines.length - 1].isBlank()) {
+			if (lines[lines.length - 1].trim().isEmpty()) {
 				lines = Arrays.copyOfRange(lines, 0, lines.length - 1);
 			}
 
@@ -160,7 +160,7 @@ public class SuiteCreator implements TestSuiteListener {
 	private void removeTabs(String[] lines) {
 		Matcher tabMatcher = LINE_START_PATTERN.matcher(lines[0]);
 		if (tabMatcher.find()) {
-			var tabPattern = tabMatcher.group(1);
+			String tabPattern = tabMatcher.group(1);
 			range(0, lines.length).filter(index -> lines[index].startsWith(tabPattern))
 					.forEach(index -> lines[index] = lines[index].substring(tabPattern.length()));
 		}

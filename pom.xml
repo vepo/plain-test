@@ -128,12 +128,34 @@
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>3.8.1</version>
+					<executions>
+						<execution>
+							<id>default-compile</id>
+							<configuration>
+								<jdkToolchain>
+									<version>9</version>
+								</jdkToolchain>
+								<release>9</release>
+							</configuration>
+						</execution>
+						<execution>
+							<id>base-compile</id>
+							<goals>
+								<goal>compile</goal>
+							</goals>
+							<configuration>
+								<excludes>
+									<exclude>module-info.java</exclude>
+								</excludes>
+							</configuration>
+						</execution>
+					</executions>
 					<configuration>
-						<source>14</source>
-						<release>14</release>
-						<compilerArgs>
-							--enable-preview
-						</compilerArgs>
+						<jdkToolchain>
+							<version>[1.8,9)</version>
+						</jdkToolchain>
+						<source>1.8</source>
+						<target>1.8</target>
 					</configuration>
 				</plugin>
 			</plugins>

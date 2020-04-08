@@ -13,170 +13,158 @@ import java.util.Optional;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import io.vepo.plaintest.Suite;
 import io.vepo.plaintest.SuiteFactory;
 import io.vepo.plaintest.runner.utils.Os;
 import io.vepo.plaintest.runner.utils.Os.OS;
 
 public class BashCommandTest {
 
-	private static final String BASH_SUCCESS_TEST = Os.getOS() == OS.WINDOWS ? """
-			Suite BashTest {
-			    exec-dir: src
+	private static final String BASH_SUCCESS_TEST = Os.getOS() == OS.WINDOWS ? "Suite BashTest {\n" + //
+			"    exec-dir: src\n" + //
+			"\n" + //
+			"    CMD EnterDir {\n" + //
+			"        cmd    : \"dir\"\n" + //
+			"        timeout: 500\n" + //
+			"        assert stdout Contains \"src\"\n" + //
+			"    }\n" + //
+			"\n" + //
+			"    Suite MainTest {\n" + //
+			"        exec-dir: main\n" + //
+			"        CMD EnterSubFolder {\n" + //
+			"            cmd    : \"dir\"\n" + //
+			"            timeout: 500\n" + //
+			"            assert stdout Contains \"java\"\n" + //
+			"        }\n" + //
+			"    }\n" + //
+			"}" : "Suite BashTest {\n" + //
+					"    exec-dir: src\n" + //
+					"\n" + //
+					"    CMD EnterDir {\n" + //
+					"        cmd    : \"ls\"\n" + //
+					"        timeout: 500\n" + //
+					"        assert stdout Contains \"src\"\n" + //
+					"    }\n" + //
+					"\n" + //
+					"    Suite MainTest {\n" + //
+					"        exec-dir: main\n" + //
+					"        CMD EnterSubFolder {\n" + //
+					"            cmd    : \"ls\"\n" + //
+					"            timeout: 500\n" + //
+					"            assert stdout Contains \"java\"\n" + //
+					"        }\n" + //
+					"    }\n" + //
+					"}";
 
-			    CMD EnterDir {
-			        cmd    : "dir"
-			        timeout: 500
-			        assert stdout Contains "src"
-			    }
+	private static final String BASH_FAIL_TEST = "Suite BashTest {\n" + //
+			"\n" + //
+			"    CMD Error {\n" + //
+			"        cmd    : \"commandThatDoesNotExists\"\n" + //
+			"        timeout: 500\n" + //
+			"    }\n" + //
+			"}";
 
-			    Suite MainTest {
-			        exec-dir: main
-			        CMD EnterSubFolder {
-			            cmd    : "dir"
-			            timeout: 500
-			            assert stdout Contains "java"
-			        }
-			    }
-			}""" : """
-			Suite BashTest {
-			    exec-dir: src
+	private static final String BASH_FAIL_ASSERTION = Os.getOS() == OS.WINDOWS ? "Suite BashTest {\n" + //
+			"\n" + //
+			"CMD Error {\n" + //
+			"    cmd    : \"dir\"\n" + //
+			"    timeout: 500\n" + //
+			"    assert stdout Contains \"String That DOES NOT EXIST!\"\n" + //
+			"}\n" + //
+			"}" : "Suite BashTest {\n" + //
+					"\n" + //
+					"    CMD Error {\n" + //
+					"        cmd    : \"ls\"\n" + //
+					"        timeout: 500\n" + //
+					"        assert stdout Contains \"String That DOES NOT EXIST!\"\n" + //
+					"    }\n" + //
+					"}";
 
-			    CMD EnterDir {
-			        cmd    : "ls"
-			        timeout: 500
-			        assert stdout Contains "src"
-			    }
+	private static final String BASH_ASSERTION_STRING_SUCCESS_EQUALS = "Suite EchoTest {\n" + //
+			"\n" + //
+			"    CMD EchoSomeString {\n" + //
+			"        cmd    : \"echo some string\"\n" + //
+			"        timeout: 500\n" + //
+			"        assert stdout Equals \"some string\"\n" + //
+			"    }\n" + //
+			"}";
 
-			    Suite MainTest {
-			        exec-dir: main
-			        CMD EnterSubFolder {
-			            cmd    : "ls"
-			            timeout: 500
-			            assert stdout Contains "java"
-			        }
-			    }
-			}""";
+	private static final String BASH_ASSERTION_STRING_FAILED_EQUALS = "Suite EchoTest {\n" + //
+			"\n" + //
+			"    CMD EchoSomeString {\n" + //
+			"        cmd    : \"echo some string\"\n" + //
+			"        timeout: 500\n" + //
+			"        assert stdout Equals \"string\"\n" + //
+			"    }\n" + //
+			"}";
 
-	private static final String BASH_FAIL_TEST = """
-			Suite BashTest {
+	private static final String BASH_ASSERTION_STRING_SUCCESS_CONTAINS = "Suite EchoTest {\n" + //
+			"\n" + //
+			"    CMD EchoSomeString {\n" + //
+			"        cmd    : \"echo some string\"\n" + //
+			"        timeout: 500\n" + //
+			"        assert stdout Equals \"some string\"\n" + //
+			"    }\n" + //
+			"}";
 
-			    CMD Error {
-			        cmd    : "commandThatDoesNotExists"
-			        timeout: 500
-			    }
-			}""";
+	private static final String BASH_ASSERTION_STRING_FAILED_CONTAINS = "Suite EchoTest {\n" + //
+			"\n" + //
+			"    CMD EchoSomeString {\n" + //
+			"        cmd    : \"echo some string\"\n" + //
+			"        timeout: 500\n" + //
+			"        assert stdout Equals \"other string\"\n" + //
+			"    }\n" + //
+			"}";
 
-	private static final String BASH_FAIL_ASSERTION = Os.getOS() == OS.WINDOWS ? """
-				Suite BashTest {
-
-			    CMD Error {
-			        cmd    : "dir"
-			        timeout: 500
-			        assert stdout Contains "String That DOES NOT EXIST!"
-			    }
-			}""" : """
-			Suite BashTest {
-
-			    CMD Error {
-			        cmd    : "ls"
-			        timeout: 500
-			        assert stdout Contains "String That DOES NOT EXIST!"
-			    }
-			}""";
-
-	private static final String BASH_ASSERTION_STRING_SUCCESS_EQUALS = """
-			Suite EchoTest {
-
-			    CMD EchoSomeString {
-			        cmd    : "echo some string"
-			        timeout: 500
-			        assert stdout Equals "some string"
-			    }
-			}
-			""";
-
-	private static final String BASH_ASSERTION_STRING_FAILED_EQUALS = """
-			Suite EchoTest {
-
-			    CMD EchoSomeString {
-			        cmd    : "echo some string"
-			        timeout: 500
-			        assert stdout Equals "string"
-			    }
-			}
-			""";
-
-	private static final String BASH_ASSERTION_STRING_SUCCESS_CONTAINS = """
-			Suite EchoTest {
-
-			    CMD EchoSomeString {
-			        cmd    : "echo some string"
-			        timeout: 500
-			        assert stdout Equals "some string"
-			    }
-			}
-			""";
-
-	private static final String BASH_ASSERTION_STRING_FAILED_CONTAINS = """
-			Suite EchoTest {
-
-			    CMD EchoSomeString {
-			        cmd    : "echo some string"
-			        timeout: 500
-			        assert stdout Equals "other string"
-			    }
-			}
-			""";
-
-	private static final String BASH_ASSERTION_MISSING_ATTRIBUTE = """
-			Suite EchoTest {
-
-			    CMD EchoSomeString {
-			        timeout: 500
-			        assert stdout Equals "other string"
-			    }
-			}
-			""";
+	private static final String BASH_ASSERTION_MISSING_ATTRIBUTE = "Suite EchoTest {\n" + //
+			"\n" + //
+			"    CMD EchoSomeString {\n" + //
+			"        timeout: 500\n" + //
+			"        assert stdout Equals \"other string\"\n" + //
+			"    }\n" + //
+			"}";
 
 	@Test
 	public void listCommandTest() {
-		var suite = SuiteFactory.parseSuite(BASH_SUCCESS_TEST);
-		var executor = new PlainTestExecutor();
-		assertThat(executor.execute(suite)).satisfies(result -> assertTrue(result.success()))
+		Suite suite = SuiteFactory.parseSuite(BASH_SUCCESS_TEST);
+		PlainTestExecutor executor = new PlainTestExecutor();
+		assertThat(executor.execute(suite)).satisfies(result -> assertTrue(result.isSuccess()))
 				.satisfies(result -> assertThat(find(result, "EnterDir")).isPresent().get()
-						.satisfies(r -> assertTrue(r.success())))
+						.satisfies(r -> assertTrue(r.isSuccess())))
 				.satisfies(result -> assertThat(find(result, "MainTest")).isPresent().get()
-						.satisfies(r -> assertTrue(r.success())));
+						.satisfies(r -> assertTrue(r.isSuccess())));
 	}
 
 	@Test
 	public void failCommandTest() {
-		var suite = SuiteFactory.parseSuite(BASH_FAIL_TEST);
-		var executor = new PlainTestExecutor();
-		assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.success())).satisfies(
-				result -> assertThat(find(result, "Error")).isPresent().get().satisfies(r -> assertFalse(r.success())));
+		Suite suite = SuiteFactory.parseSuite(BASH_FAIL_TEST);
+		PlainTestExecutor executor = new PlainTestExecutor();
+		assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.isSuccess()))
+				.satisfies(result -> assertThat(find(result, "Error")).isPresent().get()
+						.satisfies(r -> assertFalse(r.isSuccess())));
 	}
 
 	@Test
 	public void failAssertionCommandTest() {
-		var suite = SuiteFactory.parseSuite(BASH_FAIL_ASSERTION);
-		var executor = new PlainTestExecutor();
-		assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.success())).satisfies(
-				result -> assertThat(find(result, "Error")).isPresent().get().satisfies(r -> assertFalse(r.success())));
+		Suite suite = SuiteFactory.parseSuite(BASH_FAIL_ASSERTION);
+		PlainTestExecutor executor = new PlainTestExecutor();
+		assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.isSuccess()))
+				.satisfies(result -> assertThat(find(result, "Error")).isPresent().get()
+						.satisfies(r -> assertFalse(r.isSuccess())));
 	}
 
 	@Nested
 	public class MissingAttributeTest {
 		@Test
 		public void stringSuccessTest() {
-			var suite = SuiteFactory.parseSuite(BASH_ASSERTION_MISSING_ATTRIBUTE);
-			var executor = new PlainTestExecutor();
-			assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.success()))
+			Suite suite = SuiteFactory.parseSuite(BASH_ASSERTION_MISSING_ATTRIBUTE);
+			PlainTestExecutor executor = new PlainTestExecutor();
+			assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.isSuccess()))
 					.satisfies(result -> assertThat(find(result, "EchoSomeString")).isPresent().get()
-							.satisfies(r -> assertFalse(r.success()))
+							.satisfies(r -> assertFalse(r.isSuccess()))
 							.satisfies(r -> assertEquals(
 									asList(new Fail(FailReason.MISSING_ATTRIBUTES, "Missing attributes: [cmd]")),
-									r.fails())));
+									r.getFails())));
 		}
 	}
 
@@ -185,20 +173,20 @@ public class BashCommandTest {
 
 		@Test
 		public void stringSuccessTest() {
-			var suite = SuiteFactory.parseSuite(BASH_ASSERTION_STRING_SUCCESS_CONTAINS);
-			var executor = new PlainTestExecutor();
-			assertThat(executor.execute(suite)).satisfies(result -> assertTrue(result.success()))
+			Suite suite = SuiteFactory.parseSuite(BASH_ASSERTION_STRING_SUCCESS_CONTAINS);
+			PlainTestExecutor executor = new PlainTestExecutor();
+			assertThat(executor.execute(suite)).satisfies(result -> assertTrue(result.isSuccess()))
 					.satisfies(result -> assertThat(find(result, "EchoSomeString")).isPresent().get()
-							.satisfies(r -> assertTrue(r.success())));
+							.satisfies(r -> assertTrue(r.isSuccess())));
 		}
 
 		@Test
 		public void stringFailedTest() {
-			var suite = SuiteFactory.parseSuite(BASH_ASSERTION_STRING_FAILED_CONTAINS);
-			var executor = new PlainTestExecutor();
-			assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.success()))
+			Suite suite = SuiteFactory.parseSuite(BASH_ASSERTION_STRING_FAILED_CONTAINS);
+			PlainTestExecutor executor = new PlainTestExecutor();
+			assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.isSuccess()))
 					.satisfies(result -> assertThat(find(result, "EchoSomeString")).isPresent().get()
-							.satisfies(r -> assertFalse(r.success())));
+							.satisfies(r -> assertFalse(r.isSuccess())));
 		}
 	}
 
@@ -207,30 +195,30 @@ public class BashCommandTest {
 
 		@Test
 		public void stringSuccessTest() {
-			var suite = SuiteFactory.parseSuite(BASH_ASSERTION_STRING_SUCCESS_EQUALS);
-			var executor = new PlainTestExecutor();
-			assertThat(executor.execute(suite)).satisfies(result -> assertTrue(result.success()))
+			Suite suite = SuiteFactory.parseSuite(BASH_ASSERTION_STRING_SUCCESS_EQUALS);
+			PlainTestExecutor executor = new PlainTestExecutor();
+			assertThat(executor.execute(suite)).satisfies(result -> assertTrue(result.isSuccess()))
 					.satisfies(result -> assertThat(find(result, "EchoSomeString")).isPresent().get()
-							.satisfies(r -> assertTrue(r.success())));
+							.satisfies(r -> assertTrue(r.isSuccess())));
 		}
 
 		@Test
 		public void stringFailedTest() {
-			var suite = SuiteFactory.parseSuite(BASH_ASSERTION_STRING_FAILED_EQUALS);
-			var executor = new PlainTestExecutor();
-			assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.success()))
+			Suite suite = SuiteFactory.parseSuite(BASH_ASSERTION_STRING_FAILED_EQUALS);
+			PlainTestExecutor executor = new PlainTestExecutor();
+			assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.isSuccess()))
 					.satisfies(result -> assertThat(find(result, "EchoSomeString")).isPresent().get()
-							.satisfies(r -> assertFalse(r.success())));
+							.satisfies(r -> assertFalse(r.isSuccess())));
 		}
 	}
 
 	private Optional<Result> find(Result result, String name) {
 		if (isNull(result)) {
 			return Optional.empty();
-		} else if (result.name().equals(name)) {
+		} else if (result.getName().equals(name)) {
 			return Optional.of(result);
 		} else {
-			return result.results().stream().map(r -> find((Result) r, name).orElse(null)).filter(Objects::nonNull)
+			return result.getResults().stream().map(r -> find((Result) r, name).orElse(null)).filter(Objects::nonNull)
 					.findFirst();
 		}
 	}
