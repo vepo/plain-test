@@ -22,6 +22,7 @@
 		<module>plain-test-parser</module>
 		<module>plain-test-executor</module>
 		<module>plain-test-runner</module>
+		<module>report</module>
 	</modules>
 
 	<dependencyManagement>
@@ -82,6 +83,28 @@
 		</dependency>
 	</dependencies>
 
+	<profiles>
+		<profile>
+			<id>sonar</id>
+			<properties>
+				<sonar.host.url>https://sonarcloud.io</sonar.host.url>
+				<sonar.organization>vepo-github</sonar.organization>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+					</plugin>
+					<plugin>
+						<groupId>org.sonarsource.scanner.maven</groupId>
+						<artifactId>sonar-maven-plugin</artifactId>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 	<build>
 		<pluginManagement>
 			<plugins>
@@ -90,11 +113,7 @@
 					<artifactId>maven-surefire-plugin</artifactId>
 					<version>3.0.0-M4</version>
 					<configuration>
-						<argLine>--enable-preview --add-opens
-							java.base/java.lang=ALL-UNNAMED --add-opens
-							java.base/java.util=ALL-UNNAMED --add-opens
-							java.base/java.io=ALL-UNNAMED --add-opens
-							java.base/java.math=ALL-UNNAMED</argLine>
+						<argLine><![CDATA[@{argLine} --enable-preview --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED]]></argLine>
 					</configuration>
 				</plugin>
 				<plugin>
@@ -102,11 +121,7 @@
 					<artifactId>maven-failsafe-plugin</artifactId>
 					<version>3.0.0-M4</version>
 					<configuration>
-						<argLine>--enable-preview --add-opens
-							java.base/java.lang=ALL-UNNAMED --add-opens
-							java.base/java.util=ALL-UNNAMED --add-opens
-							java.base/java.io=ALL-UNNAMED --add-opens
-							java.base/java.math=ALL-UNNAMED</argLine>
+						<argLine><![CDATA[@{argLine} --enable-preview --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED]]></argLine>
 					</configuration>
 				</plugin>
 				<plugin>
@@ -121,30 +136,28 @@
 						</compilerArgs>
 					</configuration>
 				</plugin>
-				<plugin>
-					<groupId>org.jacoco</groupId>
-					<artifactId>jacoco-maven-plugin</artifactId>
-					<version>0.8.5</version>
-					<executions>
-						<execution>
-							<id>jacoco-initialize</id>
-							<goals>
-								<goal>prepare-agent</goal>
-							</goals>
-						</execution>
-						<execution>
-							<id>jacoco-site</id>
-							<phase>verify</phase>
-							<goals>
-								<goal>report</goal>
-							</goals>
-						</execution>
-					</executions>
-					<configuration>
-						<outputDirectory>${basedir}</outputDirectory>
-					</configuration>
-				</plugin>
 			</plugins>
 		</pluginManagement>
+		<plugins>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.5</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report-aggregate</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report-aggregate</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
 	</build>
 </project>

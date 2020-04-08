@@ -64,7 +64,7 @@ public class PlainTestExecutor {
 			}
 		});
 		return new Result(suite.name(), start, currentTimeMillis(), results.stream().allMatch(Result::success), "", "",
-				results, emptyList());
+				results, asList());
 	}
 
 	private Result executeStep(Step step, Context context) {
@@ -90,7 +90,7 @@ public class PlainTestExecutor {
 	@SuppressWarnings("unchecked")
 	private Result checkAssertions(Step step, Result result) {
 		List<Assertion<?>> assertions = step.assertions();
-		var fails = result.fails();
+		var fails =result.fails();
 		assertions.forEach(assertion -> {
 			switch (assertion.verb()) {
 			case "Contains": {

@@ -1,6 +1,7 @@
 package io.vepo.plaintest.runner.executor.plugins;
 
 import static java.lang.System.currentTimeMillis;
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Map.entry;
 import static java.util.Map.ofEntries;
@@ -38,12 +39,9 @@ public class CommandExecutor implements StepExecutor {
 	public Result execute(Step step, Context context) {
 		long start = currentTimeMillis();
 		try {
-			ProcessBuilder pb;
-			if (Os.getOS() == OS.WINDOWS) {
-				pb = new ProcessBuilder("cmd.exe", "/c", step.attribute("cmd"));
-			} else {
-				pb = new ProcessBuilder(step.attribute("cmd"));
-			}
+			String[] cmd = Os.getOS() == OS.WINDOWS ? new String[] { "cmd.exe", "/c", step.attribute("cmd") }
+					: new String[] { step.attribute("cmd") };
+			ProcessBuilder pb = new ProcessBuilder(cmd);
 			pb.directory(context.getWorkingDirectory().toFile());
 			pb.environment().putAll(System.getenv());
 			logger.info("Executing command: step={} context={}", step, context);
@@ -62,7 +60,7 @@ public class CommandExecutor implements StepExecutor {
 		} catch (IOException e) {
 			logger.warn("Execution error!", e);
 			return new Result(step.name(), start, currentTimeMillis(), false, "", "", emptyList(),
-					Arrays.asList(new Fail(FailReason.FAILED, e.getMessage())));
+					asList(new Fail(FailReason.FAILED, e.getMessage())));
 		} catch (InterruptedException e) {
 			throw new RuntimeException("Execution Stopped!");
 		}
