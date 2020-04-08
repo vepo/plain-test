@@ -157,6 +157,9 @@
 						</goals>
 					</execution>
 				</executions>
+				<configuration>
+					<excludes>**/*io/vepo/plaintest/parser/antlr4/generated/**</excludes>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

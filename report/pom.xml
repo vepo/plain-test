@@ -20,10 +20,14 @@
 			<artifactId>plain-test-parser</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>io.vepo</groupId>
 			<artifactId>plain-test-executor</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.vepo</groupId>
+			<artifactId>plain-test-runner</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 	</dependencies>
