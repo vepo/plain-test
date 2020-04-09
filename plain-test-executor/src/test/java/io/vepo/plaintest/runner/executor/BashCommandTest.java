@@ -1,14 +1,10 @@
 package io.vepo.plaintest.runner.executor;
 
 import static java.util.Arrays.asList;
-import static java.util.Objects.isNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.Objects;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,7 +14,7 @@ import io.vepo.plaintest.SuiteFactory;
 import io.vepo.plaintest.runner.utils.Os;
 import io.vepo.plaintest.runner.utils.Os.OS;
 
-public class BashCommandTest {
+public class BashCommandTest extends AbstractTest {
 
 	private static final String BASH_SUCCESS_TEST = Os.getOS() == OS.WINDOWS ? "Suite BashTest {\n" + //
 			"    exec-dir: src\n" + //
@@ -209,17 +205,6 @@ public class BashCommandTest {
 			assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.isSuccess()))
 					.satisfies(result -> assertThat(find(result, "EchoSomeString")).isPresent().get()
 							.satisfies(r -> assertFalse(r.isSuccess())));
-		}
-	}
-
-	private Optional<Result> find(Result result, String name) {
-		if (isNull(result)) {
-			return Optional.empty();
-		} else if (result.getName().equals(name)) {
-			return Optional.of(result);
-		} else {
-			return result.getResults().stream().map(r -> find((Result) r, name).orElse(null)).filter(Objects::nonNull)
-					.findFirst();
 		}
 	}
 }
