@@ -17,13 +17,14 @@ import io.vepo.plaintest.runner.utils.Os.OS;
 
 public class BashCommandTest extends AbstractTest {
 
-	private static final String BASH_SUCCESS_TEST = Os.getOS() == OS.WINDOWS ? "Suite BashTest {\n" + //
+	private static final String BASH_SUCCESS_TEST = Os.getOS() == OS.WINDOWS ? 
+			"Suite BashTest {\n" + //
 			"    exec-dir: src\n" + //
 			"\n" + //
 			"    CMD EnterDir {\n" + //
 			"        cmd    : \"dir\"\n" + //
 			"        timeout: 500\n" + //
-			"        assert stdout Contains \"src\"\n" + //
+			"        assert stdout Contains \"main\"\n" + //
 			"    }\n" + //
 			"\n" + //
 			"    Suite MainTest {\n" + //
@@ -40,7 +41,7 @@ public class BashCommandTest extends AbstractTest {
 					"    CMD EnterDir {\n" + //
 					"        cmd    : \"ls\"\n" + //
 					"        timeout: 500\n" + //
-					"        assert stdout Contains \"src\"\n" + //
+					"        assert stdout Contains \"main\"\n" + //
 					"    }\n" + //
 					"\n" + //
 					"    Suite MainTest {\n" + //
