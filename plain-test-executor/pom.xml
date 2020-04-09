@@ -19,5 +19,11 @@
 			<artifactId>plain-test-parser</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.mock-server</groupId>
+			<artifactId>mockserver-netty</artifactId>
+			<version>3.10.8</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 </project>
