@@ -3,14 +3,13 @@ package io.vepo.plaintest.runner.executor.plugins;
 import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
-import static java.util.Map.entry;
-import static java.util.Map.ofEntries;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -74,9 +73,15 @@ public class CommandExecutor implements StepExecutor {
 		}
 	}
 
+	@SuppressWarnings("serial")
 	@Override
 	public Map<String, Class<?>> requiredAttribute() {
-		return ofEntries(entry("cmd", String.class), entry("timeout", Long.class));
+		return new HashMap<String, Class<?>>() {
+			{
+				put("cmd", String.class);
+				put("timeout", Long.class);
+			}
+		};
 	}
 
 }

@@ -16,6 +16,8 @@
 		<maven.compiler.parameters>true</maven.compiler.parameters>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
 
 	<modules>
@@ -119,43 +121,14 @@
 					<artifactId>maven-failsafe-plugin</artifactId>
 					<version>3.0.0-M4</version>
 				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-compiler-plugin</artifactId>
-					<version>3.8.1</version>
-					<executions>
-						<execution>
-							<id>default-compile</id>
-							<configuration>
-								<jdkToolchain>
-									<version>9</version>
-								</jdkToolchain>
-								<release>9</release>
-							</configuration>
-						</execution>
-						<execution>
-							<id>base-compile</id>
-							<goals>
-								<goal>compile</goal>
-							</goals>
-							<configuration>
-								<excludes>
-									<exclude>module-info.java</exclude>
-								</excludes>
-							</configuration>
-						</execution>
-					</executions>
-					<configuration>
-						<jdkToolchain>
-							<version>[1.8,9)</version>
-						</jdkToolchain>
-						<source>1.8</source>
-						<target>1.8</target>
-					</configuration>
-				</plugin>
 			</plugins>
 		</pluginManagement>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.8.1</version>
+			</plugin>
 			<plugin>
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>

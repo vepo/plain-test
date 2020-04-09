@@ -2,15 +2,36 @@ package io.vepo.plaintest;
 
 import static io.vepo.plaintest.SuiteFactory.parseSuite;
 import static java.util.Arrays.asList;
-import static java.util.Map.entry;
-import static java.util.Map.ofEntries;
+import static java.util.stream.Collectors.toMap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.Map;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 public class SuiteParserTest {
+	private static class Tuple<K, V> {
+		private K key;
+		private V value;
+
+		Tuple(K key, V value) {
+			this.key = key;
+			this.value = value;
+		}
+
+	}
+
+	private static <K, V> Tuple<K, V> entry(K key, V value) {
+		return new Tuple<K, V>(key, value);
+	}
+
+	private static <K, V> Map<K, V> ofEntries(Tuple<K, V>... tuples) {
+		return Stream.of(tuples).collect(toMap(entry -> entry.key, entry -> entry.value));
+	}
+
 	@Nested
 	public class ExecutionDirectoryTest {
 		@Test
