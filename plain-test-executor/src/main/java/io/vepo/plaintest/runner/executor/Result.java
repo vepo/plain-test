@@ -7,6 +7,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 public class Result {
 
 	public static class ResultBuilder {
@@ -115,7 +119,7 @@ public class Result {
 	}
 
 	public String getName() {
-		return name;
+		return this.name;
 	}
 
 	public void setName(String name) {
@@ -123,7 +127,7 @@ public class Result {
 	}
 
 	public long getStart() {
-		return start;
+		return this.start;
 	}
 
 	public void setStart(long start) {
@@ -131,7 +135,7 @@ public class Result {
 	}
 
 	public long getEnd() {
-		return end;
+		return this.end;
 	}
 
 	public void setEnd(long end) {
@@ -139,7 +143,7 @@ public class Result {
 	}
 
 	public boolean isSuccess() {
-		return success;
+		return this.success;
 	}
 
 	public void setSuccess(boolean success) {
@@ -147,7 +151,7 @@ public class Result {
 	}
 
 	public Map<String, Object> getProperties() {
-		return properties;
+		return this.properties;
 	}
 
 	public void setProperties(Map<String, Object> properties) {
@@ -155,7 +159,7 @@ public class Result {
 	}
 
 	public List<Result> getResults() {
-		return results;
+		return this.results;
 	}
 
 	public void setResults(List<Result> results) {
@@ -163,7 +167,7 @@ public class Result {
 	}
 
 	public List<Fail> getFails() {
-		return fails;
+		return this.fails;
 	}
 
 	public void setFails(List<Fail> fails) {
@@ -186,60 +190,33 @@ public class Result {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (int) (end ^ (end >>> 32));
-		result = prime * result + ((fails == null) ? 0 : fails.hashCode());
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + ((results == null) ? 0 : results.hashCode());
-		result = prime * result + (int) (start ^ (start >>> 32));
-		result = prime * result + ((properties == null) ? 0 : properties.hashCode());
-		result = prime * result + (success ? 1231 : 1237);
-		return result;
+		return new HashCodeBuilder().append(this.name).append(this.start).append(this.end).append(this.success)
+				.append(this.properties).append(this.results).append(this.fails).hashCode();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (this.getClass() != obj.getClass()) {
 			return false;
+		}
 		Result other = (Result) obj;
-		if (end != other.end)
-			return false;
-		if (fails == null) {
-			if (other.fails != null)
-				return false;
-		} else if (!fails.equals(other.fails))
-			return false;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		if (results == null) {
-			if (other.results != null)
-				return false;
-		} else if (!results.equals(other.results))
-			return false;
-		if (start != other.start)
-			return false;
-		if (properties == null) {
-			if (other.properties != null)
-				return false;
-		} else if (!properties.equals(other.properties))
-			return false;
-		if (success != other.success)
-			return false;
-		return true;
+		return new EqualsBuilder().append(this.name, other.name).append(this.start, other.start)
+				.append(this.end, other.end).append(this.success, other.success)
+				.append(this.properties, other.properties).append(this.results, other.results)
+				.append(this.fails, other.fails).isEquals();
 	}
 
 	@Override
 	public String toString() {
-		return "Result [name=" + name + ", start=" + start + ", end=" + end + ", success=" + success + ", properties="
-				+ properties + ", results=" + results + ", fails=" + fails + "]";
+		return new ToStringBuilder(this).append("name", this.name).append("start", this.start).append("end", this.end)
+				.append("success", this.success).append("properties", this.properties).append("results", this.results)
+				.append("fails", this.fails).toString();
 	}
 
 }
