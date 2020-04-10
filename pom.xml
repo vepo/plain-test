@@ -24,7 +24,6 @@
 		<module>plain-test-parser</module>
 		<module>plain-test-executor</module>
 		<module>plain-test-runner</module>
-		<module>report</module>
 	</modules>
 
 	<dependencyManagement>
@@ -103,6 +102,14 @@
 					<groupId>org.sonarsource.scanner.maven</groupId>
 					<artifactId>sonar-maven-plugin</artifactId>
 					<version>3.7.0.1746</version>
+					<executions>
+						<execution>
+							<phase>verify</phase>
+							<goals>
+								<goal>sonar</goal>
+							</goals>
+						</execution>
+					</executions>
 				</plugin>
 			</plugins>
 		</pluginManagement>
@@ -116,23 +123,31 @@
 				<groupId>org.jacoco</groupId>
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>0.8.5</version>
+				<configuration>
+					<append>true</append>
+					<excludes>**/*io/vepo/plaintest/parser/antlr4/generated/**</excludes>
+				</configuration>
 				<executions>
 					<execution>
+						<id>prepare-agent</id>
 						<goals>
 							<goal>prepare-agent</goal>
 						</goals>
 					</execution>
 					<execution>
-						<id>report-aggregate</id>
+						<id>prepare-agent-integration</id>
+						<goals>
+							<goal>prepare-agent-integration</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>jacoco-site</id>
 						<phase>verify</phase>
 						<goals>
-							<goal>report-aggregate</goal>
+							<goal>report</goal>
 						</goals>
 					</execution>
 				</executions>
-				<configuration>
-					<excludes>**/*io/vepo/plaintest/parser/antlr4/generated/**</excludes>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>
