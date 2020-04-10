@@ -10,7 +10,7 @@ jobs:
       - name: Run Maven
         uses: xlui/action-maven-cli/jdk11@master
         with:
-          args: clean verify
+          args: clean verify -Dsonar.login=$SONAR_TOKEN
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
