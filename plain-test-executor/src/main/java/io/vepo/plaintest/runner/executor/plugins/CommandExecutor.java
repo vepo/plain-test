@@ -38,13 +38,13 @@ public class CommandExecutor implements StepExecutor {
 		long start = currentTimeMillis();
 		try {
 			String[] cmd = Os.getOS() == OS.WINDOWS ? new String[] { "cmd.exe", "/c", step.attribute("cmd") }
-					: new String[] { step.attribute("cmd") };
+					: new String[] { "/bin/sh", "-c", step.attribute("cmd") };
 			ProcessBuilder pb = new ProcessBuilder(cmd);
 			pb.directory(context.getWorkingDirectory().toFile());
 			logger.info("Executing command: step={} context={}", step, context);
 			Process p = pb.start();
-			String stdout = captureOutput(p.getInputStream());
-			String stderr = captureOutput(p.getErrorStream());
+			String stdout = this.captureOutput(p.getInputStream());
+			String stderr = this.captureOutput(p.getErrorStream());
 			int exitValue = p.waitFor();
 
 			List<Fail> fails = new ArrayList<>();
