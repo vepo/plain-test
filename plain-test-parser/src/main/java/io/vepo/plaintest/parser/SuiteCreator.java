@@ -48,27 +48,27 @@ public class SuiteCreator implements TestSuiteListener {
 
 	@Override
 	public void visitTerminal(TerminalNode node) {
-		logger.debug("Visit Terminal: {}", node);
+		logger.trace("Visit Terminal: {}", node);
 	}
 
 	@Override
 	public void visitErrorNode(ErrorNode node) {
-		logger.debug("Visit Error Node: {}", node);
+		logger.trace("Visit Error Node: {}", node);
 	}
 
 	@Override
 	public void enterEveryRule(ParserRuleContext ctx) {
-		logger.debug("Enter Every Rule: {}", ctx);
+		logger.trace("Enter Every Rule: {}", ctx);
 	}
 
 	@Override
 	public void exitEveryRule(ParserRuleContext ctx) {
-		logger.debug("Exit Every Rule: {}", ctx);
+		logger.trace("Exit Every Rule: {}", ctx);
 	}
 
 	@Override
 	public void enterSuite(SuiteContext ctx) {
-		logger.debug("Enter Suite: {}", ctx);
+		logger.trace("Enter Suite: {}", ctx);
 		Suite previousTestSuite = this.currentSuite;
 		this.currentSuite = new Suite(
 				Optional.ofNullable(previousTestSuite).map(Suite::lastIndex).map(i -> i + 1).orElse(0),
@@ -87,7 +87,7 @@ public class SuiteCreator implements TestSuiteListener {
 
 	@Override
 	public void exitSuite(SuiteContext ctx) {
-		logger.debug("Exit Suite: {}", ctx);
+		logger.trace("Exit Suite: {}", ctx);
 
 		this.suites.pollLast();
 		this.currentSuite = this.suites.peekLast();
@@ -99,7 +99,7 @@ public class SuiteCreator implements TestSuiteListener {
 
 	@Override
 	public void enterStep(StepContext ctx) {
-		logger.debug("Enter Step: {}", ctx);
+		logger.trace("Enter Step: {}", ctx);
 		int lastIndex = this.currentSuite.lastIndex();
 		if (ctx.IDENTIFIER().size() == 2) {
 			this.currentStep = new Step(lastIndex + 1, ctx.IDENTIFIER(0).getText(), ctx.IDENTIFIER(1).getText(),
@@ -112,17 +112,17 @@ public class SuiteCreator implements TestSuiteListener {
 
 	@Override
 	public void exitStep(StepContext ctx) {
-		logger.debug("Exit Step: {}", ctx);
+		logger.trace("Exit Step: {}", ctx);
 	}
 
 	@Override
 	public void enterAttribute(AttributeContext ctx) {
-		logger.debug("Enter Attribute: {}", ctx);
+		logger.trace("Enter Attribute: {}", ctx);
 	}
 
 	@Override
 	public void exitAttribute(AttributeContext ctx) {
-		logger.debug("Exit Attribute: {}", ctx);
+		logger.trace("Exit Attribute: {}", ctx);
 
 		if (nonNull(ctx.value().STRING())) {
 			this.currentStep.addStringAttribute(ctx.IDENTIFIER().getText(), processString(ctx.value().getText()));
@@ -168,22 +168,22 @@ public class SuiteCreator implements TestSuiteListener {
 
 	@Override
 	public void enterValue(ValueContext ctx) {
-		logger.debug("Enter Value: {}", ctx);
+		logger.trace("Enter Value: {}", ctx);
 	}
 
 	@Override
 	public void exitValue(ValueContext ctx) {
-		logger.debug("Exit Value: {}", ctx);
+		logger.trace("Exit Value: {}", ctx);
 	}
 
 	@Override
 	public void enterAssertion(AssertionContext ctx) {
-		logger.debug("Enter Assertion: {}", ctx);
+		logger.trace("Enter Assertion: {}", ctx);
 	}
 
 	@Override
 	public void exitAssertion(AssertionContext ctx) {
-		logger.debug("Enter Assertion: {}", ctx);
+		logger.trace("Enter Assertion: {}", ctx);
 
 		if (nonNull(ctx.value().STRING())) {
 			this.currentStep.addAssertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
@@ -201,11 +201,12 @@ public class SuiteCreator implements TestSuiteListener {
 
 	@Override
 	public void enterExecDirectory(ExecDirectoryContext ctx) {
-		logger.debug("Enter ExecDirectory: {}", ctx);
+		logger.trace("Enter ExecDirectory: {}", ctx);
 	}
 
 	@Override
 	public void exitExecDirectory(ExecDirectoryContext ctx) {
+		logger.trace("Exit ExecDirectory: {}", ctx);
 		if (nonNull(ctx.FILE_PATH())) {
 			this.currentSuite.setExecDirectory(ctx.FILE_PATH().toString());
 		} else if (nonNull(ctx.IDENTIFIER())) {

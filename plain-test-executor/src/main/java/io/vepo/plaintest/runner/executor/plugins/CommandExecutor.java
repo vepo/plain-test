@@ -2,8 +2,6 @@ package io.vepo.plaintest.runner.executor.plugins;
 
 import static java.lang.System.currentTimeMillis;
 import static java.lang.Thread.currentThread;
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -45,21 +43,22 @@ public class CommandExecutor implements StepExecutor {
 			pb.directory(context.getWorkingDirectory().toFile());
 			logger.info("Executing command: step={} context={}", step, context);
 			Process p = pb.start();
-			String stdout = captureOutpu(p.getInputStream());
-			String stderr = captureOutpu(p.getErrorStream());
-			p.waitFor();
+			String stdout = captureOutput(p.getInputStream());
+			String stderr = captureOutput(p.getErrorStream());
+			int exitValue = p.waitFor();
 
 			List<Fail> fails = new ArrayList<>();
 
-			if (p.exitValue() != 0) {
-				fails.add(new Fail(FailReason.FAILED, "Exit code: " + p.exitValue()));
+			if (exitValue != 0) {
+				fails.add(new Fail(FailReason.FAILED, "Exit code: " + exitValue));
 			}
-			return new Result(step.getName(), start, currentTimeMillis(), fails.isEmpty(), stdout, stderr, emptyList(),
-					fails);
+			return Result.builder().name(step.getName()).start(start).end(currentTimeMillis()).success(fails.isEmpty())
+					.property("exitValue", exitValue).property("stdout", stdout).property("stder", stderr).fails(fails)
+					.build();
 		} catch (IOException e) {
 			logger.warn("Execution error!", e);
-			return new Result(step.getName(), start, currentTimeMillis(), false, "", "", emptyList(),
-					asList(new Fail(FailReason.FAILED, e.getMessage())));
+			return Result.builder().name(step.getName()).start(start).end(currentTimeMillis()).success(false)
+					.fail(new Fail(FailReason.FAILED, e.getMessage())).build();
 		} catch (InterruptedException e) {
 			logger.warn("Interrupted!", e);
 			// Restore interrupted state...
@@ -68,7 +67,7 @@ public class CommandExecutor implements StepExecutor {
 		}
 	}
 
-	private String captureOutpu(InputStream inputStream) throws IOException {
+	private String captureOutput(InputStream inputStream) throws IOException {
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));) {
 			StringJoiner sj = new StringJoiner(System.getProperty("line.separator"));
 			reader.lines().iterator().forEachRemaining(sj::add);

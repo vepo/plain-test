@@ -2,8 +2,6 @@ package io.vepo.plaintest.runner.executor;
 
 import static io.vepo.plaintest.SuiteAttributes.EXECUTION_PATH;
 import static java.lang.System.currentTimeMillis;
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.IntStream.rangeClosed;
@@ -19,9 +17,9 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vepo.plaintest.Assertion;
 import io.vepo.plaintest.Step;
 import io.vepo.plaintest.Suite;
+import io.vepo.plaintest.runner.executor.Result.ResultBuilder;
 import io.vepo.plaintest.runner.executor.context.Context;
 import io.vepo.plaintest.runner.executor.context.InnerSuiteContext;
 import io.vepo.plaintest.runner.executor.context.RootSuiteContext;
@@ -63,8 +61,8 @@ public class PlainTestExecutor {
 				context.addResult(suiteResult);
 			}
 		});
-		return new Result(suite.getName(), start, currentTimeMillis(), results.stream().allMatch(Result::isSuccess), "",
-				"", results, asList());
+		return Result.builder().name(suite.getName()).start(start).end(currentTimeMillis()).results(results)
+				.success(results.stream().allMatch(Result::isSuccess)).build();
 	}
 
 	private Result executeStep(Step step, Context context) {
@@ -73,32 +71,33 @@ public class PlainTestExecutor {
 			Set<Attribute<?>> missingAttributes = executor.requiredAttribute()
 					.filter(entry -> !step.getAttributes().containsKey(entry.key())).collect(toSet());
 			if (!missingAttributes.isEmpty()) {
-				return new Result(step.getName(), currentTimeMillis(), currentTimeMillis(), false, "", "", emptyList(),
-						asList(new Fail(FailReason.MISSING_ATTRIBUTES, "Missing attributes: ["
-								+ missingAttributes.stream().map(Attribute::key).collect(joining(", ")) + "]")));
+				return Result.builder().name(step.getName()).success(false)
+						.fail(new Fail(FailReason.MISSING_ATTRIBUTES,
+								"Missing attributes: ["
+										+ missingAttributes.stream().map(Attribute::key).collect(joining(", ")) + "]"))
+						.build();
 			} else {
 				return checkAssertions(step, executor.execute(step, context));
 			}
 		} else {
-			return new Result(step.getName(), currentTimeMillis(), currentTimeMillis(), false, "", "", emptyList(),
-					asList(new Fail(FailReason.PLUGIN_NOT_FOUND, "Could not find plugin: " + step.getPlugin())));
+			return Result.builder().name(step.getName()).success(false)
+					.fail(new Fail(FailReason.PLUGIN_NOT_FOUND, "Could not find plugin: " + step.getPlugin())).build();
 		}
 	}
 
 	private Result checkAssertions(Step step, Result result) {
-		List<Assertion<?>> assertions = step.getAssertions();
-		List<Fail> fails = result.getFails();
-		assertions.forEach(assertion -> {
+		ResultBuilder builder = Result.builder(result);
+		step.getAssertions().forEach(assertion -> {
 			switch (assertion.getVerb()) {
 			case "Contains": {
 				if (assertion.getValue() instanceof String) {
 					String value = result.get(assertion.getProperty(), String.class);
 					if (!value.contains((String) assertion.getValue())) {
-						fails.add(new Fail(FailReason.ASSERTION,
+						builder.success(false).fail(new Fail(FailReason.ASSERTION,
 								assertion.getProperty() + " does not contains " + assertion.getValue()));
 					}
 				} else {
-					fails.add(new Fail(FailReason.RUNTIME_EXCEPTION, assertion.getProperty()
+					builder.success(false).fail(new Fail(FailReason.RUNTIME_EXCEPTION, assertion.getProperty()
 							+ " cannot check contains for numbers. value:" + assertion.getValue()));
 				}
 				break;
@@ -107,13 +106,13 @@ public class PlainTestExecutor {
 				if (assertion.getValue() instanceof String) {
 					String value = result.get(assertion.getProperty(), String.class);
 					if (value.compareTo((String) assertion.getValue()) != 0) {
-						fails.add(new Fail(FailReason.ASSERTION,
+						builder.success(false).fail(new Fail(FailReason.ASSERTION,
 								assertion.getProperty() + " is not equal to " + assertion.getValue()));
 					}
 				} else if (assertion.getValue() instanceof Long) {
 					Long value = result.get(assertion.getProperty(), Long.class);
 					if (value.longValue() == ((Long) assertion.getValue()).longValue()) {
-						fails.add(new Fail(FailReason.ASSERTION,
+						builder.success(false).fail(new Fail(FailReason.ASSERTION,
 								assertion.getProperty() + " is not equal to " + assertion.getValue()));
 					}
 				}
@@ -121,7 +120,6 @@ public class PlainTestExecutor {
 			}
 			}
 		});
-		return new Result(result.getName(), result.getStart(), result.getEnd(), result.isSuccess() && fails.isEmpty(),
-				result.getStdout(), result.getStderr(), result.getResults(), fails);
+		return builder.build();
 	}
 }
