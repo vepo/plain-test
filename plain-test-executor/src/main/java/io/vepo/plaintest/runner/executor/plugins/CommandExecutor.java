@@ -1,6 +1,7 @@
 package io.vepo.plaintest.runner.executor.plugins;
 
 import static java.lang.System.currentTimeMillis;
+import static java.lang.Thread.currentThread;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 
@@ -60,7 +61,10 @@ public class CommandExecutor implements StepExecutor {
 			return new Result(step.getName(), start, currentTimeMillis(), false, "", "", emptyList(),
 					asList(new Fail(FailReason.FAILED, e.getMessage())));
 		} catch (InterruptedException e) {
-			throw new RuntimeException("Execution Stopped!");
+			logger.warn("Interrupted!", e);
+			// Restore interrupted state...
+			currentThread().interrupt();
+			throw new RuntimeException("Interrupted");
 		}
 	}
 
