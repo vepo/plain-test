@@ -17,8 +17,7 @@ import io.vepo.plaintest.runner.utils.Os.OS;
 
 public class BashCommandTest extends AbstractTest {
 
-	private static final String BASH_SUCCESS_TEST = Os.getOS() == OS.WINDOWS ? 
-			"Suite BashTest {\n" + //
+	private static final String BASH_SUCCESS_TEST = Os.getOS() == OS.WINDOWS ? "Suite BashTest {\n" + //
 			"    exec-dir: src\n" + //
 			"\n" + //
 			"    CMD EnterDir {\n" + //
@@ -96,24 +95,6 @@ public class BashCommandTest extends AbstractTest {
 			"    }\n" + //
 			"}";
 
-	private static final String BASH_ASSERTION_STRING_SUCCESS_CONTAINS = "Suite EchoTest {\n" + //
-			"\n" + //
-			"    CMD EchoSomeString {\n" + //
-			"        cmd    : \"echo some string\"\n" + //
-			"        timeout: 500\n" + //
-			"        assert stdout Equals \"some string\"\n" + //
-			"    }\n" + //
-			"}";
-
-	private static final String BASH_ASSERTION_STRING_FAILED_CONTAINS = "Suite EchoTest {\n" + //
-			"\n" + //
-			"    CMD EchoSomeString {\n" + //
-			"        cmd    : \"echo some string\"\n" + //
-			"        timeout: 500\n" + //
-			"        assert stdout Equals \"other string\"\n" + //
-			"    }\n" + //
-			"}";
-
 	private static final String BASH_ASSERTION_MISSING_ATTRIBUTE = "Suite EchoTest {\n" + //
 			"\n" + //
 			"    CMD EchoSomeString {\n" + //
@@ -127,9 +108,9 @@ public class BashCommandTest extends AbstractTest {
 		Suite suite = SuiteFactory.parseSuite(BASH_SUCCESS_TEST);
 		PlainTestExecutor executor = new PlainTestExecutor();
 		assertThat(executor.execute(suite)).satisfies(result -> assertTrue(result.isSuccess()))
-				.satisfies(result -> assertThat(find(result, "EnterDir")).isPresent().get()
+				.satisfies(result -> assertThat(this.find(result, "EnterDir")).isPresent().get()
 						.satisfies(r -> assertTrue(r.isSuccess())))
-				.satisfies(result -> assertThat(find(result, "MainTest")).isPresent().get()
+				.satisfies(result -> assertThat(this.find(result, "MainTest")).isPresent().get()
 						.satisfies(r -> assertTrue(r.isSuccess())));
 	}
 
@@ -138,7 +119,7 @@ public class BashCommandTest extends AbstractTest {
 		Suite suite = SuiteFactory.parseSuite(BASH_FAIL_TEST);
 		PlainTestExecutor executor = new PlainTestExecutor();
 		assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.isSuccess()))
-				.satisfies(result -> assertThat(find(result, "Error")).isPresent().get()
+				.satisfies(result -> assertThat(this.find(result, "Error")).isPresent().get()
 						.satisfies(r -> assertFalse(r.isSuccess())));
 	}
 
@@ -147,7 +128,7 @@ public class BashCommandTest extends AbstractTest {
 		Suite suite = SuiteFactory.parseSuite(BASH_FAIL_ASSERTION);
 		PlainTestExecutor executor = new PlainTestExecutor();
 		assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.isSuccess()))
-				.satisfies(result -> assertThat(find(result, "Error")).isPresent().get()
+				.satisfies(result -> assertThat(this.find(result, "Error")).isPresent().get()
 						.satisfies(r -> assertFalse(r.isSuccess())));
 	}
 
@@ -158,34 +139,51 @@ public class BashCommandTest extends AbstractTest {
 			Suite suite = SuiteFactory.parseSuite(BASH_ASSERTION_MISSING_ATTRIBUTE);
 			PlainTestExecutor executor = new PlainTestExecutor();
 			assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.isSuccess()))
-					.satisfies(result -> assertThat(find(result, "EchoSomeString")).isPresent().get()
-							.satisfies(r -> assertFalse(r.isSuccess()))
+					.satisfies(result -> assertThat(BashCommandTest.this.find(result, "EchoSomeString")).isPresent()
+							.get().satisfies(r -> assertFalse(r.isSuccess()))
 							.satisfies(r -> assertEquals(
 									asList(new Fail(FailReason.MISSING_ATTRIBUTES, "Missing attributes: [cmd]")),
 									r.getFails())));
 		}
 	}
 
-	@Disabled
 	@Nested
 	public class AssertContainsTest {
+
+		private static final String BASH_ASSERTION_STRING_SUCCESS_CONTAINS = "Suite EchoTest {\n" + //
+				"\n" + //
+				"    CMD EchoSomeString {\n" + //
+				"        cmd    : \"echo some string\"\n" + //
+				"        timeout: 500\n" + //
+				"        assert stdout Equals \"some string\"\n" + //
+				"    }\n" + //
+				"}";
 
 		@Test
 		public void stringSuccessTest() {
 			Suite suite = SuiteFactory.parseSuite(BASH_ASSERTION_STRING_SUCCESS_CONTAINS);
 			PlainTestExecutor executor = new PlainTestExecutor();
 			assertThat(executor.execute(suite)).satisfies(result -> assertTrue(result.isSuccess()))
-					.satisfies(result -> assertThat(find(result, "EchoSomeString")).isPresent().get()
-							.satisfies(r -> assertTrue(r.isSuccess())));
+					.satisfies(result -> assertThat(BashCommandTest.this.find(result, "EchoSomeString")).isPresent()
+							.get().satisfies(r -> assertTrue(r.isSuccess())));
 		}
+
+		private static final String BASH_ASSERTION_STRING_FAILED_CONTAINS = "Suite EchoTest {\n" + //
+				"\n" + //
+				"    CMD EchoSomeString {\n" + //
+				"        cmd    : \"echo some string\"\n" + //
+				"        timeout: 500\n" + //
+				"        assert stdout Equals \"other string\"\n" + //
+				"    }\n" + //
+				"}";
 
 		@Test
 		public void stringFailedTest() {
 			Suite suite = SuiteFactory.parseSuite(BASH_ASSERTION_STRING_FAILED_CONTAINS);
 			PlainTestExecutor executor = new PlainTestExecutor();
 			assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.isSuccess()))
-					.satisfies(result -> assertThat(find(result, "EchoSomeString")).isPresent().get()
-							.satisfies(r -> assertFalse(r.isSuccess())));
+					.satisfies(result -> assertThat(BashCommandTest.this.find(result, "EchoSomeString")).isPresent()
+							.get().satisfies(r -> assertFalse(r.isSuccess())));
 		}
 	}
 
@@ -198,8 +196,8 @@ public class BashCommandTest extends AbstractTest {
 			Suite suite = SuiteFactory.parseSuite(BASH_ASSERTION_STRING_SUCCESS_EQUALS);
 			PlainTestExecutor executor = new PlainTestExecutor();
 			assertThat(executor.execute(suite)).satisfies(result -> assertTrue(result.isSuccess()))
-					.satisfies(result -> assertThat(find(result, "EchoSomeString")).isPresent().get()
-							.satisfies(r -> assertTrue(r.isSuccess())));
+					.satisfies(result -> assertThat(BashCommandTest.this.find(result, "EchoSomeString")).isPresent()
+							.get().satisfies(r -> assertTrue(r.isSuccess())));
 		}
 
 		@Test
@@ -207,8 +205,8 @@ public class BashCommandTest extends AbstractTest {
 			Suite suite = SuiteFactory.parseSuite(BASH_ASSERTION_STRING_FAILED_EQUALS);
 			PlainTestExecutor executor = new PlainTestExecutor();
 			assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.isSuccess()))
-					.satisfies(result -> assertThat(find(result, "EchoSomeString")).isPresent().get()
-							.satisfies(r -> assertFalse(r.isSuccess())));
+					.satisfies(result -> assertThat(BashCommandTest.this.find(result, "EchoSomeString")).isPresent()
+							.get().satisfies(r -> assertFalse(r.isSuccess())));
 		}
 	}
 }

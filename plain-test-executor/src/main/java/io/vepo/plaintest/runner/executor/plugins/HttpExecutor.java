@@ -2,7 +2,6 @@ package io.vepo.plaintest.runner.executor.plugins;
 
 import static io.vepo.plaintest.runner.executor.FailReason.RUNTIME_EXCEPTION;
 import static java.lang.System.currentTimeMillis;
-import static java.util.Arrays.asList;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -42,7 +41,7 @@ public class HttpExecutor implements StepExecutor {
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
 			con.setRequestMethod(methodUrl);
 			int status = con.getResponseCode();
-			String stdout = "";
+			String body = "";
 			try (BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));) {
 				String inputLine;
 				StringBuffer content = new StringBuffer();
@@ -50,24 +49,24 @@ public class HttpExecutor implements StepExecutor {
 					content.append(inputLine);
 				}
 				in.close();
-				stdout = content.toString();
+				body = content.toString();
 			}
 			con.disconnect();
-			logger.info("HTTP Request executed! output={}", stdout);
-			return new Result(step.getName(), start, currentTimeMillis(), true, stdout, "", asList(), asList());
+			logger.info("HTTP Request executed! output={}", body);
+			return Result.builder().name(step.getName()).start(start).end(currentTimeMillis()).success(true)
+					.property("statusCode", status).property("content", body).build();
 		} catch (MalformedURLException e) {
 			logger.error("Error executing test.", e);
-			return new Result(step.getName(), start, currentTimeMillis(), false, "", "Invalid URL: " + stepUrl,
-					asList(), asList(new Fail(RUNTIME_EXCEPTION, "Invalid URL: " + stepUrl)));
+			return Result.builder().name(step.getName()).start(start).end(currentTimeMillis()).success(false)
+					.fail(new Fail(RUNTIME_EXCEPTION, "Invalid URL: " + stepUrl)).build();
 		} catch (ProtocolException e) {
 			logger.error("Error executing test.", e);
-			return new Result(step.getName(), start, currentTimeMillis(), false, "", "Invalid Method: " + methodUrl,
-					asList(), asList(new Fail(RUNTIME_EXCEPTION, "Invalid Method: " + methodUrl)));
+			return Result.builder().name(step.getName()).start(start).end(currentTimeMillis()).success(false)
+					.fail(new Fail(RUNTIME_EXCEPTION, "Invalid Method: " + methodUrl)).build();
 		} catch (IOException e) {
 			logger.error("Error executing test.", e);
-			return new Result(step.getName(), start, currentTimeMillis(), false, "",
-					"Could not connect with: " + stepUrl, asList(),
-					asList(new Fail(RUNTIME_EXCEPTION, "Could not connect with: " + stepUrl)));
+			return Result.builder().name(step.getName()).start(start).end(currentTimeMillis()).success(false)
+					.fail(new Fail(RUNTIME_EXCEPTION, "Could not connect with: " + stepUrl)).build();
 		}
 	}
 
