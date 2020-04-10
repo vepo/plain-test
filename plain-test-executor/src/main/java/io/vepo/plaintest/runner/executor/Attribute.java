@@ -13,11 +13,11 @@ public class Attribute<T> {
 		this.type = type;
 	}
 
-	public String key() {
+	public String getKey() {
 		return this.key;
 	}
 
-	public Class<?> type() {
+	public Class<?> getType() {
 		return this.type;
 	}
 

@@ -71,12 +71,11 @@ public class PlainTestExecutor {
 		if (this.stepExecutors.containsKey(step.getPlugin())) {
 			StepExecutor executor = this.stepExecutors.get(step.getPlugin());
 			Set<Attribute<?>> missingAttributes = executor.requiredAttribute()
-					.filter(entry -> !step.getAttributes().containsKey(entry.key())).collect(toSet());
+					.filter(entry -> !step.getAttributes().containsKey(entry.getKey())).collect(toSet());
 			if (!missingAttributes.isEmpty()) {
 				return Result.builder().name(step.getName()).success(false)
-						.fail(new Fail(FailReason.MISSING_ATTRIBUTES,
-								"Missing attributes: ["
-										+ missingAttributes.stream().map(Attribute::key).collect(joining(", ")) + "]"))
+						.fail(new Fail(FailReason.MISSING_ATTRIBUTES, "Missing attributes: ["
+								+ missingAttributes.stream().map(Attribute::getKey).collect(joining(", ")) + "]"))
 						.build();
 			} else {
 				return this.checkAssertions(step, executor.execute(step, context));
