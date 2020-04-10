@@ -201,6 +201,7 @@ public class SuiteCreator implements TestSuiteListener {
 
 	@Override
 	public void enterExecDirectory(ExecDirectoryContext ctx) {
+		logger.debug("Enter ExecDirectory: {}", ctx);
 	}
 
 	@Override

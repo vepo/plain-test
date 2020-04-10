@@ -5,6 +5,7 @@ import static java.lang.System.currentTimeMillis;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toSet;
 import static java.util.stream.IntStream.rangeClosed;
 
 import java.nio.file.Paths;
@@ -12,9 +13,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.ServiceLoader;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,14 +70,12 @@ public class PlainTestExecutor {
 	private Result executeStep(Step step, Context context) {
 		if (stepExecutors.containsKey(step.getPlugin())) {
 			StepExecutor executor = stepExecutors.get(step.getPlugin());
-			Map<String, Object> missingAttributes = executor.requiredAttribute().entrySet().stream()
-					.filter(entry -> !step.getAttributes().containsKey(entry.getKey()))
-					.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+			Set<Attribute<?>> missingAttributes = executor.requiredAttribute()
+					.filter(entry -> !step.getAttributes().containsKey(entry.key())).collect(toSet());
 			if (!missingAttributes.isEmpty()) {
 				return new Result(step.getName(), currentTimeMillis(), currentTimeMillis(), false, "", "", emptyList(),
 						asList(new Fail(FailReason.MISSING_ATTRIBUTES, "Missing attributes: ["
-								+ missingAttributes.entrySet().stream().map(Entry::getKey).collect(joining(", "))
-								+ "]")));
+								+ missingAttributes.stream().map(Attribute::key).collect(joining(", ")) + "]")));
 			} else {
 				return checkAssertions(step, executor.execute(step, context));
 			}

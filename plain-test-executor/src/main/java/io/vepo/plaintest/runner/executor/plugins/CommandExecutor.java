@@ -9,15 +9,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.StringJoiner;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.vepo.plaintest.Step;
+import io.vepo.plaintest.runner.executor.Attribute;
 import io.vepo.plaintest.runner.executor.Fail;
 import io.vepo.plaintest.runner.executor.FailReason;
 import io.vepo.plaintest.runner.executor.Result;
@@ -42,7 +42,6 @@ public class CommandExecutor implements StepExecutor {
 					: new String[] { step.attribute("cmd") };
 			ProcessBuilder pb = new ProcessBuilder(cmd);
 			pb.directory(context.getWorkingDirectory().toFile());
-			pb.environment().putAll(System.getenv());
 			logger.info("Executing command: step={} context={}", step, context);
 			Process p = pb.start();
 			String stdout = captureOutpu(p.getInputStream());
@@ -73,15 +72,9 @@ public class CommandExecutor implements StepExecutor {
 		}
 	}
 
-	@SuppressWarnings("serial")
 	@Override
-	public Map<String, Class<?>> requiredAttribute() {
-		return new HashMap<String, Class<?>>() {
-			{
-				put("cmd", String.class);
-				put("timeout", Long.class);
-			}
-		};
+	public Stream<Attribute<?>> requiredAttribute() {
+		return Stream.of(new Attribute<>("cmd", String.class), new Attribute<>("timeout", Long.class));
 	}
 
 }

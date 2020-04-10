@@ -32,9 +32,8 @@ public class SuiteFactory {
 			@Override
 			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line,
 					int charPositionInLine, String msg, RecognitionException e) {
-				logger.error(
-						"Parser Error: recognizer={}  offendingSymbol={} line={}, charPositionInLine={} msg={} e={}",
-						recognizer, offendingSymbol, line, charPositionInLine, msg, e);
+				logger.error("Parser Error: recognizer={}, offendingSymbol={}, line={}, charPositionInLine={}, msg={}",
+						recognizer, offendingSymbol, line, charPositionInLine, msg);
 			}
 
 			@Override

@@ -11,13 +11,13 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.vepo.plaintest.Step;
+import io.vepo.plaintest.runner.executor.Attribute;
 import io.vepo.plaintest.runner.executor.Fail;
 import io.vepo.plaintest.runner.executor.Result;
 import io.vepo.plaintest.runner.executor.context.Context;
@@ -71,15 +71,9 @@ public class HttpExecutor implements StepExecutor {
 		}
 	}
 
-	@SuppressWarnings("serial")
 	@Override
-	public Map<String, Class<?>> requiredAttribute() {
-		return new HashMap<String, Class<?>>() {
-			{
-				put("url", String.class);
-				put("method", String.class);
-			}
-		};
+	public Stream<Attribute<?>> requiredAttribute() {
+		return Stream.of(new Attribute<>("url", String.class), new Attribute<>("method", String.class));
 	}
 
 }
