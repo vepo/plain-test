@@ -7,12 +7,11 @@ import static java.util.stream.Collectors.toSet;
 import static java.util.stream.IntStream.rangeClosed;
 
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
@@ -43,13 +42,14 @@ public class PlainTestExecutor {
 	}
 
 	private Result executeSuite(Suite suite, Context context) {
-		long start = currentTimeMillis();
-		List<Result> results = new ArrayList<>();
+		AtomicBoolean successReference = new AtomicBoolean(true);
+		ResultBuilder resultBuilder = Result.builder().name(suite.getName()).start(currentTimeMillis());
 		rangeClosed(0, suite.lastIndex()).forEachOrdered(index -> {
 			if (suite.isStep(index)) {
 				Result stepResult = this.executeStep(suite.at(index, Step.class), context);
 				logger.debug("Step Executed! results={}", stepResult);
-				results.add(stepResult);
+				successReference.set(successReference.get() && stepResult.isSuccess());
+				resultBuilder.result(stepResult);
 				context.addResult(stepResult);
 			} else {
 				Suite innerSuite = suite.at(index, Suite.class);
@@ -59,12 +59,13 @@ public class PlainTestExecutor {
 								.orElse(context.getWorkingDirectory()));
 				Result suiteResult = this.executeSuite(innerSuite, innerContext);
 				logger.debug("Suite Executed! results={}", suiteResult);
-				results.add(suiteResult);
+				successReference.set(successReference.get() && suiteResult.isSuccess());
+				resultBuilder.result(suiteResult);
 				context.addResult(suiteResult);
 			}
 		});
-		return Result.builder().name(suite.getName()).start(start).end(currentTimeMillis()).results(results)
-				.success(results.stream().allMatch(Result::isSuccess)).build();
+
+		return resultBuilder.end(currentTimeMillis()).success(successReference.get()).build();
 	}
 
 	private Result executeStep(Step step, Context context) {
@@ -92,11 +93,11 @@ public class PlainTestExecutor {
 		step.getAssertions().forEach(assertion -> {
 			switch (assertion.getVerb()) {
 			case "Contains":
-				this.checkEquals(result, assertion, failCallback);
+				this.checkAssertionContains(result, assertion, failCallback);
 				break;
 
 			case "Equals":
-				this.checkAssertionContains(result, assertion, failCallback);
+				this.checkAssertionEquals(result, assertion, failCallback);
 				break;
 
 			default:
@@ -107,7 +108,7 @@ public class PlainTestExecutor {
 		return builder.build();
 	}
 
-	private void checkAssertionContains(Result result, Assertion<?> assertion, Consumer<Fail> failCallback) {
+	private void checkAssertionEquals(Result result, Assertion<?> assertion, Consumer<Fail> failCallback) {
 		if (assertion.getValue() instanceof String) {
 			String value = result.get(assertion.getProperty(), String.class);
 			if (value.compareTo((String) assertion.getValue()) != 0) {
@@ -123,7 +124,7 @@ public class PlainTestExecutor {
 		}
 	}
 
-	private void checkEquals(Result result, Assertion<?> assertion, Consumer<Fail> failCallback) {
+	private void checkAssertionContains(Result result, Assertion<?> assertion, Consumer<Fail> failCallback) {
 		if (assertion.getValue() instanceof String) {
 			String value = result.get(assertion.getProperty(), String.class);
 			if (!value.contains((String) assertion.getValue())) {
