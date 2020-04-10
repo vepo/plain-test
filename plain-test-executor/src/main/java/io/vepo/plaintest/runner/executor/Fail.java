@@ -1,5 +1,9 @@
 package io.vepo.plaintest.runner.executor;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 public class Fail {
 	private FailReason reason;
 	private String message;
@@ -13,7 +17,7 @@ public class Fail {
 	}
 
 	public FailReason getReason() {
-		return reason;
+		return this.reason;
 	}
 
 	public void setReason(FailReason reason) {
@@ -21,7 +25,7 @@ public class Fail {
 	}
 
 	public String getMessage() {
-		return message;
+		return this.message;
 	}
 
 	public void setMessage(String message) {
@@ -30,35 +34,28 @@ public class Fail {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((message == null) ? 0 : message.hashCode());
-		result = prime * result + ((reason == null) ? 0 : reason.hashCode());
-		return result;
+		return new HashCodeBuilder().append(this.reason).append(this.message).hashCode();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (this.getClass() != obj.getClass()) {
 			return false;
-		Fail other = (Fail) obj;
-		if (message == null) {
-			if (other.message != null)
-				return false;
-		} else if (!message.equals(other.message))
-			return false;
-		if (reason != other.reason)
-			return false;
-		return true;
+		}
+		final Fail otherObject = (Fail) obj;
+		return new EqualsBuilder().append(this.reason, otherObject.reason).append(this.message, otherObject.message)
+				.isEquals();
 	}
 
 	@Override
 	public String toString() {
-		return "Fail [reason=" + reason + ", message=" + message + "]";
+		return new ToStringBuilder(this).append("reason", this.reason).append("message", this.message).toString();
 	}
 
 }
