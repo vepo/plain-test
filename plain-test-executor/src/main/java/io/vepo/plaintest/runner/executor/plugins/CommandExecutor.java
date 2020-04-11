@@ -67,12 +67,11 @@ public class CommandExecutor implements StepExecutor {
 					resultBuilder.property(PROPERTY_STDOUT_KEY, captureOutput(p.getInputStream()))
 							.property(PROPERTY_STDERR_KEY, captureOutput(p.getErrorStream()));
 					exitValue.set(p.waitFor());
-				} catch (InterruptedException | IOException e) {
+				} catch (IOException e) {
 					logger.warn("Thread interrupted!", e);
 					exitValue.set(Integer.MIN_VALUE);
-					if (e instanceof InterruptedException) {
-						currentThread().interrupt();
-					}
+				} catch (InterruptedException ie) {
+					Thread.currentThread().interrupt();
 				}
 				return null;
 			});
@@ -84,7 +83,6 @@ public class CommandExecutor implements StepExecutor {
 				} catch (ExecutionException e) {
 					logger.warn("Execution error!", e);
 					resultBuilder.fail(new Fail(FailReason.RUNTIME_EXCEPTION, e.getMessage()));
-
 				}
 			} else {
 				execution.get();
@@ -102,10 +100,8 @@ public class CommandExecutor implements StepExecutor {
 			return resultBuilder.end(currentTimeMillis()).success(false)
 					.fail(new Fail(FailReason.FAILED, e.getMessage())).build();
 		} catch (InterruptedException e) {
-			logger.warn("Interrupted!", e);
-			// Restore interrupted state...
 			currentThread().interrupt();
-			throw new RuntimeException("Interrupted");
+			return null;
 		}
 	}
 
