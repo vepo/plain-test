@@ -31,13 +31,13 @@ public class PlainTestExecutor {
 	private Map<String, StepExecutor> stepExecutors;
 
 	public PlainTestExecutor() {
-		this.stepExecutors = new HashMap<>();
+		stepExecutors = new HashMap<>();
 		ServiceLoader.load(StepExecutor.class)
-				.forEach(stepExecutor -> this.stepExecutors.put(stepExecutor.name(), stepExecutor));
+				.forEach(stepExecutor -> stepExecutors.put(stepExecutor.name(), stepExecutor));
 	}
 
 	public Result execute(Suite suite) {
-		return this.executeSuite(suite, new RootSuiteContext(
+		return executeSuite(suite, new RootSuiteContext(
 				Paths.get(suite.attribute(EXECUTION_PATH, String.class).orElse(".")).toAbsolutePath()));
 	}
 
@@ -46,7 +46,7 @@ public class PlainTestExecutor {
 		ResultBuilder resultBuilder = Result.builder().name(suite.getName()).start(currentTimeMillis());
 		rangeClosed(0, suite.lastIndex()).forEachOrdered(index -> {
 			if (suite.isStep(index)) {
-				Result stepResult = this.executeStep(suite.at(index, Step.class), context);
+				Result stepResult = executeStep(suite.at(index, Step.class), context);
 				logger.debug("Step Executed! results={}", stepResult);
 				successReference.set(successReference.get() && stepResult.isSuccess());
 				resultBuilder.result(stepResult);
@@ -57,7 +57,7 @@ public class PlainTestExecutor {
 						innerSuite.attribute(EXECUTION_PATH, String.class)
 								.map(path -> context.getWorkingDirectory().resolve(path).toAbsolutePath())
 								.orElse(context.getWorkingDirectory()));
-				Result suiteResult = this.executeSuite(innerSuite, innerContext);
+				Result suiteResult = executeSuite(innerSuite, innerContext);
 				logger.debug("Suite Executed! results={}", suiteResult);
 				successReference.set(successReference.get() && suiteResult.isSuccess());
 				resultBuilder.result(suiteResult);
@@ -69,9 +69,9 @@ public class PlainTestExecutor {
 	}
 
 	private Result executeStep(Step step, Context context) {
-		if (this.stepExecutors.containsKey(step.getPlugin())) {
-			StepExecutor executor = this.stepExecutors.get(step.getPlugin());
-			Set<Attribute<?>> missingAttributes = executor.requiredAttribute()
+		if (stepExecutors.containsKey(step.getPlugin())) {
+			StepExecutor executor = stepExecutors.get(step.getPlugin());
+			Set<Attribute<?>> missingAttributes = executor.requiredAttribute().filter(Attribute::isRequired)
 					.filter(entry -> !step.getAttributes().containsKey(entry.getKey())).collect(toSet());
 			if (!missingAttributes.isEmpty()) {
 				return Result.builder().name(step.getName()).success(false)
@@ -79,7 +79,7 @@ public class PlainTestExecutor {
 								+ missingAttributes.stream().map(Attribute::getKey).collect(joining(", ")) + "]"))
 						.build();
 			} else {
-				return this.checkAssertions(step, executor.execute(step, context));
+				return checkAssertions(step, executor.execute(step, context));
 			}
 		} else {
 			return Result.builder().name(step.getName()).success(false)
@@ -93,11 +93,11 @@ public class PlainTestExecutor {
 		step.getAssertions().forEach(assertion -> {
 			switch (assertion.getVerb()) {
 			case "Contains":
-				this.checkAssertionContains(result, assertion, failCallback);
+				checkAssertionContains(result, assertion, failCallback);
 				break;
 
 			case "Equals":
-				this.checkAssertionEquals(result, assertion, failCallback);
+				checkAssertionEquals(result, assertion, failCallback);
 				break;
 
 			default:

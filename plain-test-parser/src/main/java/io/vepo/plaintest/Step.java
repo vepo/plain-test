@@ -3,6 +3,11 @@ package io.vepo.plaintest;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
 public class Step {
 	private int index;
 	private String plugin;
@@ -62,74 +67,55 @@ public class Step {
 	}
 
 	public void addStringAttribute(String key, String value) {
-		this.attributes.put(key, value);
+		attributes.put(key, value);
 	}
 
 	public void addNumberAttribute(String key, Long value) {
-		this.attributes.put(key, value);
+		attributes.put(key, value);
 	}
 
 	public <T> void addAssertion(Assertion<T> assertion) {
-		this.assertions.add(assertion);
+		assertions.add(assertion);
 	}
 
-	public String attribute(String key) {
-		if (!this.attributes.containsKey(key)) {
+	@SuppressWarnings("unchecked")
+	public <T> T attribute(String key) {
+		if (!attributes.containsKey(key)) {
 			throw new IllegalStateException("Missing attribute: " + key);
 		}
-		return (String) this.attributes.get(key);
+		return (T) attributes.get(key);
+	}
+
+	public boolean hasAttribute(String key) {
+		return attributes.containsKey(key);
 	}
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((assertions == null) ? 0 : assertions.hashCode());
-		result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
-		result = prime * result + index;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + ((plugin == null) ? 0 : plugin.hashCode());
-		return result;
+		return new HashCodeBuilder().append(assertions).append(attributes).append(index).append(name).append(plugin)
+				.hashCode();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		Step other = (Step) obj;
-		if (assertions == null) {
-			if (other.assertions != null)
-				return false;
-		} else if (!assertions.equals(other.assertions))
-			return false;
-		if (attributes == null) {
-			if (other.attributes != null)
-				return false;
-		} else if (!attributes.equals(other.attributes))
-			return false;
-		if (index != other.index)
-			return false;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		if (plugin == null) {
-			if (other.plugin != null)
-				return false;
-		} else if (!plugin.equals(other.plugin))
-			return false;
-		return true;
+		return new EqualsBuilder().append(assertions, other.assertions).append(attributes, other.attributes)
+				.append(index, other.index).append(name, other.name).append(plugin, other.plugin).isEquals();
 	}
 
 	@Override
 	public String toString() {
-		return "Step [index=" + index + ", plugin=" + plugin + ", name=" + name + ", attributes=" + attributes
-				+ ", assertions=" + assertions + "]";
+		return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).append("index", index).append("name", name)
+				.append("plugin", plugin).append("attributes", attributes).append("assertions", assertions).toString();
 	}
 
 }
