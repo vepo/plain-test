@@ -32,6 +32,13 @@ import io.vepo.plaintest.runner.utils.Os.OS;
 public class CommandExecutor implements StepExecutor {
 	private static final Logger logger = LoggerFactory.getLogger(CommandExecutor.class);
 	public static final String COMMAND_EXECUTOR_PLUGIN_NAME = "CMD";
+
+	private static final String TIMEOUT_ATTRIBUTE_KEY = "timeout";
+
+	private static final String PROPERTY_STDERR_KEY = "stderr";
+	private static final String PROPERTY_STDOUT_KEY = "stdout";
+	private static final String PROPERTY_EXIT_VALUE_KEY = "exitValue";
+
 	private static final long MAX_ALLOWED_TIME = 250;
 
 	@Override
@@ -57,18 +64,21 @@ public class CommandExecutor implements StepExecutor {
 			Future<?> execution = newSingleThreadExecutor().submit(() -> {
 				try {
 					logger.info("Waiting for Thread...");
-					resultBuilder.property("stdout", captureOutput(p.getInputStream())).property("stder",
-							captureOutput(p.getErrorStream()));
+					resultBuilder.property(PROPERTY_STDOUT_KEY, captureOutput(p.getInputStream()))
+							.property(PROPERTY_STDERR_KEY, captureOutput(p.getErrorStream()));
 					exitValue.set(p.waitFor());
 				} catch (InterruptedException | IOException e) {
 					logger.warn("Thread interrupted!", e);
 					exitValue.set(Integer.MIN_VALUE);
+					if (e instanceof InterruptedException) {
+						currentThread().interrupt();
+					}
 				}
 				return null;
 			});
 			logger.warn("New process waiting in background...");
-			if (step.hasAttribute("timeout")) {
-				long timeout = step.attribute("timeout");
+			if (step.hasAttribute(TIMEOUT_ATTRIBUTE_KEY)) {
+				long timeout = step.attribute(TIMEOUT_ATTRIBUTE_KEY);
 				try {
 					execution.get(timeout + MAX_ALLOWED_TIME, TimeUnit.MILLISECONDS);
 				} catch (ExecutionException e) {
@@ -85,7 +95,8 @@ public class CommandExecutor implements StepExecutor {
 				resultBuilder.fail(new Fail(FailReason.FAILED, "Exit code: " + exitValue));
 				success = false;
 			}
-			return resultBuilder.end(currentTimeMillis()).success(success).property("exitValue", exitValue).build();
+			return resultBuilder.end(currentTimeMillis()).success(success).property(PROPERTY_EXIT_VALUE_KEY, exitValue)
+					.build();
 		} catch (ExecutionException | TimeoutException | IOException e) {
 			logger.warn("Execution error!", e);
 			return resultBuilder.end(currentTimeMillis()).success(false)
@@ -108,7 +119,8 @@ public class CommandExecutor implements StepExecutor {
 
 	@Override
 	public Stream<Attribute<?>> requiredAttribute() {
-		return Stream.of(new Attribute<>("cmd", String.class, true), new Attribute<>("timeout", Long.class, false));
+		return Stream.of(new Attribute<>("cmd", String.class, true),
+				new Attribute<>(TIMEOUT_ATTRIBUTE_KEY, Long.class, false));
 	}
 
 }

@@ -7,6 +7,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
 public class Suite {
 	private int index;
 	private String name;
@@ -67,11 +72,11 @@ public class Suite {
 	}
 
 	public void addStep(Step step) {
-		this.steps.add(step);
+		steps.add(step);
 	}
 
 	public void addSuite(Suite suite) {
-		this.suites.add(suite);
+		suites.add(suite);
 	}
 
 	public int lastIndex() {
@@ -80,17 +85,17 @@ public class Suite {
 	}
 
 	public boolean isStep(int position) {
-		return this.steps.stream().filter(step -> step.getIndex() == position).count() == 1L;
+		return steps.stream().filter(step -> step.getIndex() == position).count() == 1L;
 	}
 
 	public boolean isSuite(int position) {
-		return this.suites.stream().filter(step -> step.getIndex() == position).count() == 1L;
+		return suites.stream().filter(step -> step.getIndex() == position).count() == 1L;
 	}
 
 	@SuppressWarnings("unchecked")
 	public <T> Optional<T> attribute(SuiteAttributes key) {
-		if (this.attributes.containsKey(key)) {
-			return Optional.of((T) this.attributes.get(key));
+		if (attributes.containsKey(key)) {
+			return Optional.of((T) attributes.get(key));
 		} else {
 			return Optional.empty();
 		}
@@ -103,10 +108,10 @@ public class Suite {
 	@SuppressWarnings("unchecked")
 	public <T> T at(int index, Class<T> requiredClass) {
 		if (requiredClass == Step.class) {
-			return (T) this.steps.stream().filter(step -> step.getIndex() == index).findFirst()
+			return (T) steps.stream().filter(step -> step.getIndex() == index).findFirst()
 					.orElseThrow(() -> new RuntimeException("Could not find a Step on this position! index=" + index));
 		} else if (requiredClass == Suite.class) {
-			return (T) this.suites.stream().filter(suite -> suite.getIndex() == index).findFirst()
+			return (T) suites.stream().filter(suite -> suite.getIndex() == index).findFirst()
 					.orElseThrow(() -> new RuntimeException("Could not find a Suite on this position! index=" + index));
 		} else {
 			throw new RuntimeException("Unexpected type: " + requiredClass);
@@ -114,59 +119,36 @@ public class Suite {
 	}
 
 	public void setExecDirectory(String execDirectory) {
-		this.attributes.put(EXECUTION_PATH, execDirectory);
+		attributes.put(EXECUTION_PATH, execDirectory);
 	}
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
-		result = prime * result + index;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + ((steps == null) ? 0 : steps.hashCode());
-		result = prime * result + ((suites == null) ? 0 : suites.hashCode());
-		return result;
+		return new HashCodeBuilder().append(index).append(name).append(attributes).append(steps).append(suites)
+				.hashCode();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		Suite other = (Suite) obj;
-		if (attributes == null) {
-			if (other.attributes != null)
-				return false;
-		} else if (!attributes.equals(other.attributes))
-			return false;
-		if (index != other.index)
-			return false;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		if (steps == null) {
-			if (other.steps != null)
-				return false;
-		} else if (!steps.equals(other.steps))
-			return false;
-		if (suites == null) {
-			if (other.suites != null)
-				return false;
-		} else if (!suites.equals(other.suites))
-			return false;
-		return true;
+		return new EqualsBuilder().append(index, other.index).append(name, other.name)
+				.append(attributes, other.attributes).append(steps, other.steps).append(suites, other.suites)
+				.isEquals();
 	}
 
 	@Override
 	public String toString() {
-		return "Suite [index=" + index + ", name=" + name + ", suites=" + suites + ", steps=" + steps + ", attributes="
-				+ attributes + "]";
+		return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).append("index", index).append("name", name)
+				.append("attributes", attributes).append("steps", steps).append("suites", suites).toString();
 	}
 
 }
