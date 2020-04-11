@@ -31,7 +31,7 @@ public class Timeout {
 			}
 		} catch (InterruptedException e) {
 			currentThread().interrupt();
-			return null;
+			return Optional.empty();
 		} catch (ExecutionException e) {
 			logger.warn("Execution error!", e);
 			throw new IllegalStateException("Error test execution!", e);

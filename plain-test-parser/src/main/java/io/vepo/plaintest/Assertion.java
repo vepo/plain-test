@@ -1,5 +1,10 @@
 package io.vepo.plaintest;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
 public class Assertion<T> {
 	private String property;
 	private String verb;
@@ -40,44 +45,29 @@ public class Assertion<T> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((property == null) ? 0 : property.hashCode());
-		result = prime * result + ((value == null) ? 0 : value.hashCode());
-		result = prime * result + ((verb == null) ? 0 : verb.hashCode());
-		return result;
+		return new HashCodeBuilder().append(this.property).append(this.verb).append(this.value).hashCode();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		Assertion<?> other = (Assertion<?>) obj;
-		if (property == null) {
-			if (other.property != null)
-				return false;
-		} else if (!property.equals(other.property))
-			return false;
-		if (value == null) {
-			if (other.value != null)
-				return false;
-		} else if (!value.equals(other.value))
-			return false;
-		if (verb == null) {
-			if (other.verb != null)
-				return false;
-		} else if (!verb.equals(other.verb))
-			return false;
-		return true;
+		return new EqualsBuilder().append(this.property, other.property).append(this.verb, other.verb)
+				.append(this.value, other.value).isEquals();
 	}
 
 	@Override
 	public String toString() {
-		return "Assertion [property=" + property + ", verb=" + verb + ", value=" + value + "]";
+		return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).append("property", this.property)
+				.append("verb", this.verb).append("value", this.value).toString();
 	}
 
 }

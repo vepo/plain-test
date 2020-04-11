@@ -55,13 +55,13 @@ public class CommandExecutor implements StepExecutor {
 
 			Process p = pb.start();
 
-			Optional<Long> timeout = step.optionalAttribute(TIMEOUT_ATTRIBUTE_KEY, Long.class);
+			Optional<Long> maybeTimeout = step.optionalAttribute(TIMEOUT_ATTRIBUTE_KEY, Long.class);
 			Optional<Integer> returnValue = executeWithTimeout(() -> {
 				logger.info("Waiting for Thread...");
 				resultBuilder.property(PROPERTY_STDOUT_KEY, captureOutput(p.getInputStream()))
 						.property(PROPERTY_STDERR_KEY, captureOutput(p.getErrorStream()));
 				return p.waitFor();
-			}, timeout);
+			}, maybeTimeout);
 
 			boolean success;
 			int exitValue;
@@ -74,8 +74,8 @@ public class CommandExecutor implements StepExecutor {
 					success = true;
 				}
 			} else {
-				resultBuilder.fail(
-						new Fail(TIMED_OUT, String.format("Execution exceeds timeout! timeout=%dms", timeout.get())));
+				resultBuilder.fail(new Fail(TIMED_OUT,
+						String.format("Execution exceeds timeout! timeout=%dms", maybeTimeout.orElse(-1L))));
 				success = false;
 				exitValue = -1;
 			}
