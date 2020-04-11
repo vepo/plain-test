@@ -1,7 +1,11 @@
 package io.vepo.plaintest.runner.executor.plugins;
 
+import static io.vepo.plaintest.runner.executor.Attribute.createAttribute;
 import static io.vepo.plaintest.runner.executor.FailReason.RUNTIME_EXCEPTION;
+import static io.vepo.plaintest.runner.executor.FailReason.TIMED_OUT;
+import static io.vepo.plaintest.runner.utils.Timeout.executeWithTimeout;
 import static java.lang.System.currentTimeMillis;
+import static java.util.Objects.isNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,6 +14,8 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.net.UnknownHostException;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -19,11 +25,36 @@ import io.vepo.plaintest.Step;
 import io.vepo.plaintest.runner.executor.Attribute;
 import io.vepo.plaintest.runner.executor.Fail;
 import io.vepo.plaintest.runner.executor.Result;
+import io.vepo.plaintest.runner.executor.Result.ResultBuilder;
 import io.vepo.plaintest.runner.executor.context.Context;
 
 public class HttpExecutor implements StepExecutor {
 	private static final Logger logger = LoggerFactory.getLogger(HttpExecutor.class);
 	public static final String HTTP_EXECUTOR_PLUGIN_NAME = "HTTP";
+
+	public static class HttpContents {
+		private final int statusCode;
+		private final String body;
+		private final Exception exception;
+
+		private HttpContents(int statusCode, String body, Exception exception) {
+			this.statusCode = statusCode;
+			this.body = body;
+			this.exception = exception;
+		}
+
+		public int getStatusCode() {
+			return statusCode;
+		}
+
+		public String getBody() {
+			return body;
+		}
+
+		public Exception getException() {
+			return exception;
+		}
+	}
 
 	@Override
 	public String name() {
@@ -32,9 +63,30 @@ public class HttpExecutor implements StepExecutor {
 
 	@Override
 	public Result execute(Step step, Context context) {
-		long start = currentTimeMillis();
-		String stepUrl = step.attribute("url");
-		String methodUrl = step.attribute("method");
+		ResultBuilder resultBuilder = Result.builder().name(step.getName()).start(currentTimeMillis());
+		String stepUrl = step.requiredAttribute("url");
+		String methodUrl = step.requiredAttribute("method");
+		Optional<Long> maybeTimeout = step.optionalAttribute("timeout", Long.class);
+		Optional<HttpContents> maybeContents = executeWithTimeout(() -> executeRequest(stepUrl, methodUrl),
+				maybeTimeout);
+		return maybeContents.map(contents -> {
+			resultBuilder.end(currentTimeMillis());
+			if (isNull(contents.getException())) {
+				resultBuilder.success(true).property("statusCode", contents.getStatusCode()).property("content",
+						contents.getBody());
+			} else {
+				processError(resultBuilder, stepUrl, methodUrl, contents);
+			}
+
+			return resultBuilder.build();
+		}).orElseGet(
+				() -> resultBuilder.end(currentTimeMillis()).success(false)
+						.fail(new Fail(TIMED_OUT,
+								String.format("Execution exceeds timeout! timeout=%dms", maybeTimeout.orElse(-1L))))
+						.build());
+	}
+
+	private HttpContents executeRequest(String stepUrl, String methodUrl) {
 		try {
 			logger.info("Executing HTTP Request: url={} method={}", stepUrl, methodUrl);
 			URL url = new URL(stepUrl);
@@ -53,26 +105,35 @@ public class HttpExecutor implements StepExecutor {
 			}
 			con.disconnect();
 			logger.info("HTTP Request executed! output={}", body);
-			return Result.builder().name(step.getName()).start(start).end(currentTimeMillis()).success(true)
-					.property("statusCode", status).property("content", body).build();
+			return new HttpContents(status, body, null);
 		} catch (MalformedURLException e) {
-			logger.error("Error executing test.", e);
-			return Result.builder().name(step.getName()).start(start).end(currentTimeMillis()).success(false)
-					.fail(new Fail(RUNTIME_EXCEPTION, "Invalid URL: " + stepUrl)).build();
+			return new HttpContents(-1, "", e);
 		} catch (ProtocolException e) {
-			logger.error("Error executing test.", e);
-			return Result.builder().name(step.getName()).start(start).end(currentTimeMillis()).success(false)
-					.fail(new Fail(RUNTIME_EXCEPTION, "Invalid Method: " + methodUrl)).build();
+			return new HttpContents(-1, "", e);
 		} catch (IOException e) {
-			logger.error("Error executing test.", e);
-			return Result.builder().name(step.getName()).start(start).end(currentTimeMillis()).success(false)
-					.fail(new Fail(RUNTIME_EXCEPTION, "Could not connect with: " + stepUrl)).build();
+			return new HttpContents(-1, "", e);
+		}
+	}
+
+	private void processError(ResultBuilder resultBuilder, String stepUrl, String methodUrl, HttpContents contents) {
+		resultBuilder.success(false);
+		if (contents.getException() instanceof MalformedURLException) {
+			resultBuilder.fail(new Fail(RUNTIME_EXCEPTION, "Invalid URL: " + stepUrl));
+		} else if (contents.getException() instanceof ProtocolException) {
+			resultBuilder.fail(new Fail(RUNTIME_EXCEPTION, "Invalid Method: " + methodUrl));
+		} else if (contents.getException() instanceof UnknownHostException) {
+			resultBuilder.fail(new Fail(RUNTIME_EXCEPTION, "Could not connect with: " + stepUrl + ". Unknown Host."));
+		} else if (contents.getException() instanceof IOException) {
+			resultBuilder.fail(new Fail(RUNTIME_EXCEPTION, "Could not connect with: " + stepUrl));
+		} else {
+			throw new IllegalStateException("Exception not implemented!", contents.getException());
 		}
 	}
 
 	@Override
 	public Stream<Attribute<?>> requiredAttribute() {
-		return Stream.of(new Attribute<>("url", String.class, true), new Attribute<>("method", String.class, true));
+		return Stream.of(createAttribute("url", String.class, true), createAttribute("method", String.class, true),
+				createAttribute("timeout", Long.class, false));
 	}
 
 }
