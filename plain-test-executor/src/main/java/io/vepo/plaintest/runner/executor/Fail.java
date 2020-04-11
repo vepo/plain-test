@@ -1,5 +1,7 @@
 package io.vepo.plaintest.runner.executor;
 
+import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
+
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -17,7 +19,7 @@ public class Fail {
 	}
 
 	public FailReason getReason() {
-		return this.reason;
+		return reason;
 	}
 
 	public void setReason(FailReason reason) {
@@ -25,7 +27,7 @@ public class Fail {
 	}
 
 	public String getMessage() {
-		return this.message;
+		return message;
 	}
 
 	public void setMessage(String message) {
@@ -34,7 +36,7 @@ public class Fail {
 
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder().append(this.reason).append(this.message).hashCode();
+		return new HashCodeBuilder().append(reason).append(message).hashCode();
 	}
 
 	@Override
@@ -49,13 +51,13 @@ public class Fail {
 			return false;
 		}
 		final Fail otherObject = (Fail) obj;
-		return new EqualsBuilder().append(this.reason, otherObject.reason).append(this.message, otherObject.message)
-				.isEquals();
+		return new EqualsBuilder().append(reason, otherObject.reason).append(message, otherObject.message).isEquals();
 	}
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append("reason", this.reason).append("message", this.message).toString();
+		return new ToStringBuilder(this, SHORT_PREFIX_STYLE).append("reason", reason).append("message", message)
+				.toString();
 	}
 
 }

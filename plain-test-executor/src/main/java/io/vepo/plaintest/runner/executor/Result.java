@@ -1,6 +1,7 @@
 package io.vepo.plaintest.runner.executor;
 
 import static java.lang.System.currentTimeMillis;
+import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,20 +24,20 @@ public class Result {
 		private List<Fail> fails;
 
 		private ResultBuilder() {
-			this.start = this.end = currentTimeMillis();
-			this.properties = new HashMap<>();
-			this.results = new ArrayList<>();
-			this.fails = new ArrayList<>();
+			start = end = currentTimeMillis();
+			properties = new HashMap<>();
+			results = new ArrayList<>();
+			fails = new ArrayList<>();
 		}
 
 		private ResultBuilder(Result result) {
-			this.name = result.name;
-			this.start = result.start;
-			this.end = result.end;
-			this.success = result.success;
-			this.properties = result.properties;
-			this.results = result.results;
-			this.fails = result.fails;
+			name = result.name;
+			start = result.start;
+			end = result.end;
+			success = result.success;
+			properties = result.properties;
+			results = result.results;
+			fails = result.fails;
 		}
 
 		public ResultBuilder name(String name) {
@@ -60,7 +61,7 @@ public class Result {
 		}
 
 		public ResultBuilder property(String key, Object value) {
-			this.properties.put(key, value);
+			properties.put(key, value);
 			return this;
 		}
 
@@ -70,7 +71,7 @@ public class Result {
 		}
 
 		public ResultBuilder result(Result result) {
-			this.results.add(result);
+			results.add(result);
 			return this;
 		}
 
@@ -80,7 +81,7 @@ public class Result {
 		}
 
 		public ResultBuilder fail(Fail fail) {
-			this.fails.add(fail);
+			fails.add(fail);
 			return this;
 		}
 
@@ -106,20 +107,20 @@ public class Result {
 	private List<Fail> fails;
 
 	private Result(ResultBuilder builder) {
-		this.name = builder.name;
-		this.start = builder.start;
-		this.end = builder.end;
-		this.success = builder.success;
-		this.properties = builder.properties;
-		this.results = builder.results;
-		this.fails = builder.fails;
+		name = builder.name;
+		start = builder.start;
+		end = builder.end;
+		success = builder.success;
+		properties = builder.properties;
+		results = builder.results;
+		fails = builder.fails;
 	}
 
 	public Result() {
 	}
 
 	public String getName() {
-		return this.name;
+		return name;
 	}
 
 	public void setName(String name) {
@@ -127,7 +128,7 @@ public class Result {
 	}
 
 	public long getStart() {
-		return this.start;
+		return start;
 	}
 
 	public void setStart(long start) {
@@ -135,7 +136,7 @@ public class Result {
 	}
 
 	public long getEnd() {
-		return this.end;
+		return end;
 	}
 
 	public void setEnd(long end) {
@@ -143,7 +144,7 @@ public class Result {
 	}
 
 	public boolean isSuccess() {
-		return this.success;
+		return success;
 	}
 
 	public void setSuccess(boolean success) {
@@ -151,7 +152,7 @@ public class Result {
 	}
 
 	public Map<String, Object> getProperties() {
-		return this.properties;
+		return properties;
 	}
 
 	public void setProperties(Map<String, Object> properties) {
@@ -159,7 +160,7 @@ public class Result {
 	}
 
 	public List<Result> getResults() {
-		return this.results;
+		return results;
 	}
 
 	public void setResults(List<Result> results) {
@@ -167,7 +168,7 @@ public class Result {
 	}
 
 	public List<Fail> getFails() {
-		return this.fails;
+		return fails;
 	}
 
 	public void setFails(List<Fail> fails) {
@@ -176,8 +177,8 @@ public class Result {
 
 	@SuppressWarnings("unchecked")
 	public <T> T get(String property, Class<T> requiredClass) {
-		if (this.properties.containsKey(property)) {
-			Object value = this.properties.get(property);
+		if (properties.containsKey(property)) {
+			Object value = properties.get(property);
 			if (!requiredClass.isInstance(value)) {
 				throw new IllegalArgumentException("Unexpected type: " + property + " has type " + value.getClass()
 						+ " but was required " + requiredClass);
@@ -190,8 +191,8 @@ public class Result {
 
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder().append(this.name).append(this.start).append(this.end).append(this.success)
-				.append(this.properties).append(this.results).append(this.fails).hashCode();
+		return new HashCodeBuilder().append(name).append(start).append(end).append(success).append(properties)
+				.append(results).append(fails).hashCode();
 	}
 
 	@Override
@@ -206,17 +207,16 @@ public class Result {
 			return false;
 		}
 		Result other = (Result) obj;
-		return new EqualsBuilder().append(this.name, other.name).append(this.start, other.start)
-				.append(this.end, other.end).append(this.success, other.success)
-				.append(this.properties, other.properties).append(this.results, other.results)
-				.append(this.fails, other.fails).isEquals();
+		return new EqualsBuilder().append(name, other.name).append(start, other.start).append(end, other.end)
+				.append(success, other.success).append(properties, other.properties).append(results, other.results)
+				.append(fails, other.fails).isEquals();
 	}
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this).append("name", this.name).append("start", this.start).append("end", this.end)
-				.append("success", this.success).append("properties", this.properties).append("results", this.results)
-				.append("fails", this.fails).toString();
+		return new ToStringBuilder(this, SHORT_PREFIX_STYLE).append("name", name).append("start", start)
+				.append("end", end).append("success", success).append("properties", properties)
+				.append("results", results).append("fails", fails).toString();
 	}
 
 }

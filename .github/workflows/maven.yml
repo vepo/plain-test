@@ -17,7 +17,7 @@ jobs:
         with:
           java-version: 8
       - name: Build with Maven
-        run: mvn verify sonar:sonar sonar:sonar -Dsonar.login=${SONAR_TOKEN} -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=vepo-github -Dsonar.projectKey=vepo/plain-test  -Dsonar.java.coveragePlugin=jacoco -Dsonar.branch.name=${BASE_BRANCH}
+        run: mvn -B clean verify sonar:sonar sonar:sonar -Dsonar.login=${SONAR_TOKEN} -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=vepo-github -Dsonar.projectKey=vepo/plain-test  -Dsonar.java.coveragePlugin=jacoco -Dsonar.branch.name=${BASE_BRANCH}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

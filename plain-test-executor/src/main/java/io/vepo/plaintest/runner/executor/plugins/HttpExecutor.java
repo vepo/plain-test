@@ -72,7 +72,7 @@ public class HttpExecutor implements StepExecutor {
 
 	@Override
 	public Stream<Attribute<?>> requiredAttribute() {
-		return Stream.of(new Attribute<>("url", String.class), new Attribute<>("method", String.class));
+		return Stream.of(new Attribute<>("url", String.class, true), new Attribute<>("method", String.class, true));
 	}
 
 }
