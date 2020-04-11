@@ -227,7 +227,7 @@ public class CommandExecutorTest extends AbstractTest {
 
 	private static final String BASH_SLEEP_2s_SUCCESS = Os.getOS() == OS.WINDOWS ? "Suite SleepTest {\n" + //
 			"\n" + //
-			"    CMD OptionalTest {\n" + //
+			"    CMD Sleep2s {\n" + //
 			"        cmd    : \"ping -n 3 127.0.0.1\"\n" + // Why?!?!
 															// https://www.ibm.com/support/pages/timeout-command-run-batch-job-exits-immediately-and-returns-error-input-redirection-not-supported-exiting-process-immediately
 			"        timeout: 2000\n" + //
@@ -239,7 +239,7 @@ public class CommandExecutorTest extends AbstractTest {
 					"        timeout: 2000\n" + //
 					"    }\n" + //
 					"}";
-	private static final String BASH_TIMEOUT_OPTIONAÇ = "Suite OptionalTest {\n" + //
+	private static final String BASH_TIMEOUT_OPTIONAL = "Suite OptionalTest {\n" + //
 			"\n" + //
 			"    CMD OptionalStep {\n" + //
 
@@ -279,7 +279,7 @@ public class CommandExecutorTest extends AbstractTest {
 		@Test
 		@DisplayName("It should be an optional property")
 		public void optionalTest() {
-			Suite suite = SuiteFactory.parseSuite(BASH_TIMEOUT_OPTIONAÇ);
+			Suite suite = SuiteFactory.parseSuite(BASH_TIMEOUT_OPTIONAL);
 			PlainTestExecutor executor = new PlainTestExecutor();
 			assertThat(executor.execute(suite)).satisfies(result -> assertTrue(result.isSuccess()))
 					.satisfies(result -> assertThat(find(result, "OptionalStep")).isPresent().get()
