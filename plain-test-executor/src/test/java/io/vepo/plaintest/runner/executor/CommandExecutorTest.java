@@ -15,7 +15,7 @@ import io.vepo.plaintest.SuiteFactory;
 import io.vepo.plaintest.runner.utils.Os;
 import io.vepo.plaintest.runner.utils.Os.OS;
 
-@DisplayName("[TEST] Command Executor")
+@DisplayName("Command Executor")
 public class CommandExecutorTest extends AbstractTest {
 
 	private static final String BASH_SUCCESS_TEST = Os.getOS() == OS.WINDOWS ? "Suite BashTest {\n" + //
@@ -262,8 +262,12 @@ public class CommandExecutorTest extends AbstractTest {
 			Suite suite = SuiteFactory.parseSuite(BASH_SLEEP_10s_FAIL);
 			PlainTestExecutor executor = new PlainTestExecutor();
 			assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.isSuccess()))
-					.satisfies(result -> assertThat(find(result, "Sleep10s")).isPresent().get()
-							.satisfies(r -> assertFalse(r.isSuccess())));
+					.satisfies(result -> assertThat(find(result, "Sleep10s")).isPresent().get().satisfies(r -> {
+						assertFalse(r.isSuccess());
+						assertEquals(
+								asList(new Fail(FailReason.TIMED_OUT, "Execution exceeds timeout! timeout=1000ms")),
+								r.getFails());
+					}));
 		}
 
 		@Test

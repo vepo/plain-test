@@ -11,7 +11,11 @@ public class Attribute<T> {
 	public final Class<?> type;
 	private final boolean required;
 
-	public Attribute(String key, Class<?> type, boolean required) {
+	public static <A> Attribute<A> createAttribute(String key, Class<?> type, boolean required) {
+		return new Attribute<>(key, type, required);
+	}
+
+	private Attribute(String key, Class<?> type, boolean required) {
 		this.key = key;
 		this.type = type;
 		this.required = required;
