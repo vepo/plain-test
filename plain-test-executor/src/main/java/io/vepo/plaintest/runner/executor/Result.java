@@ -65,18 +65,8 @@ public class Result {
 			return this;
 		}
 
-		public ResultBuilder results(List<Result> results) {
-			this.results.addAll(results);
-			return this;
-		}
-
 		public ResultBuilder result(Result result) {
 			results.add(result);
-			return this;
-		}
-
-		public ResultBuilder fails(List<Fail> fails) {
-			this.fails.addAll(fails);
 			return this;
 		}
 
@@ -98,13 +88,13 @@ public class Result {
 		return new ResultBuilder(result);
 	}
 
-	private String name;
-	private long start;
-	private long end;
-	private boolean success;
-	private Map<String, Object> properties;
-	private List<Result> results;
-	private List<Fail> fails;
+	private final String name;
+	private final long start;
+	private final long end;
+	private final boolean success;
+	private final Map<String, Object> properties;
+	private final List<Result> results;
+	private final List<Fail> fails;
 
 	private Result(ResultBuilder builder) {
 		name = builder.name;
@@ -116,63 +106,32 @@ public class Result {
 		fails = builder.fails;
 	}
 
-	public Result() {
-	}
-
 	public String getName() {
 		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
 	}
 
 	public long getStart() {
 		return start;
 	}
 
-	public void setStart(long start) {
-		this.start = start;
-	}
-
 	public long getEnd() {
 		return end;
-	}
-
-	public void setEnd(long end) {
-		this.end = end;
 	}
 
 	public boolean isSuccess() {
 		return success;
 	}
 
-	public void setSuccess(boolean success) {
-		this.success = success;
-	}
-
 	public Map<String, Object> getProperties() {
 		return properties;
-	}
-
-	public void setProperties(Map<String, Object> properties) {
-		this.properties = properties;
 	}
 
 	public List<Result> getResults() {
 		return results;
 	}
 
-	public void setResults(List<Result> results) {
-		this.results = results;
-	}
-
 	public List<Fail> getFails() {
 		return fails;
-	}
-
-	public void setFails(List<Fail> fails) {
-		this.fails = fails;
 	}
 
 	@SuppressWarnings("unchecked")

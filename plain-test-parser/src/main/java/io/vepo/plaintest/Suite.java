@@ -112,6 +112,7 @@ public class Suite {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public <T> Optional<T> attribute(SuiteAttributes key, Class<T> requiredClass) {
 		if (attributes.containsKey(key)) {
 			Object value = attributes.get(key);

@@ -10,6 +10,7 @@ import static java.util.Objects.isNull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -67,8 +68,8 @@ public class HttpExecutor implements StepExecutor {
 		String stepUrl = step.requiredAttribute("url");
 		String methodUrl = step.requiredAttribute("method");
 		Optional<Long> maybeTimeout = step.optionalAttribute("timeout", Long.class);
-		Optional<HttpContents> maybeContents = executeWithTimeout(() -> executeRequest(stepUrl, methodUrl),
-				maybeTimeout);
+		Optional<HttpContents> maybeContents = executeWithTimeout(
+				() -> executeRequest(stepUrl, methodUrl, step.optionalAttribute("body", String.class)), maybeTimeout);
 		return maybeContents.map(contents -> {
 			resultBuilder.end(currentTimeMillis());
 			if (isNull(contents.getException())) {
@@ -86,30 +87,41 @@ public class HttpExecutor implements StepExecutor {
 						.build());
 	}
 
-	private HttpContents executeRequest(String stepUrl, String methodUrl) {
+	private HttpContents executeRequest(String stepUrl, String methodUrl, Optional<String> maybeRequestBody) {
 		try {
 			logger.info("Executing HTTP Request: url={} method={}", stepUrl, methodUrl);
 			URL url = new URL(stepUrl);
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
 			con.setRequestMethod(methodUrl);
-			int status = con.getResponseCode();
-			String body = "";
-			try (BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));) {
-				String inputLine;
-				StringBuffer content = new StringBuffer();
-				while ((inputLine = in.readLine()) != null) {
-					content.append(inputLine);
+
+			Optional<IOException> sendException = maybeRequestBody.map(requestBody -> {
+				con.setDoOutput(true);
+				try (OutputStreamWriter out = new OutputStreamWriter(con.getOutputStream())) {
+					out.write(requestBody);
+					return null;
+				} catch (IOException e) {
+					return e;
 				}
-				in.close();
-				body = content.toString();
+			});
+
+			if (sendException.isPresent()) {
+				return new HttpContents(-1, "", sendException.get());
+			} else {
+				int status = con.getResponseCode();
+				String body = "";
+				try (BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));) {
+					String inputLine;
+					StringBuffer content = new StringBuffer();
+					while ((inputLine = in.readLine()) != null) {
+						content.append(inputLine);
+					}
+					in.close();
+					body = content.toString();
+				}
+				con.disconnect();
+				logger.info("HTTP Request executed! output={}", body);
+				return new HttpContents(status, body, null);
 			}
-			con.disconnect();
-			logger.info("HTTP Request executed! output={}", body);
-			return new HttpContents(status, body, null);
-		} catch (MalformedURLException e) {
-			return new HttpContents(-1, "", e);
-		} catch (ProtocolException e) {
-			return new HttpContents(-1, "", e);
 		} catch (IOException e) {
 			return new HttpContents(-1, "", e);
 		}
