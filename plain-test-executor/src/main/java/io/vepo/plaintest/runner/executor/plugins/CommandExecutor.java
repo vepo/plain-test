@@ -1,19 +1,18 @@
 package io.vepo.plaintest.runner.executor.plugins;
 
+import static io.vepo.plaintest.runner.executor.Attribute.createAttribute;
+import static io.vepo.plaintest.runner.executor.FailReason.FAILED;
+import static io.vepo.plaintest.runner.executor.FailReason.TIMED_OUT;
+import static io.vepo.plaintest.runner.utils.Os.OS.WINDOWS;
+import static io.vepo.plaintest.runner.utils.Timeout.executeWithTimeout;
 import static java.lang.System.currentTimeMillis;
-import static java.lang.Thread.currentThread;
-import static java.util.concurrent.Executors.newSingleThreadExecutor;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Optional;
 import java.util.StringJoiner;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -22,12 +21,10 @@ import org.slf4j.LoggerFactory;
 import io.vepo.plaintest.Step;
 import io.vepo.plaintest.runner.executor.Attribute;
 import io.vepo.plaintest.runner.executor.Fail;
-import io.vepo.plaintest.runner.executor.FailReason;
 import io.vepo.plaintest.runner.executor.Result;
 import io.vepo.plaintest.runner.executor.Result.ResultBuilder;
 import io.vepo.plaintest.runner.executor.context.Context;
 import io.vepo.plaintest.runner.utils.Os;
-import io.vepo.plaintest.runner.utils.Os.OS;
 
 public class CommandExecutor implements StepExecutor {
 	private static final Logger logger = LoggerFactory.getLogger(CommandExecutor.class);
@@ -39,8 +36,6 @@ public class CommandExecutor implements StepExecutor {
 	private static final String PROPERTY_STDOUT_KEY = "stdout";
 	private static final String PROPERTY_EXIT_VALUE_KEY = "exitValue";
 
-	private static final long MAX_ALLOWED_TIME = 250;
-
 	@Override
 	public String name() {
 		return COMMAND_EXECUTOR_PLUGIN_NAME;
@@ -51,57 +46,44 @@ public class CommandExecutor implements StepExecutor {
 		long start = currentTimeMillis();
 		ResultBuilder resultBuilder = Result.builder().name(step.getName()).start(start);
 		try {
-
-			String[] cmd = Os.getOS() == OS.WINDOWS ? new String[] { "cmd.exe", "/c", step.attribute("cmd") }
-					: new String[] { "/bin/sh", "-c", step.attribute("cmd") };
+			String executionCommand = step.requiredAttribute("cmd");
+			String[] cmd = Os.getOS() == WINDOWS ? new String[] { "cmd.exe", "/c", executionCommand }
+					: new String[] { "/bin/sh", "-c", executionCommand };
 			ProcessBuilder pb = new ProcessBuilder(cmd);
 			pb.directory(context.getWorkingDirectory().toFile());
 			logger.info("Executing command: step={} context={}", step, context);
 
 			Process p = pb.start();
 
-			AtomicInteger exitValue = new AtomicInteger(-1);
-			Future<?> execution = newSingleThreadExecutor().submit(() -> {
-				try {
-					logger.info("Waiting for Thread...");
-					resultBuilder.property(PROPERTY_STDOUT_KEY, captureOutput(p.getInputStream()))
-							.property(PROPERTY_STDERR_KEY, captureOutput(p.getErrorStream()));
-					exitValue.set(p.waitFor());
-				} catch (IOException e) {
-					logger.warn("Thread interrupted!", e);
-					exitValue.set(Integer.MIN_VALUE);
-				} catch (InterruptedException ie) {
-					Thread.currentThread().interrupt();
-				}
-				return null;
-			});
-			logger.warn("New process waiting in background...");
-			if (step.hasAttribute(TIMEOUT_ATTRIBUTE_KEY)) {
-				long timeout = step.attribute(TIMEOUT_ATTRIBUTE_KEY);
-				try {
-					execution.get(timeout + MAX_ALLOWED_TIME, TimeUnit.MILLISECONDS);
-				} catch (ExecutionException e) {
-					logger.warn("Execution error!", e);
-					resultBuilder.fail(new Fail(FailReason.RUNTIME_EXCEPTION, e.getMessage()));
+			Optional<Long> maybeTimeout = step.optionalAttribute(TIMEOUT_ATTRIBUTE_KEY, Long.class);
+			Optional<Integer> returnValue = executeWithTimeout(() -> {
+				logger.info("Waiting for Thread...");
+				resultBuilder.property(PROPERTY_STDOUT_KEY, captureOutput(p.getInputStream()))
+						.property(PROPERTY_STDERR_KEY, captureOutput(p.getErrorStream()));
+				return p.waitFor();
+			}, maybeTimeout);
+
+			boolean success;
+			int exitValue;
+			if (returnValue.isPresent()) {
+				exitValue = returnValue.get();
+				if (exitValue != 0) {
+					resultBuilder.fail(new Fail(FAILED, "Exit code: " + exitValue));
+					success = false;
+				} else {
+					success = true;
 				}
 			} else {
-				execution.get();
-			}
-
-			boolean success = true;
-			if (exitValue.get() != 0) {
-				resultBuilder.fail(new Fail(FailReason.FAILED, "Exit code: " + exitValue));
+				resultBuilder.fail(new Fail(TIMED_OUT,
+						String.format("Execution exceeds timeout! timeout=%dms", maybeTimeout.orElse(-1L))));
 				success = false;
+				exitValue = -1;
 			}
 			return resultBuilder.end(currentTimeMillis()).success(success).property(PROPERTY_EXIT_VALUE_KEY, exitValue)
 					.build();
-		} catch (ExecutionException | TimeoutException | IOException e) {
+		} catch (IOException e) {
 			logger.warn("Execution error!", e);
-			return resultBuilder.end(currentTimeMillis()).success(false)
-					.fail(new Fail(FailReason.FAILED, e.getMessage())).build();
-		} catch (InterruptedException e) {
-			currentThread().interrupt();
-			return null;
+			return resultBuilder.end(currentTimeMillis()).success(false).fail(new Fail(FAILED, e.getMessage())).build();
 		}
 	}
 
@@ -115,8 +97,8 @@ public class CommandExecutor implements StepExecutor {
 
 	@Override
 	public Stream<Attribute<?>> requiredAttribute() {
-		return Stream.of(new Attribute<>("cmd", String.class, true),
-				new Attribute<>(TIMEOUT_ATTRIBUTE_KEY, Long.class, false));
+		return Stream.of(createAttribute("cmd", String.class, true),
+				createAttribute(TIMEOUT_ATTRIBUTE_KEY, Long.class, false));
 	}
 
 }

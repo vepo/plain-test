@@ -2,6 +2,7 @@ package io.vepo.plaintest;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -79,7 +80,15 @@ public class Step {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T> T attribute(String key) {
+	public <T> Optional<T> optionalAttribute(String key, Class<T> requiredClass) {
+		if (!attributes.containsKey(key)) {
+			return Optional.empty();
+		}
+		return Optional.of((T) attributes.get(key));
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> T requiredAttribute(String key) {
 		if (!attributes.containsKey(key)) {
 			throw new IllegalStateException("Missing attribute: " + key);
 		}

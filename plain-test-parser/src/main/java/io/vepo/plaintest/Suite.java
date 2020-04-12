@@ -156,7 +156,7 @@ public class Suite {
 			return (T) suites.stream().filter(suite -> suite.getIndex() == index).findFirst()
 					.orElseThrow(() -> new RuntimeException("Could not find a Suite on this position! index=" + index));
 		} else {
-			throw new RuntimeException("Unexpected type: " + requiredClass);
+			throw new IllegalStateException("Unexpected type: " + requiredClass);
 		}
 	}
 
