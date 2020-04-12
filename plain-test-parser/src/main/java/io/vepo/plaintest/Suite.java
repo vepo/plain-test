@@ -122,18 +122,6 @@ public class Suite {
 		return attributes;
 	}
 
-	public void setAttributes(Map<SuiteAttributes, Object> attributes) {
-		this.attributes = attributes;
-	}
-
-	public void addStep(Step step) {
-		steps.add(step);
-	}
-
-	public void addSuite(Suite suite) {
-		suites.add(suite);
-	}
-
 	@SuppressWarnings("unchecked")
 	public <T> Optional<T> attribute(SuiteAttributes key) {
 		if (attributes.containsKey(key)) {
@@ -145,19 +133,6 @@ public class Suite {
 
 	public <T> Optional<T> attribute(SuiteAttributes key, Class<T> requiredClass) {
 		return attribute(key);
-	}
-
-	@SuppressWarnings("unchecked")
-	public <T> T at(int index, Class<T> requiredClass) {
-		if (requiredClass == Step.class) {
-			return (T) steps.stream().filter(step -> step.getIndex() == index).findFirst()
-					.orElseThrow(() -> new RuntimeException("Could not find a Step on this position! index=" + index));
-		} else if (requiredClass == Suite.class) {
-			return (T) suites.stream().filter(suite -> suite.getIndex() == index).findFirst()
-					.orElseThrow(() -> new RuntimeException("Could not find a Suite on this position! index=" + index));
-		} else {
-			throw new IllegalStateException("Unexpected type: " + requiredClass);
-		}
 	}
 
 	@Override

@@ -26,12 +26,16 @@ attribute
     ;
 
 value
-    : NUMBER | MULTILINE_STRING | STRING
+    : NUMBER | MULTILINE_STRING | STRING | NULL
     ;
 
 VERB
     : 'Contains'
     | 'Equals'
+    ;
+
+NULL
+    : 'null'
     ;
 
 IDENTIFIER

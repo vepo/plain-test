@@ -1,5 +1,7 @@
 package io.vepo.plaintest;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -10,18 +12,65 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 public class Step {
+	public static class StepBuilder {
+		private int index;
+		private String plugin;
+		private String name;
+		private Map<String, Object> attributes;
+		private List<Assertion<?>> assertions;
+
+		private StepBuilder() {
+			attributes = new HashMap<>();
+			assertions = new ArrayList<>();
+		}
+
+		public StepBuilder index(int index) {
+			this.index = index;
+			return this;
+		}
+
+		public StepBuilder plugin(String plugin) {
+			this.plugin = plugin;
+			return this;
+		}
+
+		public StepBuilder name(String name) {
+			this.name = name;
+			return this;
+		}
+
+		public StepBuilder attribute(String key, Object value) {
+			attributes.put(key, value);
+			return this;
+		}
+
+		public StepBuilder assertion(Assertion<?> assertion) {
+			assertions.add(assertion);
+			return this;
+		}
+
+		public Step build() {
+			return new Step(this);
+		}
+
+	}
+
+	public static final StepBuilder builder() {
+		return new StepBuilder();
+	}
+
 	private int index;
 	private String plugin;
 	private String name;
 	private Map<String, Object> attributes;
 	private List<Assertion<?>> assertions;
 
-	public Step(int index, String plugin, String name, Map<String, Object> attributes, List<Assertion<?>> assertions) {
-		this.index = index;
-		this.plugin = plugin;
-		this.name = name;
-		this.attributes = attributes;
-		this.assertions = assertions;
+	private Step(StepBuilder builder) {
+		index = builder.index;
+		plugin = builder.plugin;
+		name = builder.name;
+		attributes = builder.attributes;
+		assertions = builder.assertions;
 	}
 
 	public Step() {

@@ -2,36 +2,13 @@ package io.vepo.plaintest;
 
 import static io.vepo.plaintest.SuiteAttributes.EXECUTION_PATH;
 import static io.vepo.plaintest.SuiteFactory.parseSuite;
-import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toMap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import java.util.Map;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 public class SuiteParserTest {
-	private static class Tuple {
-		private String key;
-		private Object value;
-
-		Tuple(String key, Object value) {
-			this.key = key;
-			this.value = value;
-		}
-
-	}
-
-	private static Tuple entry(String key, Object value) {
-		return new Tuple(key, value);
-	}
-
-	private static Map<String, Object> ofEntries(Tuple... tuples) {
-		return Stream.of(tuples).collect(toMap(entry -> entry.key, entry -> entry.value));
-	}
 
 	@Nested
 	public class ExecutionDirectoryTest {
@@ -98,15 +75,15 @@ public class SuiteParserTest {
 	@Test
 	@DisplayName("It SHOULD parse index of inner Steps")
 	public void indexTest() {
-		assertEquals(
-				Suite.builder().index(0).name("T1")
-						.step(new Step(0, "HTTP", "Step1", ofEntries(entry("method", "GET")),
-								asList(new Assertion<>("responseCode", "Equals", 200L))))
-						.step(new Step(1, "CMD", "Step2", ofEntries(entry("cmd", "ls")), asList()))
-						.step(new Step(2, "CMD", "Step3", ofEntries(entry("cmd", "cd new-folder")), asList()))
-						.suite(Suite.builder().index(3).name("T2")
-								.step(new Step(0, "CMD", "Step2.1", ofEntries(entry("cmd", "ls")), asList())).build())
-						.step(new Step(4, "CMD", "Step4", ofEntries(entry("cmd", "ls *.txt")), asList())).build(),
+		assertEquals(Suite.builder().index(0).name("T1")
+				.step(Step.builder().index(0).plugin("HTTP").name("Step1").attribute("method", "GET")
+						.assertion(new Assertion<>("responseCode", "Equals", 200L)).build())
+				.step(Step.builder().index(1).plugin("CMD").name("Step2").attribute("cmd", "ls").build())
+				.step(Step.builder().index(2).plugin("CMD").name("Step3").attribute("cmd", "cd new-folder").build())
+				.suite(Suite.builder().index(3).name("T2")
+						.step(Step.builder().index(0).plugin("CMD").name("Step2.1").attribute("cmd", "ls").build())
+						.build())
+				.step(Step.builder().index(4).plugin("CMD").name("Step4").attribute("cmd", "ls *.txt").build()).build(),
 				parseSuite("Suite T1 {\n" + //
 						"    HTTP Step1 {\n" + //
 						"        method  : \"GET\"\n" + //
@@ -133,15 +110,19 @@ public class SuiteParserTest {
 	@Test
 	@DisplayName("It SHOULD parse Suite with inner Suites")
 	public void innerSuiteTest() {
-		assertEquals(Suite.builder().index(0).name("T1")
-				.step(new Step(0, "HTTP", "Step1", ofEntries(entry("method", "GET")), asList()))
-				.suite(Suite.builder().index(1).name("T2")
-						.step(new Step(0, "HTTP", "Step2", ofEntries(entry("method", "POST")), asList()))
-						.suite(Suite.builder().index(1).name("T3")
-								.step(new Step(0, "HTTP", "Step3", ofEntries(entry("method", "PUT")), asList()))
+		assertEquals(
+				Suite.builder().index(0).name("T1")
+						.step(Step.builder().index(0).plugin("HTTP").name("Step1").attribute("method", "GET").build())
+						.suite(Suite.builder().index(1).name("T2")
+								.step(Step.builder().index(0).plugin("HTTP").name("Step2").attribute("method", "POST")
+										.build())
+								.suite(Suite.builder().index(1).name("T3")
+										.step(Step.builder().index(0).plugin("HTTP").name("Step3")
+												.attribute("method", "PUT").build())
+										.build())
 								.build())
-						.build())
-				.build(), parseSuite("Suite T1 {\n" + //
+						.build(),
+				parseSuite("Suite T1 {\n" + //
 						"    HTTP Step1 {\n" + //
 						"        method: \"GET\"\n" + //
 						"    }\n" + //
@@ -161,63 +142,63 @@ public class SuiteParserTest {
 	@Test
 	@DisplayName("It SHOULD parse parameter value Multi Line String")
 	public void multilineStringTest() {
-		assertEquals(parseSuite("Suite T1 {\n" + //
-				"    HTTP Step1 {\n" + //
-				"        method  : \"POST\"\n" + //
-				"        body    : \"\"\"\n" + //
-				"                  {\n" + //
-				"                      \"id\": 1,\n" + //
-				"                      \"username\": \"vepo\"\n" + //
-				"                  }\n" + //
-				"                  \"\"\"\n" + //
-				"        assert responseCode Equals 200\n" + //
-				"    }\n" + //
-				"}"), Suite.builder().index(0).name("T1")
-						.step(new Step(0, "HTTP", "Step1", ofEntries(entry("method", "POST"), entry("body", "{\n" + //
-								"    \"id\": 1,\n" + //
-								"    \"username\": \"vepo\"\n" + //
-								"}")), asList(new Assertion<>("responseCode", "Equals", 200L))))
-						.build());
+		assertEquals(Suite.builder().index(0).name("T1").step(Step.builder().index(0).plugin("HTTP").name("Step1")
+				.attribute("method", "POST").attribute("body", "{\n" + //
+						"    \"id\": 1,\n" + //
+						"    \"username\": \"vepo\"\n" + //
+						"}")
+				.assertion(new Assertion<>("responseCode", "Equals", 200L)).build()).build(),
+				parseSuite("Suite T1 {\n" + //
+						"    HTTP Step1 {\n" + //
+						"        method  : \"POST\"\n" + //
+						"        body    : \"\"\"\n" + //
+						"                  {\n" + //
+						"                      \"id\": 1,\n" + //
+						"                      \"username\": \"vepo\"\n" + //
+						"                  }\n" + //
+						"                  \"\"\"\n" + //
+						"        assert responseCode Equals 200\n" + //
+						"    }\n" + //
+						"}"));
 	}
 
 	@Test
 	@DisplayName("It SHOULD parse Step assertion")
 	public void stepWithAssertionTest() {
-		assertEquals(parseSuite("Suite T1 {\n" + //
-				"    HTTP Step1 {\n" + //
-				"        method  : \"GET\"\n" + //
-				"        timeout : 1000\n" + //
-				"        minValue: -5\n" + //
-				"        maxValue: 1500000000\n" + //
-				"        assert responseCode    Equals 200\n" + //
-				"        assert responseMessage Equals \"OK\"\n" + //
-				"    }\n" + //
-				"}"),
-				Suite.builder().index(0).name("T1")
-						.step(new Step(0, "HTTP", "Step1",
-								ofEntries(entry("method", "GET"), entry("timeout", 1000L), entry("minValue", -5L),
-										entry("maxValue", 1500000000L)),
-								asList(new Assertion<>("responseCode", "Equals", 200L),
-										new Assertion<>("responseMessage", "Equals", "OK"))))
-						.build());
+		assertEquals(Suite.builder().index(0).name("T1")
+				.step(Step.builder().index(0).plugin("HTTP").name("Step1").attribute("method", "GET")
+						.attribute("timeout", 1000L).attribute("minValue", -5L).attribute("maxValue", 1500000000L)
+
+						.assertion(new Assertion<>("responseCode", "Equals", 200L))
+						.assertion(new Assertion<>("responseMessage", "Equals", "OK"))
+						.assertion(new Assertion<>("body", "Equals", null)).build())
+				.build(), parseSuite("Suite T1 {\n" + //
+						"    HTTP Step1 {\n" + //
+						"        method  : \"GET\"\n" + //
+						"        timeout : 1000\n" + //
+						"        minValue: -5\n" + //
+						"        maxValue: 1500000000\n" + //
+						"        assert responseCode    Equals 200\n" + //
+						"        assert responseMessage Equals \"OK\"\n" + //
+						"        assert body Equals null\n" + //
+						"    }\n" + //
+						"}"));
 	}
 
 	@Test
 	@DisplayName("It SHOULD parse a Suite with a Plugin")
 	public void suiteWithPluginParseTest() {
-		assertEquals(parseSuite("Suite T1 {\n" + //
-				"    HTTP Step1 {\n" + //
-				"        method: \"GET\"\n" + //
-				"        timeout: 1000\n" + //
-				"        minValue: -5\n" + //
-				"        maxValue: 1500000000\n" + //
-				"    }\n" + //
-				"}"), Suite
-						.builder().index(0).name("T1").step(
-								new Step(0, "HTTP", "Step1",
-										ofEntries(entry("method", "GET"), entry("timeout", 1000L),
-												entry("minValue", -5L), entry("maxValue", 1500000000L)),
-										asList()))
-						.build());
+		assertEquals(Suite.builder().index(0).name("T1")
+				.step(Step.builder().index(0).plugin("HTTP").name("Step1").attribute("method", "GET")
+						.attribute("timeout", 1000L).attribute("minValue", -5L).attribute("maxValue", 1500000000L)
+						.build())
+				.build(), parseSuite("Suite T1 {\n" + //
+						"    HTTP Step1 {\n" + //
+						"        method: \"GET\"\n" + //
+						"        timeout: 1000\n" + //
+						"        minValue: -5\n" + //
+						"        maxValue: 1500000000\n" + //
+						"    }\n" + //
+						"}"));
 	}
 }

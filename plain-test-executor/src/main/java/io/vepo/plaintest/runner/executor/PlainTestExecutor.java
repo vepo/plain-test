@@ -112,7 +112,7 @@ public class PlainTestExecutor {
 			}
 		} else if (assertion.getValue() instanceof Long) {
 			Long value = result.get(assertion.getProperty(), Long.class);
-			if (value.longValue() == ((Long) assertion.getValue()).longValue()) {
+			if (value.longValue() != ((Long) assertion.getValue()).longValue()) {
 				failCallback.accept(new Fail(FailReason.ASSERTION,
 						assertion.getProperty() + " is not equal to " + assertion.getValue()));
 			}

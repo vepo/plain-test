@@ -1,6 +1,7 @@
 package io.vepo.plaintest.runner.executor;
 
 import static io.vepo.plaintest.SuiteFactory.parseSuite;
+import static io.vepo.plaintest.runner.executor.FailReason.ASSERTION;
 import static io.vepo.plaintest.runner.executor.FailReason.RUNTIME_EXCEPTION;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -156,6 +157,124 @@ public class HttpPluginTest extends AbstractTest {
 					}));
 		});
 
+	}
+
+	private static final String HTTP_RESPONSE_CODE_ASSERTION_TEST_SUITE = "Suite HttpGet {\n" + //
+			"\n" + //
+			"    HTTP GetRequest {\n" + //
+			"        url: \"http://${host}:${port}/defaultGet\"\n" + //
+			"        method: \"GET\"\n" + //
+			"        assert statusCode Equals 200\n" + //
+			"    }\n" + //
+			"}";
+
+	private static final String HTTP_BODY_ASSERTION_TEST_SUITE = "Suite HttpGet {\n" + //
+			"\n" + //
+			"    HTTP GetRequest {\n" + //
+			"        url: \"http://${host}:${port}/defaultGet\"\n" + //
+			"        method: \"GET\"\n" + //
+			"        assert content ${Verb} \"${Content}\"\n" + //
+			"    }\n" + //
+			"}";
+
+	@Nested
+	@DisplayName("Asserts")
+	public class AssertTest {
+		@Nested
+		@DisplayName("Status Code")
+		public class StatusCodeAssertTest {
+			@Test
+			@DisplayName("It should be possible to assert responseCode")
+			public void responseCodeAssertionTest() {
+				InetSocketAddress remoteAddress = client.remoteAddress();
+				validateHttp("/defaultGet", "GET", 200, "{\"response\":\"OK\"}", 0, seconds(0), () -> {
+					String port = Integer.toString(remoteAddress.getPort());
+					Suite suite = parseSuite(HTTP_RESPONSE_CODE_ASSERTION_TEST_SUITE
+							.replace("${host}", remoteAddress.getHostName()).replace("${port}", port));
+					PlainTestExecutor executor = new PlainTestExecutor();
+
+					assertThat(executor.execute(suite)).satisfies(result -> assertTrue(result.isSuccess()))
+							.satisfies(result -> assertThat(find(result, "HttpGet")).isPresent().get()
+									.satisfies(r -> assertTrue(r.isSuccess())))
+							.satisfies(
+									result -> assertThat(find(result, "GetRequest")).isPresent().get().satisfies(r -> {
+										assertTrue(r.isSuccess());
+										assertEquals(asList(), r.getFails());
+									}));
+				});
+			}
+
+			@Test
+			@DisplayName("It should be possible to fail assert responseCode")
+			public void responseCodeAssertionFailTest() {
+				InetSocketAddress remoteAddress = client.remoteAddress();
+				validateHttp("/defaultGet", "GET", 201, "{\"response\":\"OK\"}", 0, seconds(0), () -> {
+					String port = Integer.toString(remoteAddress.getPort());
+					Suite suite = parseSuite(HTTP_RESPONSE_CODE_ASSERTION_TEST_SUITE
+							.replace("${host}", remoteAddress.getHostName()).replace("${port}", port));
+					PlainTestExecutor executor = new PlainTestExecutor();
+
+					assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.isSuccess()))
+							.satisfies(result -> assertThat(find(result, "HttpGet")).isPresent().get()
+									.satisfies(r -> assertFalse(r.isSuccess())))
+							.satisfies(
+									result -> assertThat(find(result, "GetRequest")).isPresent().get().satisfies(r -> {
+										assertFalse(r.isSuccess());
+										assertEquals(asList(new Fail(ASSERTION, "statusCode is not equal to 200")),
+												r.getFails());
+									}));
+				});
+			}
+		}
+
+		@Nested
+		@DisplayName("Body")
+		public class BodyAssertTest {
+			@Test
+			@DisplayName("It should be possible to assert responseCode")
+			public void bodyEqualsAssertionTest() {
+				InetSocketAddress remoteAddress = client.remoteAddress();
+				validateHttp("/defaultGet", "GET", 200, "{\"response\":\"OK\"}", 0, seconds(0), () -> {
+					String port = Integer.toString(remoteAddress.getPort());
+					Suite suite = parseSuite(HTTP_BODY_ASSERTION_TEST_SUITE
+							.replace("${host}", remoteAddress.getHostName()).replace("${port}", port)
+							.replace("${Verb}", "Equals").replace("${Content}", "{\\\"response\\\":\\\"OK\\\"}"));
+					PlainTestExecutor executor = new PlainTestExecutor();
+
+					assertThat(executor.execute(suite)).satisfies(result -> assertTrue(result.isSuccess()))
+							.satisfies(result -> assertThat(find(result, "HttpGet")).isPresent().get()
+									.satisfies(r -> assertTrue(r.isSuccess())))
+							.satisfies(
+									result -> assertThat(find(result, "GetRequest")).isPresent().get().satisfies(r -> {
+										assertTrue(r.isSuccess());
+										assertEquals(asList(), r.getFails());
+									}));
+				});
+			}
+
+			@Test
+			@DisplayName("It should be possible to fail assert responseCode")
+			public void responseCodeAssertionFailTest() {
+				InetSocketAddress remoteAddress = client.remoteAddress();
+				validateHttp("/defaultGet", "GET", 201, "{\"response\":\"OK\"}", 0, seconds(0), () -> {
+					String port = Integer.toString(remoteAddress.getPort());
+					Suite suite = parseSuite(HTTP_RESPONSE_CODE_ASSERTION_TEST_SUITE
+							.replace("${host}", remoteAddress.getHostName()).replace("${port}", port));
+					PlainTestExecutor executor = new PlainTestExecutor();
+
+					assertThat(executor.execute(suite)).satisfies(result -> assertFalse(result.isSuccess()))
+							.satisfies(result -> assertThat(find(result, "HttpGet")).isPresent().get()
+									.satisfies(r -> assertFalse(r.isSuccess())))
+							.satisfies(
+									result -> assertThat(find(result, "GetRequest")).isPresent().get().satisfies(r -> {
+										assertFalse(r.isSuccess());
+										assertEquals(asList(new Fail(ASSERTION, "statusCode is not equal to 200")),
+												r.getFails());
+									}));
+				});
+			}
+
+		}
 	}
 
 	private static final String HTTP_TIMEOUT_URL_TEST_SUITE = "Suite HttpGet {\n" + //

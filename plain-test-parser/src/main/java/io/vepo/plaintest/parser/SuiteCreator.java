@@ -6,10 +6,8 @@ import static java.util.Objects.nonNull;
 import static java.util.stream.IntStream.range;
 import static org.apache.commons.text.StringEscapeUtils.unescapeJava;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import io.vepo.plaintest.Assertion;
 import io.vepo.plaintest.Step;
+import io.vepo.plaintest.Step.StepBuilder;
 import io.vepo.plaintest.Suite;
 import io.vepo.plaintest.Suite.SuiteBuilder;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteListener;
@@ -39,7 +38,7 @@ public class SuiteCreator implements TestSuiteListener {
 	private static final Pattern LINE_START_PATTERN = Pattern.compile("^(\\s+)");
 	private SuiteBuilder mainSuite;
 	private Deque<SuiteBuilder> suiteQueue;
-	private Step currentStep;
+	private StepBuilder currentStepBuilder;
 
 	public SuiteCreator() {
 		mainSuite = null;
@@ -106,9 +105,8 @@ public class SuiteCreator implements TestSuiteListener {
 		int lastIndex = suiteQueue.peekLast().nextIndex();
 		if (ctx.IDENTIFIER().size() == 2) {
 			logger.debug("Creating step: " + ctx.IDENTIFIER(1) + " lastIndex=" + lastIndex);
-			currentStep = new Step(lastIndex, ctx.IDENTIFIER(0).getText(), ctx.IDENTIFIER(1).getText(), new HashMap<>(),
-					new ArrayList<>());
-			suiteQueue.peekLast().step(currentStep);
+			currentStepBuilder = Step.builder().index(lastIndex).plugin(ctx.IDENTIFIER(0).getText())
+					.name(ctx.IDENTIFIER(1).getText());
 		} else {
 			logger.warn("Could not intantiate Step: context={}", ctx);
 		}
@@ -117,6 +115,8 @@ public class SuiteCreator implements TestSuiteListener {
 	@Override
 	public void exitStep(StepContext ctx) {
 		logger.trace("Exit Step: {}", ctx);
+		suiteQueue.peekLast().step(currentStepBuilder.build());
+		currentStepBuilder = null;
 	}
 
 	@Override
@@ -129,11 +129,11 @@ public class SuiteCreator implements TestSuiteListener {
 		logger.trace("Exit Attribute: {}", ctx);
 
 		if (nonNull(ctx.value().STRING())) {
-			currentStep.addStringAttribute(ctx.IDENTIFIER().getText(), processString(ctx.value().getText()));
+			currentStepBuilder.attribute(ctx.IDENTIFIER().getText(), processString(ctx.value().getText()));
 		} else if (nonNull(ctx.value().MULTILINE_STRING())) {
-			currentStep.addStringAttribute(ctx.IDENTIFIER().getText(), processMultiLineString(ctx.value().getText()));
+			currentStepBuilder.attribute(ctx.IDENTIFIER().getText(), processMultiLineString(ctx.value().getText()));
 		} else if (nonNull(ctx.value().NUMBER())) {
-			currentStep.addNumberAttribute(ctx.IDENTIFIER().getText(), Long.valueOf((ctx.value().getText())));
+			currentStepBuilder.attribute(ctx.IDENTIFIER().getText(), Long.valueOf((ctx.value().getText())));
 		} else {
 			logger.warn("Invalid value! ctx={}", ctx);
 		}
@@ -189,14 +189,16 @@ public class SuiteCreator implements TestSuiteListener {
 		logger.trace("Enter Assertion: {}", ctx);
 
 		if (nonNull(ctx.value().STRING())) {
-			currentStep.addAssertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
+			currentStepBuilder.assertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
 					processString(ctx.value().getText())));
 		} else if (nonNull(ctx.value().MULTILINE_STRING())) {
-			currentStep.addAssertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
+			currentStepBuilder.assertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
 					processMultiLineString(ctx.value().getText())));
 		} else if (nonNull(ctx.value().NUMBER())) {
-			currentStep.addAssertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
+			currentStepBuilder.assertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
 					Long.valueOf((ctx.value().getText()))));
+		} else if (nonNull(ctx.value().NULL())) {
+			currentStepBuilder.assertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(), null));
 		} else {
 			logger.warn("Invalid value! ctx={}", ctx);
 		}
