@@ -4,7 +4,6 @@ import static io.vepo.plaintest.SuiteAttributes.EXECUTION_PATH;
 import static java.lang.System.currentTimeMillis;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toSet;
-import static java.util.stream.IntStream.rangeClosed;
 
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -44,27 +43,23 @@ public class PlainTestExecutor {
 	private Result executeSuite(Suite suite, Context context) {
 		AtomicBoolean successReference = new AtomicBoolean(true);
 		ResultBuilder resultBuilder = Result.builder().name(suite.getName()).start(currentTimeMillis());
-		rangeClosed(0, suite.lastIndex()).forEachOrdered(index -> {
-			if (suite.isStep(index)) {
-				Result stepResult = executeStep(suite.at(index, Step.class), context);
-				logger.debug("Step Executed! results={}", stepResult);
-				successReference.set(successReference.get() && stepResult.isSuccess());
-				resultBuilder.result(stepResult);
-				context.addResult(stepResult);
-			} else {
-				Suite innerSuite = suite.at(index, Suite.class);
-				Context innerContext = new InnerSuiteContext(context,
-						innerSuite.attribute(EXECUTION_PATH, String.class)
-								.map(path -> context.getWorkingDirectory().resolve(path).toAbsolutePath())
-								.orElse(context.getWorkingDirectory()));
-				Result suiteResult = executeSuite(innerSuite, innerContext);
-				logger.debug("Suite Executed! results={}", suiteResult);
-				successReference.set(successReference.get() && suiteResult.isSuccess());
-				resultBuilder.result(suiteResult);
-				context.addResult(suiteResult);
-			}
+		suite.forEachOrdered(innerSuite -> {
+			Context innerContext = new InnerSuiteContext(context,
+					innerSuite.attribute(EXECUTION_PATH, String.class)
+							.map(path -> context.getWorkingDirectory().resolve(path).toAbsolutePath())
+							.orElse(context.getWorkingDirectory()));
+			Result suiteResult = executeSuite(innerSuite, innerContext);
+			logger.debug("Suite Executed! results={}", suiteResult);
+			successReference.set(successReference.get() && suiteResult.isSuccess());
+			resultBuilder.result(suiteResult);
+			context.addResult(suiteResult);
+		}, innerStep -> {
+			Result stepResult = executeStep(innerStep, context);
+			logger.debug("Step Executed! results={}", stepResult);
+			successReference.set(successReference.get() && stepResult.isSuccess());
+			resultBuilder.result(stepResult);
+			context.addResult(stepResult);
 		});
-
 		return resultBuilder.end(currentTimeMillis()).success(successReference.get()).build();
 	}
 

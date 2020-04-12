@@ -1,5 +1,6 @@
 package io.vepo.plaintest.parser;
 
+import static io.vepo.plaintest.SuiteAttributes.EXECUTION_PATH;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.stream.IntStream.range;
@@ -10,7 +11,6 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import io.vepo.plaintest.Assertion;
 import io.vepo.plaintest.Step;
 import io.vepo.plaintest.Suite;
+import io.vepo.plaintest.Suite.SuiteBuilder;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteListener;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.AssertionContext;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.AttributeContext;
@@ -36,14 +37,13 @@ import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.ValueContext;
 public class SuiteCreator implements TestSuiteListener {
 	private static final Logger logger = LoggerFactory.getLogger(SuiteCreator.class);
 	private static final Pattern LINE_START_PATTERN = Pattern.compile("^(\\s+)");
-	private Suite testSuite;
-	private Suite currentSuite;
-	private Deque<Suite> suites;
+	private SuiteBuilder mainSuite;
+	private Deque<SuiteBuilder> suiteQueue;
 	private Step currentStep;
 
 	public SuiteCreator() {
-		this.currentSuite = this.testSuite = null;
-		this.suites = new LinkedList<>();
+		mainSuite = null;
+		suiteQueue = new LinkedList<>();
 	}
 
 	@Override
@@ -69,19 +69,18 @@ public class SuiteCreator implements TestSuiteListener {
 	@Override
 	public void enterSuite(SuiteContext ctx) {
 		logger.trace("Enter Suite: {}", ctx);
-		Suite previousTestSuite = this.currentSuite;
-		this.currentSuite = new Suite(
-				Optional.ofNullable(previousTestSuite).map(Suite::lastIndex).map(i -> i + 1).orElse(0),
-				ctx.IDENTIFIER().getText(), new ArrayList<>(), new ArrayList<>(), new HashMap<>());
 
-		this.suites.addLast(currentSuite);
-
-		if (isNull(this.testSuite)) {
-			this.testSuite = this.currentSuite;
+		int nextIndex;
+		if (suiteQueue.isEmpty()) {
+			nextIndex = 0;
+		} else {
+			nextIndex = suiteQueue.peekLast().nextIndex();
 		}
+		logger.info("Creating suite: " + ctx.IDENTIFIER().getText() + " lastIndex=" + nextIndex);
+		suiteQueue.addLast(Suite.builder().index(nextIndex).name(ctx.IDENTIFIER().getText()));
 
-		if (nonNull(previousTestSuite)) {
-			previousTestSuite.addSuite(this.currentSuite);
+		if (isNull(mainSuite)) {
+			mainSuite = suiteQueue.peekLast();
 		}
 	}
 
@@ -89,22 +88,27 @@ public class SuiteCreator implements TestSuiteListener {
 	public void exitSuite(SuiteContext ctx) {
 		logger.trace("Exit Suite: {}", ctx);
 
-		this.suites.pollLast();
-		this.currentSuite = this.suites.peekLast();
+		Suite builtSuite = suiteQueue.pollLast().build();
+
+		if (!suiteQueue.isEmpty()) {
+			suiteQueue.peekLast().suite(builtSuite);
+		}
 	}
 
 	public Suite getTestSuite() {
-		return testSuite;
+		return mainSuite.build();
 	}
 
 	@Override
 	public void enterStep(StepContext ctx) {
 		logger.trace("Enter Step: {}", ctx);
-		int lastIndex = this.currentSuite.lastIndex();
+
+		int lastIndex = suiteQueue.peekLast().nextIndex();
 		if (ctx.IDENTIFIER().size() == 2) {
-			this.currentStep = new Step(lastIndex + 1, ctx.IDENTIFIER(0).getText(), ctx.IDENTIFIER(1).getText(),
-					new HashMap<>(), new ArrayList<>());
-			this.currentSuite.addStep(currentStep);
+			logger.debug("Creating step: " + ctx.IDENTIFIER(1) + " lastIndex=" + lastIndex);
+			currentStep = new Step(lastIndex, ctx.IDENTIFIER(0).getText(), ctx.IDENTIFIER(1).getText(), new HashMap<>(),
+					new ArrayList<>());
+			suiteQueue.peekLast().step(currentStep);
 		} else {
 			logger.warn("Could not intantiate Step: context={}", ctx);
 		}
@@ -125,12 +129,11 @@ public class SuiteCreator implements TestSuiteListener {
 		logger.trace("Exit Attribute: {}", ctx);
 
 		if (nonNull(ctx.value().STRING())) {
-			this.currentStep.addStringAttribute(ctx.IDENTIFIER().getText(), processString(ctx.value().getText()));
+			currentStep.addStringAttribute(ctx.IDENTIFIER().getText(), processString(ctx.value().getText()));
 		} else if (nonNull(ctx.value().MULTILINE_STRING())) {
-			this.currentStep.addStringAttribute(ctx.IDENTIFIER().getText(),
-					processMultiLineString(ctx.value().getText()));
+			currentStep.addStringAttribute(ctx.IDENTIFIER().getText(), processMultiLineString(ctx.value().getText()));
 		} else if (nonNull(ctx.value().NUMBER())) {
-			this.currentStep.addNumberAttribute(ctx.IDENTIFIER().getText(), Long.valueOf((ctx.value().getText())));
+			currentStep.addNumberAttribute(ctx.IDENTIFIER().getText(), Long.valueOf((ctx.value().getText())));
 		} else {
 			logger.warn("Invalid value! ctx={}", ctx);
 		}
@@ -186,13 +189,13 @@ public class SuiteCreator implements TestSuiteListener {
 		logger.trace("Enter Assertion: {}", ctx);
 
 		if (nonNull(ctx.value().STRING())) {
-			this.currentStep.addAssertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
+			currentStep.addAssertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
 					processString(ctx.value().getText())));
 		} else if (nonNull(ctx.value().MULTILINE_STRING())) {
-			this.currentStep.addAssertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
+			currentStep.addAssertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
 					processMultiLineString(ctx.value().getText())));
 		} else if (nonNull(ctx.value().NUMBER())) {
-			this.currentStep.addAssertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
+			currentStep.addAssertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
 					Long.valueOf((ctx.value().getText()))));
 		} else {
 			logger.warn("Invalid value! ctx={}", ctx);
@@ -208,9 +211,9 @@ public class SuiteCreator implements TestSuiteListener {
 	public void exitExecDirectory(ExecDirectoryContext ctx) {
 		logger.trace("Exit ExecDirectory: {}", ctx);
 		if (nonNull(ctx.FILE_PATH())) {
-			this.currentSuite.setExecDirectory(ctx.FILE_PATH().toString());
+			suiteQueue.peekLast().attribute(EXECUTION_PATH, ctx.FILE_PATH().toString());
 		} else if (nonNull(ctx.IDENTIFIER())) {
-			this.currentSuite.setExecDirectory(ctx.IDENTIFIER().toString());
+			suiteQueue.peekLast().attribute(EXECUTION_PATH, ctx.IDENTIFIER().toString());
 		} else {
 			logger.warn("Invalid value! ctx={}", ctx);
 		}

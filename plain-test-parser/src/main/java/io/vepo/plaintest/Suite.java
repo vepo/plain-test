@@ -1,10 +1,13 @@
 package io.vepo.plaintest;
 
-import static io.vepo.plaintest.SuiteAttributes.EXECUTION_PATH;
-
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -13,19 +16,71 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 public class Suite {
+	public static final class SuiteBuilder {
+		private int index;
+		private String name;
+		private List<Suite> suites;
+		private List<Step> steps;
+		private Map<SuiteAttributes, Object> attributes;
+
+		private SuiteBuilder() {
+			attributes = new HashMap<>();
+			suites = new ArrayList<>();
+			steps = new ArrayList<>();
+		}
+
+		public SuiteBuilder index(int index) {
+			this.index = index;
+			return this;
+		}
+
+		public SuiteBuilder name(String name) {
+			this.name = name;
+			return this;
+		}
+
+		public SuiteBuilder suite(Suite suite) {
+			suites.add(suite);
+			return this;
+		}
+
+		public SuiteBuilder step(Step step) {
+			steps.add(step);
+			return this;
+		}
+
+		public SuiteBuilder attribute(SuiteAttributes key, Object value) {
+			attributes.put(key, value);
+			return this;
+		}
+
+		public Suite build() {
+			return new Suite(this);
+		}
+
+		public int nextIndex() {
+			return IntStream.concat(suites.stream().mapToInt(Suite::getIndex), steps.stream().mapToInt(Step::getIndex))
+					.max().orElse(-1) + 1;
+
+		}
+	}
+
+	public static final SuiteBuilder builder() {
+		return new SuiteBuilder();
+	}
+
 	private int index;
 	private String name;
 	private List<Suite> suites;
 	private List<Step> steps;
 	private Map<SuiteAttributes, Object> attributes;
 
-	public Suite(int index, String name, List<Suite> suites, List<Step> steps,
-			Map<SuiteAttributes, Object> attributes) {
-		this.index = index;
-		this.name = name;
-		this.suites = suites;
-		this.steps = steps;
-		this.attributes = attributes;
+	private Suite(SuiteBuilder builder) {
+		index = builder.index;
+		name = builder.name;
+		suites = builder.suites;
+		steps = builder.steps;
+		attributes = builder.attributes;
 	}
 
 	public Suite() {
@@ -79,19 +134,6 @@ public class Suite {
 		suites.add(suite);
 	}
 
-	public int lastIndex() {
-		return IntStream.concat(suites.stream().mapToInt(Suite::getIndex), steps.stream().mapToInt(Step::getIndex))
-				.max().orElse(-1);
-	}
-
-	public boolean isStep(int position) {
-		return steps.stream().filter(step -> step.getIndex() == position).count() == 1L;
-	}
-
-	public boolean isSuite(int position) {
-		return suites.stream().filter(step -> step.getIndex() == position).count() == 1L;
-	}
-
 	@SuppressWarnings("unchecked")
 	public <T> Optional<T> attribute(SuiteAttributes key) {
 		if (attributes.containsKey(key)) {
@@ -116,10 +158,6 @@ public class Suite {
 		} else {
 			throw new RuntimeException("Unexpected type: " + requiredClass);
 		}
-	}
-
-	public void setExecDirectory(String execDirectory) {
-		attributes.put(EXECUTION_PATH, execDirectory);
 	}
 
 	@Override
@@ -151,4 +189,30 @@ public class Suite {
 				.append("attributes", attributes).append("steps", steps).append("suites", suites).toString();
 	}
 
+	public void forEachOrdered(Consumer<Suite> suiteConsumer, Consumer<Step> stepConsumer) {
+		AtomicInteger currentIndex = new AtomicInteger(0);
+		List<Step> remainingSteps = new LinkedList<>(steps);
+		List<Suite> remainingSuites = new LinkedList<>(suites);
+		while (!remainingSteps.isEmpty() || !remainingSuites.isEmpty()) {
+			remainingSteps.removeIf(step -> {
+				if (step.getIndex() == currentIndex.get()) {
+					stepConsumer.accept(step);
+					currentIndex.incrementAndGet();
+					return true;
+				} else {
+					return false;
+				}
+			});
+
+			remainingSuites.removeIf(step -> {
+				if (step.getIndex() == currentIndex.get()) {
+					suiteConsumer.accept(step);
+					currentIndex.incrementAndGet();
+					return true;
+				} else {
+					return false;
+				}
+			});
+		}
+	}
 }

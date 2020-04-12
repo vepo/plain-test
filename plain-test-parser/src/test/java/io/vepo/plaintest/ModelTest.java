@@ -1,8 +1,5 @@
 package io.vepo.plaintest;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyMap;
-
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -17,9 +14,9 @@ public class ModelTest {
 	@ValueSource(classes = { Suite.class, Step.class, Assertion.class, })
 	public void checkModelTest(Class<?> checkClass) {
 		ToStringVerifier.forClass(checkClass).verify();
-		EqualsVerifier.forClass(checkClass).usingGetClass()
-				.withPrefabValues(Suite.class, new Suite(0, "S1", emptyList(), emptyList(), emptyMap()),
-						new Suite(1, "S2", emptyList(), emptyList(), emptyMap()))
+		EqualsVerifier
+				.forClass(checkClass).usingGetClass().withPrefabValues(Suite.class,
+						Suite.builder().index(0).name("S1").build(), Suite.builder().index(1).name("S2").build())
 				.suppress(Warning.NONFINAL_FIELDS).verify();
 	}
 }
