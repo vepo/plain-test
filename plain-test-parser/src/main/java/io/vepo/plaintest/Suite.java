@@ -69,11 +69,11 @@ public class Suite {
 		return new SuiteBuilder();
 	}
 
-	private int index;
-	private String name;
-	private List<Suite> suites;
-	private List<Step> steps;
-	private Map<SuiteAttributes, Object> attributes;
+	private final int index;
+	private final String name;
+	private final List<Suite> suites;
+	private final List<Step> steps;
+	private final Map<SuiteAttributes, Object> attributes;
 
 	private Suite(SuiteBuilder builder) {
 		index = builder.index;
@@ -83,39 +83,20 @@ public class Suite {
 		attributes = builder.attributes;
 	}
 
-	public Suite() {
-	}
-
 	public int getIndex() {
 		return index;
-	}
-
-	public void setIndex(int index) {
-		this.index = index;
 	}
 
 	public String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
-		this.name = name;
-	}
-
 	public List<Suite> getSuites() {
 		return suites;
 	}
 
-	public void setSuites(List<Suite> suites) {
-		this.suites = suites;
-	}
-
 	public List<Step> getSteps() {
 		return steps;
-	}
-
-	public void setSteps(List<Step> steps) {
-		this.steps = steps;
 	}
 
 	public Map<SuiteAttributes, Object> getAttributes() {
@@ -132,7 +113,16 @@ public class Suite {
 	}
 
 	public <T> Optional<T> attribute(SuiteAttributes key, Class<T> requiredClass) {
-		return attribute(key);
+		if (attributes.containsKey(key)) {
+			Object value = attributes.get(key);
+			if (value.getClass().isAssignableFrom(requiredClass)) {
+				return Optional.of((T) value);
+			} else {
+				throw new IllegalStateException("Invalid type!");
+			}
+		} else {
+			return Optional.empty();
+		}
 	}
 
 	@Override

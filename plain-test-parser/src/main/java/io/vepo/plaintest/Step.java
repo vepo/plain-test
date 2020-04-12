@@ -59,11 +59,11 @@ public class Step {
 		return new StepBuilder();
 	}
 
-	private int index;
-	private String plugin;
-	private String name;
-	private Map<String, Object> attributes;
-	private List<Assertion<?>> assertions;
+	private final int index;
+	private final String plugin;
+	private final String name;
+	private final Map<String, Object> attributes;
+	private final List<Assertion<?>> assertions;
 
 	private Step(StepBuilder builder) {
 		index = builder.index;
@@ -73,59 +73,24 @@ public class Step {
 		assertions = builder.assertions;
 	}
 
-	public Step() {
-	}
-
 	public int getIndex() {
 		return index;
-	}
-
-	public void setIndex(int index) {
-		this.index = index;
 	}
 
 	public String getPlugin() {
 		return plugin;
 	}
 
-	public void setPlugin(String plugin) {
-		this.plugin = plugin;
-	}
-
 	public String getName() {
 		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
 	}
 
 	public Map<String, Object> getAttributes() {
 		return attributes;
 	}
 
-	public void setAttributes(Map<String, Object> attributes) {
-		this.attributes = attributes;
-	}
-
 	public List<Assertion<?>> getAssertions() {
 		return assertions;
-	}
-
-	public void setAssertions(List<Assertion<?>> assertions) {
-		this.assertions = assertions;
-	}
-
-	public void addStringAttribute(String key, String value) {
-		attributes.put(key, value);
-	}
-
-	public void addNumberAttribute(String key, Long value) {
-		attributes.put(key, value);
-	}
-
-	public <T> void addAssertion(Assertion<T> assertion) {
-		assertions.add(assertion);
 	}
 
 	@SuppressWarnings("unchecked")

@@ -1,7 +1,12 @@
 package io.vepo.plaintest;
 
+import static io.vepo.plaintest.SuiteAttributes.EXECUTION_PATH;
+import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -9,6 +14,32 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 public class SuiteTest {
+
+	@Test
+	public void builderTest() {
+		Suite suite = Suite.builder().index(0).name("NAME").suite(Suite.builder().index(1).name("S1").build())
+				.step(Step.builder().name("Step1").build()).attribute(EXECUTION_PATH, "value1").build();
+		assertEquals(0, suite.getIndex());
+		assertEquals("NAME", suite.getName());
+		assertEquals(asList(Suite.builder().index(1).name("S1").build()), suite.getSuites());
+		assertEquals(asList(Step.builder().name("Step1").build()), suite.getSteps());
+		assertEquals(Collections.singletonMap(EXECUTION_PATH, "value1"), suite.getAttributes());
+	}
+
+	@Test
+	public void attributeTest() {
+		assertThat(Suite.builder().attribute(EXECUTION_PATH, "x").build().attribute(EXECUTION_PATH)).isPresent()
+				.hasValue("x");
+		assertThat(Suite.builder().build().attribute(EXECUTION_PATH)).isNotPresent();
+		assertThat(Suite.builder().attribute(EXECUTION_PATH, "x").build().attribute(EXECUTION_PATH, String.class))
+				.isPresent().hasValue("x");
+		assertThat(Suite.builder().build().attribute(EXECUTION_PATH, String.class)).isNotPresent();
+
+		assertThatThrownBy(
+				() -> Suite.builder().attribute(EXECUTION_PATH, "x").build().attribute(EXECUTION_PATH, Long.class))
+						.isInstanceOf(IllegalStateException.class);
+	}
+
 	@Test
 	public void consumeOrderedTest() {
 		Deque<Object> elements = new LinkedList<>();
