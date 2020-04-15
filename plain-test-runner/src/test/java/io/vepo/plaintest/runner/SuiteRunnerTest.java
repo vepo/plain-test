@@ -8,6 +8,6 @@ public class SuiteRunnerTest {
 //		SuiteRunner.main(Paths.get(".", "src", "test", "resources", "Https.suite").toString());
 //
 //		SuiteRunner.main();
-		SuiteRunner.main("jmx-export");
+//		SuiteRunner.main("jmx-export");
 	}
 }
