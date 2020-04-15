@@ -24,6 +24,7 @@
 		<module>plain-test-parser</module>
 		<module>plain-test-executor</module>
 		<module>plain-test-runner</module>
+		<module>plain-test-jmeter-integration</module>
 	</modules>
 
 	<dependencyManagement>
@@ -130,7 +131,6 @@
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
 					<version>3.0.0-M4</version>
-
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
