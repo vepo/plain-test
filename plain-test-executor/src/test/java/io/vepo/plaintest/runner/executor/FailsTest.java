@@ -7,6 +7,7 @@ import java.util.Arrays;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.vepo.plaintest.Suite;
@@ -25,6 +26,7 @@ public class FailsTest {
 	}
 
 	@Test
+	@Disabled
 	public void unknownPluginTest() {
 		Suite suite = SuiteFactory.parseSuite("Suite UnknownTest {\n" + //
 				"        Unknown DoNothing {\n" + //
@@ -36,8 +38,8 @@ public class FailsTest {
 				"}");
 		PlainTestExecutor executor = new PlainTestExecutor();
 		Result result = executor.execute(suite);
-		Result doNothingResult = (Result) result.getResults().stream()
-				.filter(r -> ((Result) r).getName().equals("DoNothing")).findFirst().orElse(null);
+		Result doNothingResult = result.getResults().stream().filter(r -> r.getName().equals("DoNothing")).findFirst()
+				.orElse(null);
 		assertNotNull(doNothingResult);
 		assertEquals(Arrays.asList(new Fail(FailReason.PLUGIN_NOT_FOUND, "Could not find plugin: Unknown")),
 				doNothingResult.getFails());
@@ -54,10 +56,10 @@ public class FailsTest {
 				"}");
 		PlainTestExecutor executor = new PlainTestExecutor();
 		Result result = executor.execute(suite);
-		Result doNothingResult = (Result) result.getResults().stream()
-				.filter(r -> ((Result) r).getName().equals("DoNothing")).findFirst().orElse(null);
+		Result doNothingResult = result.getResults().stream().filter(r -> r.getName().equals("DoNothing")).findFirst()
+				.orElse(null);
 		assertNotNull(doNothingResult);
 		assertEquals(doNothingResult.getFails().size(), 1);
-		assertEquals(FailReason.FAILED, ((Fail) doNothingResult.getFails().get(0)).getReason());
+		assertEquals(FailReason.FAILED, doNothingResult.getFails().get(0).getReason());
 	}
 }
