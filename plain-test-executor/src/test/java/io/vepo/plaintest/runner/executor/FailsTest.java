@@ -5,28 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Arrays;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.vepo.plaintest.Suite;
 import io.vepo.plaintest.SuiteFactory;
-import io.vepo.plaintest.runner.utils.MockOs;
 
 public class FailsTest {
-	@BeforeEach
-	public void setup() {
-		MockOs.mockUnix();
-	}
-
-	@AfterEach
-	public void shutdown() {
-		MockOs.clear();
-	}
 
 	@Test
-	@Disabled
 	public void unknownPluginTest() {
 		Suite suite = SuiteFactory.parseSuite("Suite UnknownTest {\n" + //
 				"        Unknown DoNothing {\n" + //
