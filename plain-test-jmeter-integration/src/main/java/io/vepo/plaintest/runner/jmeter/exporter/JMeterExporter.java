@@ -1,19 +1,21 @@
 package io.vepo.plaintest.runner.jmeter.exporter;
 
 import static java.nio.charset.Charset.defaultCharset;
+import static java.nio.file.Files.copy;
 import static java.nio.file.Files.createTempFile;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.util.Objects.isNull;
 import static org.apache.commons.text.StringEscapeUtils.escapeJava;
 import static org.apache.jmeter.save.SaveService.loadProperties;
 import static org.apache.jmeter.save.SaveService.saveTree;
+import static org.apache.jmeter.testelement.TestElement.GUI_CLASS;
+import static org.apache.jmeter.testelement.TestElement.TEST_CLASS;
 import static org.apache.jmeter.util.JMeterUtils.loadJMeterProperties;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +23,9 @@ import java.util.ServiceLoader;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jmeter.config.Arguments;
+import org.apache.jmeter.control.GenericController;
 import org.apache.jmeter.control.LoopController;
+import org.apache.jmeter.control.gui.LogicControllerGui;
 import org.apache.jmeter.testelement.TestElement;
 import org.apache.jmeter.testelement.TestPlan;
 import org.apache.jorphan.collections.HashTree;
@@ -29,6 +33,7 @@ import org.apache.jorphan.collections.ListedHashTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vepo.plaintest.Step;
 import io.vepo.plaintest.Suite;
 
 public class JMeterExporter {
@@ -73,10 +78,8 @@ public class JMeterExporter {
 
 		HashTree threadGroupHashTree = testPlanTree.add(testPlan, threadGroup);
 
-		rootSuite.forEachOrdered(suite -> logger.info("Adding suite: {}", suite), step -> {
-			logger.info("Adding Step: {}", step);
-			threadGroupHashTree.add(stepExporters.get(step.getPlugin()).createSampler(step));
-		});
+		rootSuite.forEachOrdered(suite -> createSuite(threadGroupHashTree, suite),
+				step -> createStep(threadGroupHashTree, step));
 
 		try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 			loadProperties();
@@ -85,6 +88,21 @@ public class JMeterExporter {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private void createStep(HashTree tree, Step step) {
+		logger.info("Adding Step: {}", step);
+		tree.add(stepExporters.get(step.getPlugin()).createSampler(step));
+	}
+
+	private void createSuite(HashTree tree, Suite suite) {
+		logger.info("Adding suite: {}", suite);
+		GenericController controller = new GenericController();
+		controller.setName(suite.getName());
+		setupGuiValues(controller);
+		HashTree innerTree = tree.add(controller);
+		suite.forEachOrdered(innerSuite -> createSuite(innerTree, innerSuite),
+				innerStep -> createStep(innerTree, innerStep));
 	}
 
 	private void setupJMeter() {
@@ -113,10 +131,10 @@ public class JMeterExporter {
 					.replace("${upgrade.properties}", escapeJava(upgradeProperties.toString()))
 					.replace("${saveservice.properties}", escapeJava(saveServiceProperties.toString()));
 			try (InputStream inputStream = new ByteArrayInputStream(jmeterPropertiesContents.getBytes())) {
-				Files.copy(inputStream, jmeterProperties, REPLACE_EXISTING);
+				copy(inputStream, jmeterProperties, REPLACE_EXISTING);
 			}
-			Files.copy(upgradePropertiesStream, upgradeProperties, REPLACE_EXISTING);
-			Files.copy(saveServiceProperties, upgradeProperties, REPLACE_EXISTING);
+			copy(upgradePropertiesStream, upgradeProperties, REPLACE_EXISTING);
+			copy(saveServicePropertiesStream, saveServiceProperties, REPLACE_EXISTING);
 
 			loadJMeterProperties(jmeterProperties.toFile().getAbsolutePath());
 		} catch (IOException e) {
@@ -125,9 +143,12 @@ public class JMeterExporter {
 	}
 
 	public static void setupGuiValues(TestElement element) {
-		element.setProperty(TestElement.GUI_CLASS, element.getClass().getSimpleName() + "Gui");
-		element.setProperty(TestElement.TEST_CLASS, element.getClass().getSimpleName());
-
+		if (element.getClass() == GenericController.class) {
+			element.setProperty(GUI_CLASS, LogicControllerGui.class.getSimpleName());
+		} else {
+			element.setProperty(GUI_CLASS, element.getClass().getSimpleName() + "Gui");
+		}
+		element.setProperty(TEST_CLASS, element.getClass().getSimpleName());
 	}
 
 }
