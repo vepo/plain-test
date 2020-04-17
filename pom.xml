@@ -21,10 +21,10 @@
 	</properties>
 
 	<modules>
-		<module>plain-test-parser</module>
-		<module>plain-test-executor</module>
-		<module>plain-test-runner</module>
-		<module>plain-test-jmeter-integration</module>
+		<module>parser</module>
+		<module>executor</module>
+		<module>runner</module>
+		<module>jmeter</module>
 	</modules>
 
 	<dependencyManagement>

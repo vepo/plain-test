@@ -1,0 +1,2 @@
+io.vepo.plaintest.runner.executor.plugins.ProcessExecutor
+io.vepo.plaintest.runner.executor.plugins.HttpExecutor
