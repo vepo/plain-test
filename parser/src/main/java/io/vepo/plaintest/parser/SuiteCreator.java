@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
@@ -104,7 +105,6 @@ public class SuiteCreator implements TestSuiteListener {
 
 		int lastIndex = suiteQueue.peekLast().nextIndex();
 		if (ctx.IDENTIFIER().size() == 2) {
-			logger.debug("Creating step: " + ctx.IDENTIFIER(1) + " lastIndex=" + lastIndex);
 			currentStepBuilder = Step.builder().index(lastIndex).plugin(ctx.IDENTIFIER(0).getText())
 					.name(ctx.IDENTIFIER(1).getText());
 		} else {
@@ -135,7 +135,7 @@ public class SuiteCreator implements TestSuiteListener {
 		} else if (nonNull(ctx.value().NUMBER())) {
 			currentStepBuilder.attribute(ctx.IDENTIFIER().getText(), Long.valueOf((ctx.value().getText())));
 		} else {
-			logger.warn("Invalid value! ctx={}", ctx);
+			throwInvalidContext(ctx);
 		}
 	}
 
@@ -200,8 +200,13 @@ public class SuiteCreator implements TestSuiteListener {
 		} else if (nonNull(ctx.value().NULL())) {
 			currentStepBuilder.assertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(), null));
 		} else {
-			logger.warn("Invalid value! ctx={}", ctx);
+			throwInvalidContext(ctx);
 		}
+	}
+
+	private void throwInvalidContext(RuleContext ctx) {
+		logger.warn("Invalid value! ctx={}", ctx);
+		throw new IllegalStateException(String.format("Invalid context: %s", ctx.toString()));
 	}
 
 	@Override
@@ -217,7 +222,7 @@ public class SuiteCreator implements TestSuiteListener {
 		} else if (nonNull(ctx.IDENTIFIER())) {
 			suiteQueue.peekLast().attribute(EXECUTION_PATH, ctx.IDENTIFIER().toString());
 		} else {
-			logger.warn("Invalid value! ctx={}", ctx);
+			throwInvalidContext(ctx);
 		}
 	}
 

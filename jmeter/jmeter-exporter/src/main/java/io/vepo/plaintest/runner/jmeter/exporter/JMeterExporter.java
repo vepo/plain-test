@@ -37,6 +37,7 @@ import io.vepo.plaintest.Step;
 import io.vepo.plaintest.Suite;
 
 public class JMeterExporter {
+	private static final String EXT_PROPERTIES = ".properties";
 	private static final Logger logger = LoggerFactory.getLogger(JMeterExporter.class);
 	private Map<String, StepExporter> stepExporters;
 
@@ -108,9 +109,9 @@ public class JMeterExporter {
 	private void setupJMeter() {
 		// JMeter initialization (properties, log levels, locale, etc)
 		try {
-			Path jmeterProperties = createTempFile("jmeter", ".properties");
-			Path upgradeProperties = createTempFile("upgrade", ".properties");
-			Path saveServiceProperties = createTempFile("saveService", ".properties");
+			Path jmeterProperties = createTempFile("jmeter", EXT_PROPERTIES);
+			Path upgradeProperties = createTempFile("upgrade", EXT_PROPERTIES);
+			Path saveServiceProperties = createTempFile("saveService", EXT_PROPERTIES);
 			InputStream jmeterPropertiesStream = JMeterExporter.class.getResourceAsStream("/jmeter.properties");
 			if (isNull(jmeterPropertiesStream)) {
 				throw new IllegalStateException("Could not load jmeter.properties");

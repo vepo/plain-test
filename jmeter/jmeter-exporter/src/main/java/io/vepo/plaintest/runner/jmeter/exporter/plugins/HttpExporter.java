@@ -9,6 +9,8 @@ import io.vepo.plaintest.Step;
 import io.vepo.plaintest.runner.jmeter.exporter.StepExporter;
 
 public class HttpExporter implements StepExporter {
+	private static final String HTTPS_PROTOCOL = "https://";
+	private static final String HTTP_PROTOCOL = "http://";
 	public static final String HTTP_EXECUTOR_PLUGIN_NAME = "HTTP";
 
 	@Override
@@ -32,10 +34,10 @@ public class HttpExporter implements StepExporter {
 
 	private int getPort(Step step) {
 		String url = step.requiredAttribute("url");
-		if (url.toLowerCase().startsWith("http://")) {
-			url = url.substring("http://".length());
-		} else if (url.toLowerCase().startsWith("https://")) {
-			url = url.substring("https://".length());
+		if (url.toLowerCase().startsWith(HTTP_PROTOCOL)) {
+			url = url.substring(HTTP_PROTOCOL.length());
+		} else if (url.toLowerCase().startsWith(HTTPS_PROTOCOL)) {
+			url = url.substring(HTTPS_PROTOCOL.length());
 		}
 		int slashPosition = url.indexOf('/');
 		if (slashPosition > 0) {
@@ -51,10 +53,10 @@ public class HttpExporter implements StepExporter {
 
 	private String getPath(Step step) {
 		String url = step.requiredAttribute("url");
-		if (url.toLowerCase().startsWith("http://")) {
-			url = url.substring("http://".length());
-		} else if (url.toLowerCase().startsWith("https://")) {
-			url = url.substring("https://".length());
+		if (url.toLowerCase().startsWith(HTTP_PROTOCOL)) {
+			url = url.substring(HTTP_PROTOCOL.length());
+		} else if (url.toLowerCase().startsWith(HTTPS_PROTOCOL)) {
+			url = url.substring(HTTPS_PROTOCOL.length());
 		}
 		int slashPosition = url.indexOf('/');
 		if (slashPosition > 0) {
@@ -66,9 +68,9 @@ public class HttpExporter implements StepExporter {
 
 	private String getProtocol(Step step) {
 		String url = step.requiredAttribute("url");
-		if (url.toLowerCase().startsWith("http://")) {
+		if (url.toLowerCase().startsWith(HTTP_PROTOCOL)) {
 			return "http";
-		} else if (url.toLowerCase().startsWith("https://")) {
+		} else if (url.toLowerCase().startsWith(HTTPS_PROTOCOL)) {
 			return "https";
 		}
 		return "http";
@@ -76,10 +78,10 @@ public class HttpExporter implements StepExporter {
 
 	private String getDomain(Step step) {
 		String url = step.requiredAttribute("url");
-		if (url.toLowerCase().startsWith("http://")) {
-			url = url.substring("http://".length());
-		} else if (url.toLowerCase().startsWith("https://")) {
-			url = url.substring("https://".length());
+		if (url.toLowerCase().startsWith(HTTP_PROTOCOL)) {
+			url = url.substring(HTTP_PROTOCOL.length());
+		} else if (url.toLowerCase().startsWith(HTTPS_PROTOCOL)) {
+			url = url.substring(HTTPS_PROTOCOL.length());
 		}
 		int slashPosition = url.indexOf('/');
 		if (slashPosition > 0) {
