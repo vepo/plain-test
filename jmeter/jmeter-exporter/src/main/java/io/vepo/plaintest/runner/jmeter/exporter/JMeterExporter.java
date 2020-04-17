@@ -87,7 +87,7 @@ public class JMeterExporter {
 			saveTree(testPlanTree, baos);
 			return new String(baos.toByteArray());
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			throw new IllegalStateException("Cannot write JMX!", e);
 		}
 	}
 
@@ -139,7 +139,7 @@ public class JMeterExporter {
 
 			loadJMeterProperties(jmeterProperties.toFile().getAbsolutePath());
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			throw new IllegalStateException("Cannot read/write properties files!", e);
 		}
 	}
 

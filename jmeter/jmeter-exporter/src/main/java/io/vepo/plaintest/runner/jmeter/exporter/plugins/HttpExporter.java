@@ -9,14 +9,9 @@ import io.vepo.plaintest.Step;
 import io.vepo.plaintest.runner.jmeter.exporter.StepExporter;
 
 public class HttpExporter implements StepExporter {
-	private static final String HTTPS_PROTOCOL = "https://";
-	private static final String HTTP_PROTOCOL = "http://";
 	public static final String HTTP_EXECUTOR_PLUGIN_NAME = "HTTP";
-
-	@Override
-	public String pluginName() {
-		return HTTP_EXECUTOR_PLUGIN_NAME;
-	}
+	private static final String HTTP_PROTOCOL = "http://";
+	private static final String HTTPS_PROTOCOL = "https://";
 
 	@Override
 	public AbstractSampler createSampler(Step step) {
@@ -32,38 +27,34 @@ public class HttpExporter implements StepExporter {
 		return sampler;
 	}
 
-	private int getPort(Step step) {
-		String url = step.requiredAttribute("url");
-		if (url.toLowerCase().startsWith(HTTP_PROTOCOL)) {
-			url = url.substring(HTTP_PROTOCOL.length());
-		} else if (url.toLowerCase().startsWith(HTTPS_PROTOCOL)) {
-			url = url.substring(HTTPS_PROTOCOL.length());
-		}
-		int slashPosition = url.indexOf('/');
-		if (slashPosition > 0) {
-			url = url.substring(0, slashPosition);
-		}
+	private String getDomain(Step step) {
+		String url = removePath(removeProtocol(step));
 
 		int portPosition = url.indexOf(':');
 		if (portPosition > 0) {
-			return Integer.valueOf(url.substring(portPosition + 1));
+			url = url.substring(0, portPosition);
 		}
-		return 80;
+		return url;
 	}
 
 	private String getPath(Step step) {
-		String url = step.requiredAttribute("url");
-		if (url.toLowerCase().startsWith(HTTP_PROTOCOL)) {
-			url = url.substring(HTTP_PROTOCOL.length());
-		} else if (url.toLowerCase().startsWith(HTTPS_PROTOCOL)) {
-			url = url.substring(HTTPS_PROTOCOL.length());
-		}
+		String url = removeProtocol(step);
 		int slashPosition = url.indexOf('/');
 		if (slashPosition > 0) {
 			return url.substring(slashPosition);
 		} else {
 			return "";
 		}
+	}
+
+	private int getPort(Step step) {
+		String url = removePath(removeProtocol(step));
+
+		int portPosition = url.indexOf(':');
+		if (portPosition > 0) {
+			return Integer.valueOf(url.substring(portPosition + 1));
+		}
+		return 80;
 	}
 
 	private String getProtocol(Step step) {
@@ -76,21 +67,25 @@ public class HttpExporter implements StepExporter {
 		return "http";
 	}
 
-	private String getDomain(Step step) {
+	@Override
+	public String pluginName() {
+		return HTTP_EXECUTOR_PLUGIN_NAME;
+	}
+
+	private String removePath(String url) {
+		int slashPosition = url.indexOf('/');
+		if (slashPosition > 0) {
+			url = url.substring(0, slashPosition);
+		}
+		return url;
+	}
+
+	private String removeProtocol(Step step) {
 		String url = step.requiredAttribute("url");
 		if (url.toLowerCase().startsWith(HTTP_PROTOCOL)) {
 			url = url.substring(HTTP_PROTOCOL.length());
 		} else if (url.toLowerCase().startsWith(HTTPS_PROTOCOL)) {
 			url = url.substring(HTTPS_PROTOCOL.length());
-		}
-		int slashPosition = url.indexOf('/');
-		if (slashPosition > 0) {
-			url = url.substring(0, slashPosition);
-		}
-
-		int portPosition = url.indexOf(':');
-		if (portPosition > 0) {
-			url = url.substring(0, portPosition);
 		}
 		return url;
 	}

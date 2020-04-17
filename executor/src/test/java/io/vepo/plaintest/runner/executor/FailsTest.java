@@ -1,9 +1,8 @@
 package io.vepo.plaintest.runner.executor;
 
+import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 
@@ -27,7 +26,7 @@ public class FailsTest {
 		Result doNothingResult = result.getResults().stream().filter(r -> r.getName().equals("DoNothing")).findFirst()
 				.orElse(null);
 		assertNotNull(doNothingResult);
-		assertEquals(Arrays.asList(new Fail(FailReason.PLUGIN_NOT_FOUND, "Could not find plugin: Unknown")),
+		assertEquals(asList(new Fail(FailReason.PLUGIN_NOT_FOUND, "Could not find plugin: Unknown")),
 				doNothingResult.getFails());
 	}
 
@@ -45,7 +44,7 @@ public class FailsTest {
 		Result doNothingResult = result.getResults().stream().filter(r -> r.getName().equals("DoNothing")).findFirst()
 				.orElse(null);
 		assertNotNull(doNothingResult);
-		assertEquals(doNothingResult.getFails().size(), 1);
+		assertEquals(1, doNothingResult.getFails().size());
 		assertEquals(FailReason.FAILED, doNothingResult.getFails().get(0).getReason());
 	}
 }

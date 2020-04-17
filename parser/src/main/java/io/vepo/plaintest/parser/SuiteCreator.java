@@ -76,7 +76,6 @@ public class SuiteCreator implements TestSuiteListener {
 		} else {
 			nextIndex = suiteQueue.peekLast().nextIndex();
 		}
-		logger.info("Creating suite: " + ctx.IDENTIFIER().getText() + " lastIndex=" + nextIndex);
 		suiteQueue.addLast(Suite.builder().index(nextIndex).name(ctx.IDENTIFIER().getText()));
 
 		if (isNull(mainSuite)) {

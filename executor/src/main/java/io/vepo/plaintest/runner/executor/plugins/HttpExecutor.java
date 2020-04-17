@@ -111,11 +111,10 @@ public class HttpExecutor implements StepExecutor {
 				String body = "";
 				try (BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));) {
 					String inputLine;
-					StringBuffer content = new StringBuffer();
+					StringBuilder content = new StringBuilder();
 					while ((inputLine = in.readLine()) != null) {
 						content.append(inputLine);
 					}
-					in.close();
 					body = content.toString();
 				}
 				con.disconnect();
