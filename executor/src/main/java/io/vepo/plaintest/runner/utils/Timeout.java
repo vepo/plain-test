@@ -13,6 +13,8 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vepo.plaintest.runner.executor.executions.ExecutorException;
+
 public class Timeout {
 	private static final long MAX_ALLOWED_TIME = 250;
 	private static final Logger logger = LoggerFactory.getLogger(Timeout.class);
@@ -34,7 +36,7 @@ public class Timeout {
 			return Optional.empty();
 		} catch (ExecutionException e) {
 			logger.warn("Execution error!", e);
-			throw new IllegalStateException("Error test execution!", e);
+			throw new ExecutorException("Error on timeouted execution!", e);
 		} catch (TimeoutException e) {
 			return Optional.empty();
 		}
