@@ -1,0 +1,2 @@
+io.vepo.plaintest.runner.jmeter.exporter.plugins.HttpExporter
+io.vepo.plaintest.runner.jmeter.exporter.plugins.ProcessExporter

@@ -1,0 +1,6 @@
+Suite Https {
+	HTTP CheckExist {
+		url: 	"http://localhost:9999/user/555"
+		method: "GET"
+	}
+}
