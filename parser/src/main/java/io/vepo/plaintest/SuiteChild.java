@@ -24,15 +24,6 @@ public abstract class SuiteChild {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
 		SuiteChild other = (SuiteChild) obj;
 		return new EqualsBuilder().append(index, other.index).isEquals();
 	}

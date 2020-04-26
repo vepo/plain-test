@@ -11,7 +11,7 @@ import nl.jqno.equalsverifier.Warning;
 public class ModelTest {
 
 	@ParameterizedTest
-	@ValueSource(classes = { Suite.class, Step.class, Assertion.class, })
+	@ValueSource(classes = { Suite.class, Step.class, Assertion.class, Properties.class })
 	public void checkModelTest(Class<?> checkClass) {
 		ToStringVerifier.forClass(checkClass).verify();
 		EqualsVerifier
