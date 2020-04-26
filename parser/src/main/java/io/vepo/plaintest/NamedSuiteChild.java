@@ -1,5 +1,6 @@
 package io.vepo.plaintest;
 
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -25,6 +26,7 @@ public abstract class NamedSuiteChild extends SuiteChild {
 
 	@Override
 	public boolean equals(Object obj) {
+		requireNonNull(obj, "Null should be checked on parent class");
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
