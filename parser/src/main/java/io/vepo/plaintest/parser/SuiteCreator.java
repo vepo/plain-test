@@ -9,6 +9,7 @@ import static org.apache.commons.text.StringEscapeUtils.unescapeJava;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -22,6 +23,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.vepo.plaintest.Assertion;
+import io.vepo.plaintest.Properties;
+import io.vepo.plaintest.Properties.PropertiesBuilder;
+import io.vepo.plaintest.PropertyReference;
 import io.vepo.plaintest.Step;
 import io.vepo.plaintest.Step.StepBuilder;
 import io.vepo.plaintest.Suite;
@@ -30,6 +34,8 @@ import io.vepo.plaintest.parser.antlr4.generated.TestSuiteListener;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.AssertionContext;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.AttributeContext;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.ExecDirectoryContext;
+import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.PropertiesContext;
+import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.PropertyReferenceContext;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.StepContext;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.SuiteContext;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.ValueContext;
@@ -40,6 +46,7 @@ public class SuiteCreator implements TestSuiteListener {
 	private SuiteBuilder mainSuite;
 	private Deque<SuiteBuilder> suiteQueue;
 	private StepBuilder currentStepBuilder;
+	private PropertiesBuilder currentPropertiesBuilder;
 
 	public SuiteCreator() {
 		mainSuite = null;
@@ -90,7 +97,7 @@ public class SuiteCreator implements TestSuiteListener {
 		Suite builtSuite = suiteQueue.pollLast().build();
 
 		if (!suiteQueue.isEmpty()) {
-			suiteQueue.peekLast().suite(builtSuite);
+			suiteQueue.peekLast().child(builtSuite);
 		}
 	}
 
@@ -114,7 +121,7 @@ public class SuiteCreator implements TestSuiteListener {
 	@Override
 	public void exitStep(StepContext ctx) {
 		logger.trace("Exit Step: {}", ctx);
-		suiteQueue.peekLast().step(currentStepBuilder.build());
+		suiteQueue.peekLast().child(currentStepBuilder.build());
 		currentStepBuilder = null;
 	}
 
@@ -123,18 +130,31 @@ public class SuiteCreator implements TestSuiteListener {
 		logger.trace("Enter Attribute: {}", ctx);
 	}
 
+	private void consumeAttribute(AttributeContext ctx, BiConsumer<String, Object> consumer) {
+		if (nonNull(ctx.value())) {
+			if (nonNull(ctx.value().STRING())) {
+				consumer.accept(ctx.IDENTIFIER().getText(), processString(ctx.value().getText()));
+			} else if (nonNull(ctx.value().MULTILINE_STRING())) {
+				consumer.accept(ctx.IDENTIFIER().getText(), processMultiLineString(ctx.value().getText()));
+			} else if (nonNull(ctx.value().NUMBER())) {
+				consumer.accept(ctx.IDENTIFIER().getText(), Long.valueOf((ctx.value().getText())));
+			} else {
+				throwInvalidContext(ctx);
+			}
+		} else if (nonNull(ctx.propertyReference())) {
+			consumer.accept(ctx.IDENTIFIER().getText(),
+					new PropertyReference(ctx.propertyReference().IDENTIFIER().getText()));
+		}
+	}
+
 	@Override
 	public void exitAttribute(AttributeContext ctx) {
 		logger.trace("Exit Attribute: {}", ctx);
 
-		if (nonNull(ctx.value().STRING())) {
-			currentStepBuilder.attribute(ctx.IDENTIFIER().getText(), processString(ctx.value().getText()));
-		} else if (nonNull(ctx.value().MULTILINE_STRING())) {
-			currentStepBuilder.attribute(ctx.IDENTIFIER().getText(), processMultiLineString(ctx.value().getText()));
-		} else if (nonNull(ctx.value().NUMBER())) {
-			currentStepBuilder.attribute(ctx.IDENTIFIER().getText(), Long.valueOf((ctx.value().getText())));
-		} else {
-			throwInvalidContext(ctx);
+		if (ctx.getParent() instanceof StepContext) {
+			consumeAttribute(ctx, currentStepBuilder::attribute);
+		} else if (ctx.getParent() instanceof PropertiesContext) {
+			consumeAttribute(ctx, currentPropertiesBuilder::value);
 		}
 	}
 
@@ -223,6 +243,31 @@ public class SuiteCreator implements TestSuiteListener {
 		} else {
 			throwInvalidContext(ctx);
 		}
+	}
+
+	@Override
+	public void enterProperties(PropertiesContext ctx) {
+		logger.trace("Enter Properties: {}", ctx);
+		currentPropertiesBuilder = Properties.builder();
+	}
+
+	@Override
+	public void exitProperties(PropertiesContext ctx) {
+		logger.trace("Exit Properties: {}", ctx);
+		suiteQueue.peekLast().child(currentPropertiesBuilder.build());
+		currentPropertiesBuilder = null;
+	}
+
+	@Override
+	public void enterPropertyReference(PropertyReferenceContext ctx) {
+		logger.trace("Enter Property Reference: {}", ctx);
+
+	}
+
+	@Override
+	public void exitPropertyReference(PropertyReferenceContext ctx) {
+		logger.trace("Exitr Property Referece: {}", ctx);
+
 	}
 
 }

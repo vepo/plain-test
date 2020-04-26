@@ -1,5 +1,7 @@
 package io.vepo.plaintest;
 
+import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,9 +11,8 @@ import java.util.Optional;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
 
-public class Step {
+public class Step extends NamedSuiteChild {
 	public static class StepBuilder {
 		private int index;
 		private String plugin;
@@ -59,30 +60,19 @@ public class Step {
 		return new StepBuilder();
 	}
 
-	private final int index;
 	private final String plugin;
-	private final String name;
 	private final Map<String, Object> attributes;
 	private final List<Assertion<?>> assertions;
 
 	private Step(StepBuilder builder) {
-		index = builder.index;
+		super(builder.index, builder.name);
 		plugin = builder.plugin;
-		name = builder.name;
 		attributes = builder.attributes;
 		assertions = builder.assertions;
 	}
 
-	public int getIndex() {
-		return index;
-	}
-
 	public String getPlugin() {
 		return plugin;
-	}
-
-	public String getName() {
-		return name;
 	}
 
 	public Map<String, Object> getAttributes() {
@@ -115,7 +105,7 @@ public class Step {
 
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder().append(assertions).append(attributes).append(index).append(name).append(plugin)
+		return new HashCodeBuilder().appendSuper(super.hashCode()).append(assertions).append(attributes).append(plugin)
 				.hashCode();
 	}
 
@@ -131,14 +121,14 @@ public class Step {
 			return false;
 		}
 		Step other = (Step) obj;
-		return new EqualsBuilder().append(assertions, other.assertions).append(attributes, other.attributes)
-				.append(index, other.index).append(name, other.name).append(plugin, other.plugin).isEquals();
+		return new EqualsBuilder().appendSuper(super.equals(obj)).append(assertions, other.assertions)
+				.append(attributes, other.attributes).append(plugin, other.plugin).isEquals();
 	}
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).append("index", index).append("name", name)
-				.append("plugin", plugin).append("attributes", attributes).append("assertions", assertions).toString();
+		return new ToStringBuilder(this, SHORT_PREFIX_STYLE).appendSuper(super.toString()).append("plugin", plugin)
+				.append("attributes", attributes).append("assertions", assertions).toString();
 	}
 
 }
