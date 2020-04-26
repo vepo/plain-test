@@ -25,6 +25,9 @@ public abstract class NamedSuiteChild extends SuiteChild {
 
 	@Override
 	public boolean equals(Object obj) {
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
 		NamedSuiteChild other = (NamedSuiteChild) obj;
 		return new EqualsBuilder().appendSuper(super.equals(obj)).append(name, other.name).isEquals();
 	}

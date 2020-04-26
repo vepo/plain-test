@@ -2,7 +2,10 @@ package io.vepo.plaintest;
 
 import static io.vepo.plaintest.SuiteAttributes.EXECUTION_PATH;
 import static io.vepo.plaintest.SuiteFactory.parseSuite;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -265,6 +268,24 @@ public class SuiteParserTest {
 							"        }\n" + //
 							"    }" + //
 							"}"));
+		}
+	}
+
+	@Nested
+	@DisplayName("Step")
+	public class StepTest {
+		@Test
+		@DisplayName("It SHOULD allow access attributes")
+		public void attributeTest() {
+			Step step = Step.builder().index(0).plugin("HTTP").name("Step1").attribute("method", "GET")
+					.attribute("timeout", 1000L).attribute("minValue", -5L).attribute("maxValue", 1500000000L).build();
+			assertEquals(-5L, (Long) step.requiredAttribute("minValue"));
+
+			assertFalse(step.hasAttribute("notFoundAttribute"));
+			assertThrows(IllegalStateException.class, () -> step.requiredAttribute("notFoundAttribute"));
+
+			assertThat(step.optionalAttribute("notFoundAttribute", String.class)).isEmpty();
+			assertThat(step.optionalAttribute("minValue", Long.class)).isNotEmpty().hasValue(-5L);
 		}
 	}
 }
