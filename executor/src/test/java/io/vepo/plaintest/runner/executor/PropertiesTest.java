@@ -57,13 +57,12 @@ public class PropertiesTest extends AbstractHttpTest {
 		InetSocketAddress remoteAddress = remoteAddress();
 		validateHttp("/defaultGet", "GET", 200, "{\"response\":\"OK\"}", 1, () -> {
 
-			Suite suite = SuiteFactory
-					.parseSuite(HTTP_GET_TEST_SUITE_NO_PROPERTIES.replace("${host}", remoteAddress.getHostName())
-							.replace("${port}", Integer.toString(remoteAddress.getPort())));
+			Suite suite = SuiteFactory.parseSuite(HTTP_GET_TEST_SUITE_NO_PROPERTIES);
 			PlainTestExecutor executor = new PlainTestExecutor();
 
 			Properties properties = new Properties();
-			properties.put("url", "http://${host}:${port}/defaultGet");
+			properties.put("url", "http://${host}:${port}/defaultGet".replace("${host}", remoteAddress.getHostName())
+					.replace("${port}", Integer.toString(remoteAddress.getPort())));
 			properties.put("method", "GET");
 			executor.load(properties);
 
