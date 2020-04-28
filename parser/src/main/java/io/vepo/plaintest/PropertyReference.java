@@ -1,5 +1,8 @@
 package io.vepo.plaintest;
 
+import static java.util.regex.Pattern.compile;
+import static java.util.regex.Pattern.quote;
+
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -8,7 +11,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 public class PropertyReference {
-	static Pattern regex = Pattern.compile("\\$\\{([A-Za-z][._\\-A-Za-z0-9]*)\\}");
+	static Pattern regex = compile(quote("${") + "([A-Za-z][._\\-A-Za-z0-9]*)" + quote("}"));
 	private final String name;
 
 	public PropertyReference(String name) {
