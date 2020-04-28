@@ -16,7 +16,7 @@ public class ModelTest {
 	public void checkModelTest(Class<?> checkClass) {
 		ToStringVerifier toStringVerifier = ToStringVerifier.forClass(checkClass);
 		if (SuiteChild.class.isAssignableFrom(checkClass)) {
-			toStringVerifier.withIgnoredFields("parent");
+			toStringVerifier.withIgnoredFields("parent", "propertiesResolver");
 		}
 		toStringVerifier.verify();
 
@@ -25,7 +25,7 @@ public class ModelTest {
 						Suite.builder().index(0).name("S1").build(), Suite.builder().index(1).name("S2").build())
 				.suppress(Warning.NONFINAL_FIELDS);
 		if (SuiteChild.class.isAssignableFrom(checkClass)) {
-			equalsVerifier.withIgnoredFields("parent");
+			equalsVerifier.withIgnoredFields("parent", "propertiesResolver");
 		}
 		equalsVerifier.verify();
 	}
