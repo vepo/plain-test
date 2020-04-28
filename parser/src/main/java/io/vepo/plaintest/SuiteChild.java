@@ -12,9 +12,11 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import io.vepo.plaintest.exceptions.PropertyNotDefinedException;
 
-public abstract class SuiteChild {
+public abstract class SuiteChild implements PropertiesResolver {
 	private final int index;
 	private final Suite parent;
+
+	private transient PropertiesResolver propertiesResolver;
 
 	protected SuiteChild(int index, Suite parent) {
 		this.index = index;
@@ -29,6 +31,11 @@ public abstract class SuiteChild {
 		return parent;
 	}
 
+	public void setPropertiesResolver(PropertiesResolver propertiesResolver) {
+		this.propertiesResolver = propertiesResolver;
+	}
+
+	@Override
 	public <T> T findRequiredPropertyValue(String key) {
 		if (nonNull(parent)) {
 			for (int currIndex = index - 1; currIndex >= 0; --currIndex) {
@@ -37,11 +44,14 @@ public abstract class SuiteChild {
 					return ((Properties) curr).getValue(key);
 				}
 			}
-			return parent.findRequiredPropertyValue(key);
+
+			return Optional.ofNullable(propertiesResolver).map(resolver -> resolver.<T>findRequiredPropertyValue(key))
+					.orElseGet(() -> parent.<T>findRequiredPropertyValue(key));
 		}
 		throw new PropertyNotDefinedException("Could not find property: " + key);
 	}
 
+	@Override
 	public <T> Optional<T> findOptionalPropertyValue(String key) {
 		if (nonNull(parent)) {
 			for (int currIndex = index - 1; currIndex >= 0; --currIndex) {
@@ -50,7 +60,9 @@ public abstract class SuiteChild {
 					return Optional.of(((Properties) curr).getValue(key));
 				}
 			}
-			return parent.findOptionalPropertyValue(key);
+
+			return Optional.ofNullable(propertiesResolver).map(resolver -> resolver.<T>findOptionalPropertyValue(key))
+					.orElseGet(() -> parent.<T>findOptionalPropertyValue(key));
 		}
 		return Optional.empty();
 	}

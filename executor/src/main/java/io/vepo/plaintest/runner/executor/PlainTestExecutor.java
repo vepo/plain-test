@@ -2,12 +2,15 @@ package io.vepo.plaintest.runner.executor;
 
 import static io.vepo.plaintest.SuiteAttributes.EXECUTION_PATH;
 import static java.lang.System.currentTimeMillis;
+import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toSet;
 
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -17,17 +20,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.vepo.plaintest.Assertion;
+import io.vepo.plaintest.PropertiesResolver;
 import io.vepo.plaintest.Step;
 import io.vepo.plaintest.Suite;
+import io.vepo.plaintest.exceptions.PropertyNotDefinedException;
 import io.vepo.plaintest.runner.executor.Result.ResultBuilder;
 import io.vepo.plaintest.runner.executor.context.Context;
 import io.vepo.plaintest.runner.executor.context.InnerSuiteContext;
 import io.vepo.plaintest.runner.executor.context.RootSuiteContext;
 import io.vepo.plaintest.runner.executor.plugins.StepExecutor;
 
-public class PlainTestExecutor {
+public class PlainTestExecutor implements PropertiesResolver {
 	private static final Logger logger = LoggerFactory.getLogger(PlainTestExecutor.class);
 	private Map<String, StepExecutor> stepExecutors;
+	private Properties properties;
 
 	public PlainTestExecutor() {
 		stepExecutors = new HashMap<>();
@@ -36,6 +42,7 @@ public class PlainTestExecutor {
 	}
 
 	public Result execute(Suite suite) {
+		suite.setPropertiesResolver(this);
 		return executeSuite(suite, new RootSuiteContext(
 				Paths.get(suite.attribute(EXECUTION_PATH, String.class).orElse(".")).toAbsolutePath()));
 	}
@@ -130,5 +137,31 @@ public class PlainTestExecutor {
 			failCallback.accept(new Fail(FailReason.RUNTIME_EXCEPTION,
 					assertion.getProperty() + " cannot check contains for numbers. value:" + assertion.getValue()));
 		}
+	}
+
+	public void load(Properties properties) {
+		this.properties = properties;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T findRequiredPropertyValue(String key) {
+		if (nonNull(properties)) {
+			if (properties.containsKey(key)) {
+				return (T) properties.get(key);
+			}
+		}
+		throw new PropertyNotDefinedException("Could not find property: " + key);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> Optional<T> findOptionalPropertyValue(String key) {
+		if (nonNull(properties)) {
+			if (properties.containsKey(key)) {
+				return Optional.of((T) properties.get(key));
+			}
+		}
+		return Optional.empty();
 	}
 }
