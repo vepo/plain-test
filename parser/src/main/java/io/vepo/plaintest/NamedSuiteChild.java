@@ -10,8 +10,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 public abstract class NamedSuiteChild extends SuiteChild {
 	private final String name;
 
-	protected NamedSuiteChild(int index, String name) {
-		super(index);
+	protected NamedSuiteChild(int index, String name, Suite parent) {
+		super(index, parent);
 		this.name = name;
 	}
 

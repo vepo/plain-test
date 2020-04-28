@@ -1,5 +1,6 @@
 package io.vepo.plaintest;
 
+import static java.util.Objects.isNull;
 import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
 import java.util.ArrayList;
@@ -7,10 +8,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+
+import io.vepo.plaintest.Suite.SuiteBuilder;
 
 public class Step extends NamedSuiteChild {
 	public static class StepBuilder {
@@ -19,6 +23,8 @@ public class Step extends NamedSuiteChild {
 		private String name;
 		private Map<String, Object> attributes;
 		private List<Assertion<?>> assertions;
+		private SuiteBuilder parent;
+		private Step instance;
 
 		private StepBuilder() {
 			attributes = new HashMap<>();
@@ -50,8 +56,16 @@ public class Step extends NamedSuiteChild {
 			return this;
 		}
 
+		public StepBuilder parent(SuiteBuilder parent) {
+			this.parent = parent;
+			return this;
+		}
+
 		public Step build() {
-			return new Step(this);
+			if (isNull(instance)) {
+				instance = new Step(this);
+			}
+			return instance;
 		}
 
 	}
@@ -65,7 +79,7 @@ public class Step extends NamedSuiteChild {
 	private final List<Assertion<?>> assertions;
 
 	private Step(StepBuilder builder) {
-		super(builder.index, builder.name);
+		super(builder.index, builder.name, Optional.ofNullable(builder.parent).map(SuiteBuilder::build).orElse(null));
 		plugin = builder.plugin;
 		attributes = builder.attributes;
 		assertions = builder.assertions;
@@ -96,7 +110,27 @@ public class Step extends NamedSuiteChild {
 		if (!attributes.containsKey(key)) {
 			throw new IllegalStateException("Missing attribute: " + key);
 		}
-		return (T) attributes.get(key);
+		Object value = attributes.get(key);
+		if (value instanceof PropertyReference) {
+			return findRequiredPropertyValue(((PropertyReference) value).getName());
+		} else if (value instanceof String) {
+			String changedValue = (String) value;
+			Matcher propertyMatcher = PropertyReference.REGEX.matcher(changedValue);
+			int start = 0;
+			while (propertyMatcher.find(start)) {
+				Optional<Object> maybeValue = findOptionalPropertyValue(propertyMatcher.group(1));
+				if (maybeValue.isPresent()) {
+					String valueAsString = maybeValue.get().toString();
+					changedValue = changedValue.replace(propertyMatcher.group(0), valueAsString);
+					start = propertyMatcher.start() + valueAsString.length();
+				} else {
+					start = propertyMatcher.end();
+				}
+				propertyMatcher = PropertyReference.REGEX.matcher(changedValue);
+			}
+			return (T) changedValue;
+		}
+		return (T) value;
 	}
 
 	public boolean hasAttribute(String key) {

@@ -1,6 +1,7 @@
 package io.vepo.plaintest;
 
 import static java.util.Comparator.comparingInt;
+import static java.util.Objects.isNull;
 import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
 import java.util.ArrayList;
@@ -20,6 +21,8 @@ public class Suite extends NamedSuiteChild {
 		private String name;
 		private List<SuiteChild> children;
 		private Map<SuiteAttributes, Object> attributes;
+		private SuiteBuilder parent;
+		private Suite instance;
 
 		private SuiteBuilder() {
 			attributes = new HashMap<>();
@@ -46,8 +49,16 @@ public class Suite extends NamedSuiteChild {
 			return this;
 		}
 
+		public SuiteBuilder parent(SuiteBuilder parent) {
+			this.parent = parent;
+			return this;
+		}
+
 		public Suite build() {
-			return new Suite(this);
+			if (isNull(instance)) {
+				instance = new Suite(this);
+			}
+			return instance;
 		}
 
 		public int nextIndex() {
@@ -64,13 +75,17 @@ public class Suite extends NamedSuiteChild {
 	private final Map<SuiteAttributes, Object> attributes;
 
 	private Suite(SuiteBuilder builder) {
-		super(builder.index, builder.name);
+		super(builder.index, builder.name, Optional.ofNullable(builder.parent).map(SuiteBuilder::build).orElse(null));
 		children = builder.children;
 		attributes = builder.attributes;
 	}
 
 	public List<SuiteChild> getChildren() {
 		return children;
+	}
+
+	public SuiteChild getChild(int index) {
+		return children.get(index);
 	}
 
 	public Map<SuiteAttributes, Object> getAttributes() {
