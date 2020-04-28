@@ -8,7 +8,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
 public class PropertyReference {
-	static Pattern REGEX = Pattern.compile("\\$\\{([A-Za-z][._\\-A-Za-z0-9]*)\\}");
+	static Pattern regex = Pattern.compile("\\$\\{([A-Za-z][._\\-A-Za-z0-9]*)\\}");
 	private final String name;
 
 	public PropertyReference(String name) {

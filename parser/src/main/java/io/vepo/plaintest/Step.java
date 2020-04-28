@@ -115,7 +115,7 @@ public class Step extends NamedSuiteChild {
 			return findRequiredPropertyValue(((PropertyReference) value).getName());
 		} else if (value instanceof String) {
 			String changedValue = (String) value;
-			Matcher propertyMatcher = PropertyReference.REGEX.matcher(changedValue);
+			Matcher propertyMatcher = PropertyReference.regex.matcher(changedValue);
 			int start = 0;
 			while (propertyMatcher.find(start)) {
 				Optional<Object> maybeValue = findOptionalPropertyValue(propertyMatcher.group(1));
@@ -126,7 +126,7 @@ public class Step extends NamedSuiteChild {
 				} else {
 					start = propertyMatcher.end();
 				}
-				propertyMatcher = PropertyReference.REGEX.matcher(changedValue);
+				propertyMatcher = PropertyReference.regex.matcher(changedValue);
 			}
 			return (T) changedValue;
 		}
