@@ -146,10 +146,8 @@ public class PlainTestExecutor implements PropertiesResolver {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T findRequiredPropertyValue(String key) {
-		if (nonNull(properties)) {
-			if (properties.containsKey(key)) {
-				return (T) properties.get(key);
-			}
+		if (nonNull(properties) && properties.containsKey(key)) {
+			return (T) properties.get(key);
 		}
 		throw new PropertyNotDefinedException("Could not find property: " + key);
 	}
@@ -157,10 +155,8 @@ public class PlainTestExecutor implements PropertiesResolver {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> Optional<T> findOptionalPropertyValue(String key) {
-		if (nonNull(properties)) {
-			if (properties.containsKey(key)) {
-				return Optional.of((T) properties.get(key));
-			}
+		if (nonNull(properties) && properties.containsKey(key)) {
+			return Optional.of((T) properties.get(key));
 		}
 		return Optional.empty();
 	}

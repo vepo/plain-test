@@ -44,7 +44,7 @@ public class FailsTest {
 		Result doNothingResult = result.getResults().stream().filter(r -> r.getName().equals("DoNothing")).findFirst()
 				.orElse(null);
 		assertNotNull(doNothingResult);
-		assertEquals(doNothingResult.getFails().size(), 1);
+		assertEquals(1, doNothingResult.getFails().size());
 		assertEquals(FailReason.FAILED, doNothingResult.getFails().get(0).getReason());
 	}
 }

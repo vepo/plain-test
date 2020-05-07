@@ -1,14 +1,17 @@
 package io.vepo.plaintest.runner.utils;
 
+import static java.util.Objects.isNull;
+
 public class Os {
+	// Operating systems.
 	public enum OS {
 		WINDOWS, LINUX, MAC, SOLARIS
-	};// Operating systems.
+	};
 
 	private static OS os = null;
 
 	public static OS getOS() {
-		if (os == null) {
+		if (isNull(os)) {
 			String operSys = System.getProperty("os.name").toLowerCase();
 			if (operSys.contains("win")) {
 				os = OS.WINDOWS;

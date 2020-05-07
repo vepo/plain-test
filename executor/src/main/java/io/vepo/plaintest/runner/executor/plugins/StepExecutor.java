@@ -12,5 +12,5 @@ public interface StepExecutor {
 
 	public Result execute(Step step, Context context);
 
-	public Stream<Attribute<?>> requiredAttribute();
+	public <T> Stream<Attribute<T>> requiredAttribute();
 }
