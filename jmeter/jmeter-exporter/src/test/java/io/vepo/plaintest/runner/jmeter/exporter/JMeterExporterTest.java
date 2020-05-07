@@ -3,14 +3,11 @@ package io.vepo.plaintest.runner.jmeter.exporter;
 import static io.vepo.plaintest.SuiteFactory.parseSuite;
 import static java.util.regex.Pattern.quote;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
-import org.apache.commons.io.IOUtils;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -89,16 +86,19 @@ public class JMeterExporterTest extends AbstractJMeterExecutorTest {
 			String jmxContents = exporter.export(parseSuite(
 					HTTP_MULTI_LEVEL_GET_WITH_PROPERTIES.replaceAll(quote("${host}"), clientAddress.getHostName())
 							.replaceAll(quote("${port}"), Integer.toString(clientAddress.getPort()))));
-			try (FileWriter writer = new FileWriter(new File("test.jmx"))) {
-				IOUtils.write(jmxContents, writer);
-			} catch (IOException e) {
-				fail(e);
-			}
-			validateHttp("/inner-request-3", "POST", 200, "OK", "OK", 1, //
-					() -> validateHttp("/inner-request-2", "GET", 200, "OK", 1, //
-							() -> validateHttp("/request", "GET", 200, "OK", 1, //
-									() -> execute(jmxContents,
-											event -> assertTrue(event.getResult().isSuccessful())))));
+			validateHttp("/inner-request-3", "POST", 200, "OK", "OK", 1,
+					() -> validateHttp("/inner-request-2", "GET", 200, "OK", 1, () -> validateHttp("/request", "GET",
+							200, "OK", 1,
+							() -> execute(jmxContents, event -> assertTrue(event.getResult().isSuccessful())))));
+		}
+
+		@Test
+		@DisplayName("It should create reffer to properties")
+		public void userVariablesReferencesTest() {
+			JMeterExporter exporter = new JMeterExporter();
+			Assertions.assertThat(exporter.export(parseSuite(HTTP_MULTI_LEVEL_GET_WITH_PROPERTIES)))
+					.contains("${post_method}").contains("${get_method}").contains("${host}").contains("${port}");
+
 		}
 	}
 

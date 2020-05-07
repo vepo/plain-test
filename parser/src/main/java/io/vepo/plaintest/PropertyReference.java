@@ -12,6 +12,11 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 
 public class PropertyReference {
 	static Pattern regex = compile(quote("${") + "([A-Za-z][._\\-A-Za-z0-9]*)" + quote("}"));
+
+	public static boolean matches(String value) {
+		return regex.matcher(value).matches();
+	}
+
 	private final String name;
 
 	public PropertyReference(String name) {
