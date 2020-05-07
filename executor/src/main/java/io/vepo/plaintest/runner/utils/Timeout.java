@@ -35,7 +35,7 @@ public class Timeout {
 			currentThread().interrupt();
 			return Optional.empty();
 		} catch (ExecutionException e) {
-			logger.warn("Execution error!", e);
+			logger.error("Execution error!", e);
 			throw new ExecutorException("Error on timeouted execution!", e);
 		} catch (TimeoutException e) {
 			return Optional.empty();

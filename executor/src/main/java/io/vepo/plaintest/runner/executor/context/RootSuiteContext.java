@@ -17,6 +17,7 @@ public class RootSuiteContext implements Context {
 
 	@Override
 	public void addResult(Result result) {
+		// not implemented yet...
 	}
 
 	@Override

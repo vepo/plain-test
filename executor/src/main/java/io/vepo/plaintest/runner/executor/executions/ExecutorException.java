@@ -1,10 +1,8 @@
 package io.vepo.plaintest.runner.executor.executions;
 
-import java.util.concurrent.ExecutionException;
-
 public class ExecutorException extends RuntimeException {
 
-	public ExecutorException(String message, ExecutionException cause) {
+	public ExecutorException(String message, Exception cause) {
 		super(message, cause);
 	}
 
