@@ -1,5 +1,10 @@
 package io.vepo.plaintest;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -28,5 +33,13 @@ public class ModelTest {
 			equalsVerifier.withIgnoredFields("parent", "propertiesResolver");
 		}
 		equalsVerifier.verify();
+	}
+
+	@DisplayName("It should match correctly the PropertyReference")
+	@Test
+	public void checkPropertyReferenceTest() {
+		assertFalse(PropertyReference.matches("${}"));
+		assertTrue(PropertyReference.matches("${property}"));
+		assertFalse(PropertyReference.matches("some field ${property} some data"));
 	}
 }
