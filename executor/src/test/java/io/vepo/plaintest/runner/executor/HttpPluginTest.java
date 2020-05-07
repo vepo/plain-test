@@ -9,41 +9,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockserver.model.Delay.seconds;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
-import static org.mockserver.verify.VerificationTimes.atLeast;
 
 import java.net.InetSocketAddress;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockserver.client.MockServerClient;
-import org.mockserver.junit.jupiter.MockServerExtension;
-import org.mockserver.model.Delay;
-import org.mockserver.model.HttpRequest;
 
 import io.vepo.plaintest.Suite;
 import io.vepo.plaintest.SuiteFactory;
 
-@ExtendWith(MockServerExtension.class)
 @DisplayName("HTTP Executor")
-public class HttpPluginTest extends AbstractTest {
-
-	private MockServerClient client;
-
-	@BeforeEach
-	public void setup(MockServerClient client) {
-		this.client = client;
-	}
-
-	@AfterEach
-	public void tearDown() {
-		client.reset();
-	}
+public class HttpPluginTest extends AbstractHttpTest {
 
 	private static final String HTTP_GET_TEST_SUITE = "Suite HttpGet {\n" + //
 			"    HTTP GetRequest {\n" + //
@@ -55,7 +32,7 @@ public class HttpPluginTest extends AbstractTest {
 	@Test
 	@DisplayName("It should execute GET")
 	public void getTest() {
-		InetSocketAddress remoteAddress = client.remoteAddress();
+		InetSocketAddress remoteAddress = remoteAddress();
 		validateHttp("/defaultGet", "GET", 200, "{\"response\":\"OK\"}", 1, () -> {
 
 			Suite suite = SuiteFactory.parseSuite(HTTP_GET_TEST_SUITE.replace("${host}", remoteAddress.getHostName())
@@ -81,7 +58,7 @@ public class HttpPluginTest extends AbstractTest {
 	@Test
 	@DisplayName("It should execute POST")
 	public void postTest() {
-		InetSocketAddress remoteAddress = client.remoteAddress();
+		InetSocketAddress remoteAddress = remoteAddress();
 		validateHttp("/defaultPost", "POST", 201, "{ \"username\": \"vepo\" }", "{\"response\":\"CREATED\"}", 1, () -> {
 
 			Suite suite = SuiteFactory.parseSuite(HTTP_POST_TEST_SUITE.replace("${host}", remoteAddress.getHostName())
@@ -108,7 +85,7 @@ public class HttpPluginTest extends AbstractTest {
 	@Test
 	@DisplayName("It should fail for invalid Method")
 	public void invalidMethodTest() {
-		InetSocketAddress remoteAddress = client.remoteAddress();
+		InetSocketAddress remoteAddress = remoteAddress();
 		validateHttp("/defaultGet", "GET", 200, "{\"response\":\"OK\"}", 0, () -> {
 
 			Suite suite = parseSuite(HTTP_INVALID_METHOD_TEST_SUITE.replace("${host}", remoteAddress.getHostName())
@@ -138,7 +115,7 @@ public class HttpPluginTest extends AbstractTest {
 	@Test
 	@DisplayName("It should fail for invalid URL")
 	public void invalidUrlTest() {
-		InetSocketAddress remoteAddress = client.remoteAddress();
+		InetSocketAddress remoteAddress = remoteAddress();
 		validateHttp("/defaultGet", "GET", 200, "{\"response\":\"OK\"}", 0, () -> {
 			String port = Integer.toString(remoteAddress.getPort());
 			Suite suite = parseSuite(
@@ -163,7 +140,7 @@ public class HttpPluginTest extends AbstractTest {
 	@Test
 	@DisplayName("It should fail for invalid URL")
 	public void couldNotConnectTest() {
-		InetSocketAddress remoteAddress = client.remoteAddress();
+		InetSocketAddress remoteAddress = remoteAddress();
 		validateHttp("/defaultGet", "GET", 200, "{\"response\":\"OK\"}", 0, () -> {
 			String port = Integer.toString(remoteAddress.getPort());
 			Suite suite = parseSuite(
@@ -211,7 +188,7 @@ public class HttpPluginTest extends AbstractTest {
 			@Test
 			@DisplayName("It should be possible to assert responseCode")
 			public void responseCodeAssertionTest() {
-				InetSocketAddress remoteAddress = client.remoteAddress();
+				InetSocketAddress remoteAddress = remoteAddress();
 				validateHttp("/defaultGet", "GET", 200, "{\"response\":\"OK\"}", 0, () -> {
 					String port = Integer.toString(remoteAddress.getPort());
 					Suite suite = parseSuite(HTTP_RESPONSE_CODE_ASSERTION_TEST_SUITE
@@ -232,7 +209,7 @@ public class HttpPluginTest extends AbstractTest {
 			@Test
 			@DisplayName("It should be possible to fail assert responseCode")
 			public void responseCodeAssertionFailTest() {
-				InetSocketAddress remoteAddress = client.remoteAddress();
+				InetSocketAddress remoteAddress = remoteAddress();
 				validateHttp("/defaultGet", "GET", 201, "{\"response\":\"OK\"}", 0, () -> {
 					String port = Integer.toString(remoteAddress.getPort());
 					Suite suite = parseSuite(HTTP_RESPONSE_CODE_ASSERTION_TEST_SUITE
@@ -258,7 +235,7 @@ public class HttpPluginTest extends AbstractTest {
 			@Test
 			@DisplayName("It should be possible to assert responseCode")
 			public void bodyEqualsAssertionTest() {
-				InetSocketAddress remoteAddress = client.remoteAddress();
+				InetSocketAddress remoteAddress = remoteAddress();
 				validateHttp("/defaultGet", "GET", 200, "{\"response\":\"OK\"}", 0, () -> {
 					String port = Integer.toString(remoteAddress.getPort());
 					Suite suite = parseSuite(HTTP_BODY_ASSERTION_TEST_SUITE
@@ -280,7 +257,7 @@ public class HttpPluginTest extends AbstractTest {
 			@Test
 			@DisplayName("It should be possible to fail assert responseCode")
 			public void responseCodeAssertionFailTest() {
-				InetSocketAddress remoteAddress = client.remoteAddress();
+				InetSocketAddress remoteAddress = remoteAddress();
 				validateHttp("/defaultGet", "GET", 201, "{\"response\":\"OK\"}", 0, () -> {
 					String port = Integer.toString(remoteAddress.getPort());
 					Suite suite = parseSuite(HTTP_RESPONSE_CODE_ASSERTION_TEST_SUITE
@@ -317,7 +294,7 @@ public class HttpPluginTest extends AbstractTest {
 		@Test
 		@DisplayName("It should fail if execution time exceeds timeout")
 		public void timeoutErrorTest() {
-			InetSocketAddress remoteAddress = client.remoteAddress();
+			InetSocketAddress remoteAddress = remoteAddress();
 			validateHttp("/defaultGet", "GET", 200, "{\"response\":\"OK\"}", 0, seconds(2), () -> {
 				String port = Integer.toString(remoteAddress.getPort());
 				Suite suite = parseSuite(HTTP_TIMEOUT_URL_TEST_SUITE.replace("${host}", remoteAddress.getHostName())
@@ -335,40 +312,6 @@ public class HttpPluginTest extends AbstractTest {
 						}));
 			});
 		}
-	}
-
-	private void validateHttp(String path, String method, int statusCode, String responseBody, int times, Delay delay,
-			Runnable code) {
-		HttpRequest serverRequest = request().withMethod(method).withPath(path);
-
-		client.when(serverRequest)
-				.respond(response().withStatusCode(statusCode).withBody(responseBody).withDelay(delay));
-
-		code.run();
-
-		client.verify(serverRequest, atLeast(times));
-	}
-
-	private void validateHttp(String path, String method, int statusCode, String responseBody, int times,
-			Runnable code) {
-		HttpRequest serverRequest = request().withMethod(method).withPath(path);
-
-		client.when(serverRequest).respond(response().withStatusCode(statusCode).withBody(responseBody));
-
-		code.run();
-
-		client.verify(serverRequest, atLeast(times));
-	}
-
-	private void validateHttp(String path, String method, int statusCode, String requestBody, String responseBody,
-			int times, Runnable code) {
-		HttpRequest serverRequest = request().withMethod(method).withPath(path).withBody(requestBody);
-
-		client.when(serverRequest).respond(response().withStatusCode(statusCode).withBody(responseBody));
-
-		code.run();
-
-		client.verify(serverRequest, atLeast(times));
 	}
 
 }

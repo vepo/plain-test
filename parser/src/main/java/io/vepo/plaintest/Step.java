@@ -1,23 +1,30 @@
 package io.vepo.plaintest;
 
+import static java.util.Objects.isNull;
+import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
 
-public class Step {
+import io.vepo.plaintest.Suite.SuiteBuilder;
+
+public class Step extends NamedSuiteChild {
 	public static class StepBuilder {
 		private int index;
 		private String plugin;
 		private String name;
 		private Map<String, Object> attributes;
 		private List<Assertion<?>> assertions;
+		private SuiteBuilder parent;
+		private Step instance;
 
 		private StepBuilder() {
 			attributes = new HashMap<>();
@@ -49,8 +56,16 @@ public class Step {
 			return this;
 		}
 
+		public StepBuilder parent(SuiteBuilder parent) {
+			this.parent = parent;
+			return this;
+		}
+
 		public Step build() {
-			return new Step(this);
+			if (isNull(instance)) {
+				instance = new Step(this);
+			}
+			return instance;
 		}
 
 	}
@@ -59,30 +74,19 @@ public class Step {
 		return new StepBuilder();
 	}
 
-	private final int index;
 	private final String plugin;
-	private final String name;
 	private final Map<String, Object> attributes;
 	private final List<Assertion<?>> assertions;
 
 	private Step(StepBuilder builder) {
-		index = builder.index;
+		super(builder.index, builder.name, Optional.ofNullable(builder.parent).map(SuiteBuilder::build).orElse(null));
 		plugin = builder.plugin;
-		name = builder.name;
 		attributes = builder.attributes;
 		assertions = builder.assertions;
 	}
 
-	public int getIndex() {
-		return index;
-	}
-
 	public String getPlugin() {
 		return plugin;
-	}
-
-	public String getName() {
-		return name;
 	}
 
 	public Map<String, Object> getAttributes() {
@@ -98,7 +102,11 @@ public class Step {
 		if (!attributes.containsKey(key)) {
 			return Optional.empty();
 		}
-		return Optional.of((T) attributes.get(key));
+		Object value = attributes.get(key);
+		if (value instanceof PropertyReference) {
+			return findOptionalPropertyValue(((PropertyReference) value).getName());
+		}
+		return Optional.of((T) value);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -106,7 +114,27 @@ public class Step {
 		if (!attributes.containsKey(key)) {
 			throw new IllegalStateException("Missing attribute: " + key);
 		}
-		return (T) attributes.get(key);
+		Object value = attributes.get(key);
+		if (value instanceof PropertyReference) {
+			return findRequiredPropertyValue(((PropertyReference) value).getName());
+		} else if (value instanceof String) {
+			String changedValue = (String) value;
+			Matcher propertyMatcher = PropertyReference.regex.matcher(changedValue);
+			int start = 0;
+			while (propertyMatcher.find(start)) {
+				Optional<Object> maybeValue = findOptionalPropertyValue(propertyMatcher.group(1));
+				if (maybeValue.isPresent()) {
+					String valueAsString = maybeValue.get().toString();
+					changedValue = changedValue.replace(propertyMatcher.group(0), valueAsString);
+					start = propertyMatcher.start() + valueAsString.length();
+				} else {
+					start = propertyMatcher.end();
+				}
+				propertyMatcher = PropertyReference.regex.matcher(changedValue);
+			}
+			return (T) changedValue;
+		}
+		return (T) value;
 	}
 
 	public boolean hasAttribute(String key) {
@@ -115,7 +143,7 @@ public class Step {
 
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder().append(assertions).append(attributes).append(index).append(name).append(plugin)
+		return new HashCodeBuilder().appendSuper(super.hashCode()).append(assertions).append(attributes).append(plugin)
 				.hashCode();
 	}
 
@@ -131,14 +159,14 @@ public class Step {
 			return false;
 		}
 		Step other = (Step) obj;
-		return new EqualsBuilder().append(assertions, other.assertions).append(attributes, other.attributes)
-				.append(index, other.index).append(name, other.name).append(plugin, other.plugin).isEquals();
+		return new EqualsBuilder().appendSuper(super.equals(obj)).append(assertions, other.assertions)
+				.append(attributes, other.attributes).append(plugin, other.plugin).isEquals();
 	}
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).append("index", index).append("name", name)
-				.append("plugin", plugin).append("attributes", attributes).append("assertions", assertions).toString();
+		return new ToStringBuilder(this, SHORT_PREFIX_STYLE).appendSuper(super.toString()).append("plugin", plugin)
+				.append("attributes", attributes).append("assertions", assertions).toString();
 	}
 
 }

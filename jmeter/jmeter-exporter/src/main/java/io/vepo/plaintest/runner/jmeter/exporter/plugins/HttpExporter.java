@@ -1,10 +1,17 @@
 package io.vepo.plaintest.runner.jmeter.exporter.plugins;
 
+import static org.apache.jmeter.protocol.http.sampler.HTTPSamplerBase.PORT;
+
+import java.util.Optional;
+
+import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.protocol.http.control.gui.HttpTestSampleGui;
 import org.apache.jmeter.protocol.http.sampler.HTTPSamplerProxy;
 import org.apache.jmeter.samplers.AbstractSampler;
 import org.apache.jmeter.testelement.TestElement;
+import org.apache.jmeter.testelement.property.StringProperty;
 
+import io.vepo.plaintest.PropertyReference;
 import io.vepo.plaintest.Step;
 import io.vepo.plaintest.runner.jmeter.exporter.StepExporter;
 
@@ -16,12 +23,29 @@ public class HttpExporter implements StepExporter {
 	@Override
 	public AbstractSampler createSampler(Step step) {
 		HTTPSamplerProxy sampler = new HTTPSamplerProxy();
+		sampler.setArguments(new Arguments());
 		sampler.setName(step.getName());
 		sampler.setProtocol(getProtocol(step));
 		sampler.setDomain(getDomain(step));
 		sampler.setPath(getPath(step));
-		sampler.setPort(getPort(step));
-		sampler.setMethod(step.requiredAttribute("method"));
+		Optional<String> maybePort = getPort(step);
+		if (maybePort.isPresent()) {
+			String port = maybePort.get();
+			if (PropertyReference.matches(port)) {
+				sampler.setProperty(new StringProperty(PORT, port));
+			} else {
+				sampler.setPort(Integer.parseInt(port));
+			}
+		} else {
+			sampler.setPort(80);
+		}
+		Object method = step.getAttributes().get("method");
+		if (method instanceof PropertyReference) {
+			sampler.setMethod("${" + ((PropertyReference) method).getName() + "}");
+		} else {
+			sampler.setMethod(method.toString());
+		}
+		step.optionalAttribute("body", String.class).ifPresent(body -> sampler.addNonEncodedArgument("", body, ""));
 		sampler.setProperty(TestElement.TEST_CLASS, HTTPSamplerProxy.class.getName());
 		sampler.setProperty(TestElement.GUI_CLASS, HttpTestSampleGui.class.getName());
 		return sampler;
@@ -47,18 +71,18 @@ public class HttpExporter implements StepExporter {
 		}
 	}
 
-	private int getPort(Step step) {
+	private Optional<String> getPort(Step step) {
 		String url = removePath(removeProtocol(step));
 
 		int portPosition = url.indexOf(':');
 		if (portPosition > 0) {
-			return Integer.valueOf(url.substring(portPosition + 1));
+			return Optional.of(url.substring(portPosition + 1));
 		}
-		return 80;
+		return Optional.empty();
 	}
 
 	private String getProtocol(Step step) {
-		String url = step.requiredAttribute("url");
+		String url = step.getAttributes().get("url").toString();
 		if (url.toLowerCase().startsWith(HTTP_PROTOCOL)) {
 			return "http";
 		} else if (url.toLowerCase().startsWith(HTTPS_PROTOCOL)) {

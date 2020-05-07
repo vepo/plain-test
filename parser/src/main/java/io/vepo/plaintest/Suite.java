@@ -1,32 +1,32 @@
 package io.vepo.plaintest;
 
+import static java.util.Comparator.comparingInt;
+import static java.util.Objects.isNull;
+import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
+
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
 
-public class Suite {
+public class Suite extends NamedSuiteChild {
 	public static final class SuiteBuilder {
 		private int index;
 		private String name;
-		private List<Suite> suites;
-		private List<Step> steps;
+		private List<SuiteChild> children;
 		private Map<SuiteAttributes, Object> attributes;
+		private SuiteBuilder parent;
+		private Suite instance;
 
 		private SuiteBuilder() {
 			attributes = new HashMap<>();
-			suites = new ArrayList<>();
-			steps = new ArrayList<>();
+			children = new ArrayList<>();
 		}
 
 		public SuiteBuilder index(int index) {
@@ -39,13 +39,8 @@ public class Suite {
 			return this;
 		}
 
-		public SuiteBuilder suite(Suite suite) {
-			suites.add(suite);
-			return this;
-		}
-
-		public SuiteBuilder step(Step step) {
-			steps.add(step);
+		public SuiteBuilder child(SuiteChild child) {
+			children.add(child);
 			return this;
 		}
 
@@ -54,13 +49,20 @@ public class Suite {
 			return this;
 		}
 
+		public SuiteBuilder parent(SuiteBuilder parent) {
+			this.parent = parent;
+			return this;
+		}
+
 		public Suite build() {
-			return new Suite(this);
+			if (isNull(instance)) {
+				instance = new Suite(this);
+			}
+			return instance;
 		}
 
 		public int nextIndex() {
-			return IntStream.concat(suites.stream().mapToInt(Suite::getIndex), steps.stream().mapToInt(Step::getIndex))
-					.max().orElse(-1) + 1;
+			return children.stream().mapToInt(SuiteChild::getIndex).max().orElse(-1) + 1;
 
 		}
 	}
@@ -69,34 +71,21 @@ public class Suite {
 		return new SuiteBuilder();
 	}
 
-	private final int index;
-	private final String name;
-	private final List<Suite> suites;
-	private final List<Step> steps;
+	private final List<SuiteChild> children;
 	private final Map<SuiteAttributes, Object> attributes;
 
 	private Suite(SuiteBuilder builder) {
-		index = builder.index;
-		name = builder.name;
-		suites = builder.suites;
-		steps = builder.steps;
+		super(builder.index, builder.name, Optional.ofNullable(builder.parent).map(SuiteBuilder::build).orElse(null));
+		children = builder.children;
 		attributes = builder.attributes;
 	}
 
-	public int getIndex() {
-		return index;
+	public List<SuiteChild> getChildren() {
+		return children;
 	}
 
-	public String getName() {
-		return name;
-	}
-
-	public List<Suite> getSuites() {
-		return suites;
-	}
-
-	public List<Step> getSteps() {
-		return steps;
+	public SuiteChild getChild(int index) {
+		return children.get(index);
 	}
 
 	public Map<SuiteAttributes, Object> getAttributes() {
@@ -128,8 +117,7 @@ public class Suite {
 
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder().append(index).append(name).append(attributes).append(steps).append(suites)
-				.hashCode();
+		return new HashCodeBuilder().appendSuper(super.hashCode()).append(attributes).append(children).hashCode();
 	}
 
 	@Override
@@ -144,41 +132,36 @@ public class Suite {
 			return false;
 		}
 		Suite other = (Suite) obj;
-		return new EqualsBuilder().append(index, other.index).append(name, other.name)
-				.append(attributes, other.attributes).append(steps, other.steps).append(suites, other.suites)
-				.isEquals();
+		return new EqualsBuilder().appendSuper(super.equals(obj)).append(attributes, other.attributes)
+				.append(children, other.children).isEquals();
 	}
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).append("index", index).append("name", name)
-				.append("attributes", attributes).append("steps", steps).append("suites", suites).toString();
+		return new ToStringBuilder(this, SHORT_PREFIX_STYLE).appendSuper(super.toString())
+				.append("attributes", attributes).append("children", children).toString();
 	}
 
 	public void forEachOrdered(Consumer<Suite> suiteConsumer, Consumer<Step> stepConsumer) {
-		AtomicInteger currentIndex = new AtomicInteger(0);
-		List<Step> remainingSteps = new LinkedList<>(steps);
-		List<Suite> remainingSuites = new LinkedList<>(suites);
-		while (!remainingSteps.isEmpty() || !remainingSuites.isEmpty()) {
-			remainingSteps.removeIf(step -> {
-				if (step.getIndex() == currentIndex.get()) {
-					stepConsumer.accept(step);
-					currentIndex.incrementAndGet();
-					return true;
-				} else {
-					return false;
-				}
-			});
+		children.stream().sorted(comparingInt(SuiteChild::getIndex)).forEachOrdered(child -> {
+			if (child instanceof Step) {
+				stepConsumer.accept((Step) child);
+			} else if (child instanceof Suite) {
+				suiteConsumer.accept((Suite) child);
+			}
+		});
+	}
 
-			remainingSuites.removeIf(step -> {
-				if (step.getIndex() == currentIndex.get()) {
-					suiteConsumer.accept(step);
-					currentIndex.incrementAndGet();
-					return true;
-				} else {
-					return false;
-				}
-			});
-		}
+	public void forEachOrdered(Consumer<Suite> suiteConsumer, Consumer<Step> stepConsumer,
+			Consumer<Properties> propertiesConsumer) {
+		children.stream().sorted(comparingInt(SuiteChild::getIndex)).forEachOrdered(child -> {
+			if (child instanceof Step) {
+				stepConsumer.accept((Step) child);
+			} else if (child instanceof Suite) {
+				suiteConsumer.accept((Suite) child);
+			} else if (child instanceof Properties) {
+				propertiesConsumer.accept((Properties) child);
+			}
+		});
 	}
 }

@@ -3,7 +3,7 @@ grammar TestSuite;
 suite
     :     'Suite' IDENTIFIER '{'
             execDirectory?
-            (suite | step)*
+            (suite | step | properties)*
         '}'
     ;
 
@@ -11,6 +11,12 @@ step
     : IDENTIFIER IDENTIFIER '{'
             (attribute | assertion)*
       '}'
+    ;
+
+properties
+    :    'Properties' '{'
+             attribute*
+         '}'
     ;
 
 execDirectory
@@ -22,7 +28,11 @@ assertion
     ;
 
 attribute
-    : IDENTIFIER ':' value
+    : IDENTIFIER ':' (value | propertyReference)
+    ;
+
+propertyReference
+    : '${' IDENTIFIER '}'
     ;
 
 value

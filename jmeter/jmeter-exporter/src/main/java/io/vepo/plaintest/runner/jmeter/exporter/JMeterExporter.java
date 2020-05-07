@@ -23,6 +23,7 @@ import java.util.ServiceLoader;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.jmeter.config.Arguments;
+import org.apache.jmeter.config.gui.ArgumentsPanel;
 import org.apache.jmeter.control.GenericController;
 import org.apache.jmeter.control.LoopController;
 import org.apache.jmeter.control.gui.LogicControllerGui;
@@ -33,6 +34,7 @@ import org.apache.jorphan.collections.ListedHashTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vepo.plaintest.Properties;
 import io.vepo.plaintest.Step;
 import io.vepo.plaintest.Suite;
 
@@ -80,7 +82,8 @@ public class JMeterExporter {
 		HashTree threadGroupHashTree = testPlanTree.add(testPlan, threadGroup);
 
 		rootSuite.forEachOrdered(suite -> createSuite(threadGroupHashTree, suite),
-				step -> createStep(threadGroupHashTree, step));
+				step -> createStep(threadGroupHashTree, step),
+				properties -> createProperties(threadGroupHashTree, properties));
 
 		try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 			loadProperties();
@@ -89,6 +92,14 @@ public class JMeterExporter {
 		} catch (IOException e) {
 			throw new IllegalStateException("Cannot write JMX!", e);
 		}
+	}
+
+	private void createProperties(HashTree tree, Properties properties) {
+		Arguments arguments = new Arguments();
+		properties.getValues().forEach((key, value) -> arguments.addArgument(key, value.toString()));
+		arguments.setProperty(TEST_CLASS, Arguments.class.getSimpleName());
+		arguments.setProperty(GUI_CLASS, ArgumentsPanel.class.getSimpleName());
+		tree.add(arguments);
 	}
 
 	private void createStep(HashTree tree, Step step) {
