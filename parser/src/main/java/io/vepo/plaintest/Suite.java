@@ -151,4 +151,17 @@ public class Suite extends NamedSuiteChild {
 			}
 		});
 	}
+
+	public void forEachOrdered(Consumer<Suite> suiteConsumer, Consumer<Step> stepConsumer,
+			Consumer<Properties> propertiesConsumer) {
+		children.stream().sorted(comparingInt(SuiteChild::getIndex)).forEachOrdered(child -> {
+			if (child instanceof Step) {
+				stepConsumer.accept((Step) child);
+			} else if (child instanceof Suite) {
+				suiteConsumer.accept((Suite) child);
+			} else if (child instanceof Properties) {
+				propertiesConsumer.accept((Properties) child);
+			}
+		});
+	}
 }

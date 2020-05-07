@@ -45,11 +45,13 @@ public abstract class SuiteChild implements PropertiesResolver {
 				}
 			}
 
-			return Optional.ofNullable(propertiesResolver).map(resolver -> resolver.<T>findRequiredPropertyValue(key))
-					.orElseGet(() -> parent.<T>findRequiredPropertyValue(key));
+			return Optional.ofNullable(propertiesResolver)
+					       .map(resolver -> resolver.<T>findRequiredPropertyValue(key))
+					       .orElseGet(() -> parent.<T>findRequiredPropertyValue(key));
 		}
-		return Optional.ofNullable(propertiesResolver).map(resolver -> resolver.<T>findRequiredPropertyValue(key))
-				.orElseThrow(() -> new PropertyNotDefinedException("Could not find property: " + key));
+		return Optional.ofNullable(propertiesResolver)
+				       .map(resolver -> resolver.<T>findRequiredPropertyValue(key))
+				       .orElseThrow(() -> new PropertyNotDefinedException("Could not find property: " + key));
 	}
 
 	@Override
@@ -62,8 +64,9 @@ public abstract class SuiteChild implements PropertiesResolver {
 				}
 			}
 
-			return Optional.ofNullable(propertiesResolver).map(resolver -> resolver.<T>findOptionalPropertyValue(key))
-					.orElseGet(() -> parent.<T>findOptionalPropertyValue(key));
+			return Optional.ofNullable(propertiesResolver)
+					       .map(resolver -> resolver.<T>findOptionalPropertyValue(key))
+					       .orElseGet(() -> parent.<T>findOptionalPropertyValue(key));
 		}
 		return Optional.ofNullable(propertiesResolver).flatMap(resolver -> resolver.<T>findOptionalPropertyValue(key));
 	}

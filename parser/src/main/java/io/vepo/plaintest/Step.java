@@ -102,7 +102,11 @@ public class Step extends NamedSuiteChild {
 		if (!attributes.containsKey(key)) {
 			return Optional.empty();
 		}
-		return Optional.of((T) attributes.get(key));
+		Object value = attributes.get(key);
+		if (value instanceof PropertyReference) {
+			return findOptionalPropertyValue(((PropertyReference) value).getName());
+		}
+		return Optional.of((T) value);
 	}
 
 	@SuppressWarnings("unchecked")

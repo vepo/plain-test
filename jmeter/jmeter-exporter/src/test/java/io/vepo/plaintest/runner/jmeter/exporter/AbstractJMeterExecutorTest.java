@@ -101,4 +101,15 @@ public abstract class AbstractJMeterExecutorTest {
 
 		client.verify(serverRequest, atLeast(times));
 	}
+
+	protected void validateHttp(String path, String method, int statusCode, String requestBody, String responseBody,
+			int times, Runnable code) {
+		HttpRequest serverRequest = request().withMethod(method).withPath(path).withBody(requestBody);
+
+		client.when(serverRequest).respond(response().withStatusCode(statusCode).withBody(responseBody));
+
+		code.run();
+
+		client.verify(serverRequest, atLeast(times));
+	}
 }

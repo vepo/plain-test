@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Collections;
+import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -415,6 +416,113 @@ public class SuiteParserTest {
 
 			assertThat(step.optionalAttribute("notFoundAttribute", String.class)).isEmpty();
 			assertThat(step.optionalAttribute("minValue", Long.class)).isNotEmpty().hasValue(-5L);
+		}
+
+		@Test
+		@DisplayName("It SHOULD allow access attributes from external")
+		public void attributeWithExternalPropertiesTest() {
+			Step step = Step.builder().index(0).plugin("HTTP").name("Step1").attribute("method", "GET")
+					.attribute("xyz", new PropertyReference("property1")).attribute("timeout", 1000L)
+					.attribute("minValue", -5L).attribute("maxValue", 1500000000L).build();
+			assertEquals(-5L, (Long) step.requiredAttribute("minValue"));
+
+			assertFalse(step.hasAttribute("notFoundAttribute"));
+			assertThrows(IllegalStateException.class, () -> step.requiredAttribute("notFoundAttribute"));
+
+			assertThat(step.optionalAttribute("notFoundAttribute", String.class)).isEmpty();
+			assertThat(step.optionalAttribute("minValue", Long.class)).isNotEmpty().hasValue(-5L);
+
+			step.setPropertiesResolver(new PropertiesResolver() {
+
+				@SuppressWarnings("unchecked")
+				@Override
+				public <T> T findRequiredPropertyValue(String key) {
+					return (T) ("xyz.value");
+				}
+
+				@SuppressWarnings("unchecked")
+				@Override
+				public <T> Optional<T> findOptionalPropertyValue(String key) {
+					return Optional.of((T) ("xyz.value"));
+				}
+			});
+
+			assertThat((String) step.requiredAttribute("xyz")).isEqualTo("xyz.value");
+			assertThat(step.optionalAttribute("xyz", String.class)).isNotEmpty().hasValue("xyz.value");
+
+			step.setPropertiesResolver(new PropertiesResolver() {
+
+				@Override
+				public <T> T findRequiredPropertyValue(String key) {
+					throw new IllegalStateException();
+				}
+
+				@Override
+				public <T> Optional<T> findOptionalPropertyValue(String key) {
+					return Optional.empty();
+				}
+			});
+			assertThat(step.optionalAttribute("xyz", String.class)).isEmpty();
+		}
+
+		@Test
+		@DisplayName("It SHOULD allow access attributes from external from parent")
+		public void attributeWithExternalPropertiesFromParentTest() {
+			SuiteBuilder mainBuilder = Suite.builder().index(0).name("Main");
+			SuiteBuilder firstSuiteBuilder = Suite.builder().index(0).name("SubMain").parent(mainBuilder);
+
+			Step step = Step.builder().index(0).plugin("HTTP").name("Step1").attribute("method", "GET")
+					.attribute("xyz", new PropertyReference("property1")).attribute("timeout", 1000L)
+					.attribute("minValue", -5L).attribute("maxValue", 1500000000L).parent(firstSuiteBuilder).build();
+			Suite main = mainBuilder.child(firstSuiteBuilder.child(step).build()).build();
+			Suite first = firstSuiteBuilder.build();
+
+			assertEquals(-5L, (Long) step.requiredAttribute("minValue"));
+
+			assertFalse(step.hasAttribute("notFoundAttribute"));
+			assertThrows(IllegalStateException.class, () -> step.requiredAttribute("notFoundAttribute"));
+
+			assertThat(step.optionalAttribute("notFoundAttribute", String.class)).isEmpty();
+			assertThat(step.optionalAttribute("minValue", Long.class)).isNotEmpty().hasValue(-5L);
+
+			PropertiesResolver propertiesResolver = new PropertiesResolver() {
+
+				@SuppressWarnings("unchecked")
+				@Override
+				public <T> T findRequiredPropertyValue(String key) {
+					return (T) ("xyz.value");
+				}
+
+				@SuppressWarnings("unchecked")
+				@Override
+				public <T> Optional<T> findOptionalPropertyValue(String key) {
+					return Optional.of((T) ("xyz.value"));
+				}
+			};
+			main.setPropertiesResolver(propertiesResolver);
+
+			assertThat((String) step.requiredAttribute("xyz")).isEqualTo("xyz.value");
+			assertThat(step.optionalAttribute("xyz", String.class)).isNotEmpty().hasValue("xyz.value");
+
+			main.setPropertiesResolver(null);
+			first.setPropertiesResolver(propertiesResolver);
+			assertThat((String) step.requiredAttribute("xyz")).isEqualTo("xyz.value");
+			assertThat(step.optionalAttribute("xyz", String.class)).isNotEmpty().hasValue("xyz.value");
+
+			first.setPropertiesResolver(null);
+			main.setPropertiesResolver(new PropertiesResolver() {
+
+				@Override
+				public <T> T findRequiredPropertyValue(String key) {
+					throw new IllegalStateException();
+				}
+
+				@Override
+				public <T> Optional<T> findOptionalPropertyValue(String key) {
+					return Optional.empty();
+				}
+			});
+			assertThat(step.optionalAttribute("xyz", String.class)).isEmpty();
 		}
 	}
 }

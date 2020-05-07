@@ -1,5 +1,6 @@
 package io.vepo.plaintest.runner.jmeter.exporter.plugins;
 
+import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.protocol.http.control.gui.HttpTestSampleGui;
 import org.apache.jmeter.protocol.http.sampler.HTTPSamplerProxy;
 import org.apache.jmeter.samplers.AbstractSampler;
@@ -16,12 +17,14 @@ public class HttpExporter implements StepExporter {
 	@Override
 	public AbstractSampler createSampler(Step step) {
 		HTTPSamplerProxy sampler = new HTTPSamplerProxy();
+		sampler.setArguments(new Arguments());
 		sampler.setName(step.getName());
 		sampler.setProtocol(getProtocol(step));
 		sampler.setDomain(getDomain(step));
 		sampler.setPath(getPath(step));
 		sampler.setPort(getPort(step));
 		sampler.setMethod(step.requiredAttribute("method"));
+		step.optionalAttribute("body", String.class).ifPresent(body -> sampler.addNonEncodedArgument("", body, ""));
 		sampler.setProperty(TestElement.TEST_CLASS, HTTPSamplerProxy.class.getName());
 		sampler.setProperty(TestElement.GUI_CLASS, HttpTestSampleGui.class.getName());
 		return sampler;
