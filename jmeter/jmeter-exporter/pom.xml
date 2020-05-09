@@ -13,8 +13,6 @@
 	<packaging>jar</packaging>
 	<name>Plain Test :: JMeter :: Exporter</name>
 
-
-
 	<dependencies>
 		<dependency>
 			<groupId>io.vepo</groupId>

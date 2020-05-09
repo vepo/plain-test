@@ -10,7 +10,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -18,21 +17,24 @@ import io.vepo.plaintest.SuiteFactory;
 import io.vepo.plaintest.runner.executor.PlainTestExecutor;
 import io.vepo.plaintest.runner.executor.Result;
 
-public class ExamplesValidation {
+public class ExamplesValidationTest {
 
 	@ParameterizedTest
 	@MethodSource
-	@Disabled
-	public void validateExamples(File suite) throws IOException {
+	public void validateExamplesTest(File suite) throws IOException {
 		PlainTestExecutor executor = new PlainTestExecutor();
 		Result result = executor.execute(SuiteFactory.parseSuite(new String(readAllBytes(suite.toPath()))));
 		assertTrue(result.isSuccess());
 	}
 
-	static Stream<File> validateExamples() {
+	public static Stream<File> validateExamplesTest() {
 		Path exampleFolder = Paths.get("..", "examples");
+		if (!exampleFolder.toFile().exists()) {
+			exampleFolder = Paths.get(".", "examples");
+		}
 
-		return Arrays.stream(exampleFolder.toFile().list())
-				.map(filename -> Paths.get(exampleFolder.toAbsolutePath().toString(), filename)).map(Path::toFile);
+		String absolutePath = exampleFolder.toAbsolutePath().toString();
+		return Arrays.stream(exampleFolder.toFile().list()).map(filename -> Paths.get(absolutePath, filename))
+				.map(Path::toFile);
 	}
 }

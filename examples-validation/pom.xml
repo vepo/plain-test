@@ -14,18 +14,54 @@
 	<artifactId>examples-validation</artifactId>
 	<name>Plain Test :: Examples Validation</name>
 
-	<packaging>jar</packaging>
-
 	<dependencies>
 		<dependency>
 			<groupId>io.vepo</groupId>
 			<artifactId>parser</artifactId>
 			<version>${project.version}</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.vepo</groupId>
 			<artifactId>executor</artifactId>
 			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mock-server</groupId>
+			<artifactId>mockserver-junit-jupiter</artifactId>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.mock-server</groupId>
+				<artifactId>mockserver-maven-plugin</artifactId>
+				<version>5.10.0</version>
+				<configuration>
+					<serverPort>9999</serverPort>
+					<logLevel>DEBUG</logLevel>
+					<initializationClass>io.vepo.plaintest.examples.validation.http.HttpInitialization</initializationClass>
+				</configuration>
+				<executions>
+					<execution>
+						<id>process-test-classes</id>
+						<phase>process-test-classes</phase>
+						<goals>
+							<goal>start</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>verify</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>stop</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 </project>
