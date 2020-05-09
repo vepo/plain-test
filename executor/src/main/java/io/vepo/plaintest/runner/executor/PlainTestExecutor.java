@@ -1,7 +1,11 @@
 package io.vepo.plaintest.runner.executor;
 
 import static io.vepo.plaintest.SuiteAttributes.EXECUTION_PATH;
+import static io.vepo.plaintest.runner.executor.FailReason.ASSERTION;
+import static io.vepo.plaintest.runner.executor.FailReason.MISSING_ATTRIBUTES;
+import static io.vepo.plaintest.runner.executor.FailReason.PLUGIN_NOT_FOUND;
 import static java.lang.System.currentTimeMillis;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toSet;
@@ -77,7 +81,7 @@ public class PlainTestExecutor implements PropertiesResolver {
 					.filter(entry -> !step.getAttributes().containsKey(entry.getKey())).collect(toSet());
 			if (!missingAttributes.isEmpty()) {
 				return Result.builder().name(step.getName()).success(false)
-						.fail(new Fail(FailReason.MISSING_ATTRIBUTES, "Missing attributes: ["
+						.fail(new Fail(MISSING_ATTRIBUTES, "Missing attributes: ["
 								+ missingAttributes.stream().map(Attribute::getKey).collect(joining(", ")) + "]"))
 						.build();
 			} else {
@@ -85,7 +89,7 @@ public class PlainTestExecutor implements PropertiesResolver {
 			}
 		} else {
 			return Result.builder().name(step.getName()).success(false)
-					.fail(new Fail(FailReason.PLUGIN_NOT_FOUND, "Could not find plugin: " + step.getPlugin())).build();
+					.fail(new Fail(PLUGIN_NOT_FOUND, "Could not find plugin: " + step.getPlugin())).build();
 		}
 	}
 
@@ -101,27 +105,31 @@ public class PlainTestExecutor implements PropertiesResolver {
 			case "Equals":
 				checkAssertionEquals(result, assertion, failCallback);
 				break;
-
 			default:
-				logger.warn("Verb not implemented! {}", assertion.getVerb());
-
+				// nothing
 			}
 		});
 		return builder.build();
 	}
 
 	private void checkAssertionEquals(Result result, Assertion<?> assertion, Consumer<Fail> failCallback) {
-		if (assertion.getValue() instanceof String) {
+		if (isNull(assertion.getValue())) {
+			Object value = result.get(assertion.getProperty(), Object.class);
+			if (nonNull(value)) {
+				failCallback.accept(new Fail(ASSERTION, assertion.getProperty() + " is not equal to null"));
+			}
+		} else if (assertion.getValue() instanceof String) {
 			String value = result.get(assertion.getProperty(), String.class);
 			if (value.compareTo((String) assertion.getValue()) != 0) {
-				failCallback.accept(new Fail(FailReason.ASSERTION,
-						assertion.getProperty() + " is not equal to " + assertion.getValue()));
+				failCallback.accept(
+						new Fail(ASSERTION, assertion.getProperty() + " is not equal to " + assertion.getValue()));
 			}
 		} else if (assertion.getValue() instanceof Long) {
 			Long value = result.get(assertion.getProperty(), Long.class);
-			if (value.longValue() != ((Long) assertion.getValue()).longValue()) {
-				failCallback.accept(new Fail(FailReason.ASSERTION,
-						assertion.getProperty() + " is not equal to " + assertion.getValue()));
+			if ((nonNull(value) && value.longValue() != ((Long) assertion.getValue()).longValue())
+					|| isNull(value) && nonNull(assertion.getValue())) {
+				failCallback.accept(
+						new Fail(ASSERTION, assertion.getProperty() + " is not equal to " + assertion.getValue()));
 			}
 		}
 	}
@@ -129,13 +137,17 @@ public class PlainTestExecutor implements PropertiesResolver {
 	private void checkAssertionContains(Result result, Assertion<?> assertion, Consumer<Fail> failCallback) {
 		if (assertion.getValue() instanceof String) {
 			String value = result.get(assertion.getProperty(), String.class);
-			if (!value.contains((String) assertion.getValue())) {
-				failCallback.accept(new Fail(FailReason.ASSERTION,
-						assertion.getProperty() + " does not contains " + assertion.getValue()));
+			if (nonNull(value)) {
+				if (!value.contains((String) assertion.getValue())) {
+					failCallback.accept(new Fail(ASSERTION,
+							assertion.getProperty() + " does not contains " + assertion.getValue()));
+				}
+			} else {
+				failCallback.accept(new Fail(ASSERTION, assertion.getProperty() + " is not a String value."));
 			}
 		} else {
-			failCallback.accept(new Fail(FailReason.RUNTIME_EXCEPTION,
-					assertion.getProperty() + " cannot check contains for numbers. value:" + assertion.getValue()));
+			failCallback.accept(new Fail(ASSERTION,
+					assertion.getProperty() + " cannot check contains for numbers. value: " + assertion.getValue()));
 		}
 	}
 

@@ -11,7 +11,7 @@
 	</parent>
 
 	<artifactId>jmeter</artifactId>
-	<name>Plain Test :: JMetr</name>
+	<name>Plain Test :: JMeter</name>
 	<packaging>pom</packaging>
 
 	<properties>

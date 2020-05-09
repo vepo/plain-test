@@ -7,31 +7,20 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class Fail {
-	private FailReason reason;
-	private String message;
+	private final FailReason reason;
+	private final String message;
 
 	public Fail(FailReason reason, String message) {
 		this.reason = reason;
 		this.message = message;
 	}
 
-	public Fail() {
-	}
-
 	public FailReason getReason() {
 		return reason;
 	}
 
-	public void setReason(FailReason reason) {
-		this.reason = reason;
-	}
-
 	public String getMessage() {
 		return message;
-	}
-
-	public void setMessage(String message) {
-		this.message = message;
 	}
 
 	@Override

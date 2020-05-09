@@ -142,13 +142,7 @@ public class Result {
 				if (Number.class.isAssignableFrom(requiredClass)) {
 					if (requiredClass == Long.class) {
 						return (T) ((Long) (((Number) value).longValue()));
-					} else {
-						throw new IllegalArgumentException("Unexpected type: " + property + " has type "
-								+ value.getClass() + " but was required " + requiredClass);
 					}
-				} else {
-					throw new IllegalArgumentException("Unexpected type: " + property + " has type " + value.getClass()
-							+ " but was required " + requiredClass);
 				}
 			} else {
 				return (T) value;

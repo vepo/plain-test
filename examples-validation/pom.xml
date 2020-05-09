@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>io.vepo</groupId>
+		<artifactId>plain-test</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>examples-validation</artifactId>
+	<name>Plain Test :: Examples Validation</name>
+
+	<packaging>jar</packaging>
+
+	<dependencies>
+		<dependency>
+			<groupId>io.vepo</groupId>
+			<artifactId>parser</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.vepo</groupId>
+			<artifactId>executor</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+	</dependencies>
+</project>

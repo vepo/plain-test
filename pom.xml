@@ -26,6 +26,7 @@
 		<module>executor</module>
 		<module>runner</module>
 		<module>jmeter</module>
+		<module>examples-validation</module>
 	</modules>
 
 	<dependencyManagement>

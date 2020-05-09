@@ -25,6 +25,18 @@ Suite UserTest {
 }
 ```
 
+# Defining Properties
+
+TBD
+
+# Asserting Results
+
+TBD
+
+# Threading Support
+
+Suite can be spanned in multiple threads.
+
 # Implemented Plugins
 
 ## HTTP
