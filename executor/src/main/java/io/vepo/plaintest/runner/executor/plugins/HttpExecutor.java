@@ -141,6 +141,7 @@ public class HttpExecutor implements StepExecutor {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Stream<Attribute<?>> requiredAttribute() {
 		return Stream.of(createAttribute("url", String.class, true), createAttribute("method", String.class, true),

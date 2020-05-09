@@ -95,6 +95,7 @@ public class ProcessExecutor implements StepExecutor {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Stream<Attribute<?>> requiredAttribute() {
 		return Stream.of(createAttribute("cmd", String.class, true),
