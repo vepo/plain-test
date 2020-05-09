@@ -144,7 +144,7 @@ public class HttpExecutor implements StepExecutor {
 	@Override
 	public Stream<Attribute<?>> requiredAttribute() {
 		return Stream.of(createAttribute("url", String.class, true), createAttribute("method", String.class, true),
-				createAttribute("timeout", Long.class, false));
+				createAttribute("timeout", Long.class, false), createAttribute("body", String.class, false));
 	}
 
 }
