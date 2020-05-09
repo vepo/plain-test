@@ -33,7 +33,8 @@ Execute a HTTP Request.
 
 ### Parameters
 
-|| Name || Description || Required || Default Value ||
+| Name | Description | Required | Default Value |
+| :--- | :---------- | :------: | :-----------: | 
 | url | The complete URL for the request | true | N/A |
 | method | The HTTP method that will be used on request | false | GET |
 | timeout | The execution timeout, if it is provided, the request thread will be stopped after the time exceeds | N/A |
