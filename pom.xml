@@ -18,7 +18,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
-		<sonar.coverage.exclusions>runner/**/*</sonar.coverage.exclusions>
+		<sonar.coverage.exclusions>runner/**/*,examples-validation/**/*</sonar.coverage.exclusions>
 	</properties>
 
 	<modules>
