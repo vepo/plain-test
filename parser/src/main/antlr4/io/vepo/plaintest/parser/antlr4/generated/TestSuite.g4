@@ -36,7 +36,7 @@ propertyReference
     ;
 
 value
-    : NUMBER | MULTILINE_STRING | STRING | NULL
+    : NUMBER | BOOLEAN | MULTILINE_STRING | STRING | NULL
     ;
 
 VERB
@@ -47,6 +47,9 @@ VERB
 NULL
     : 'null'
     ;
+    
+BOOLEAN
+	: [Tt][Rr][Uu][Ee] | [Ff][Aa][Ll][Ss][Ee];
 
 IDENTIFIER
     : [A-Za-z][._\-A-Za-z0-9]*

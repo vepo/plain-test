@@ -65,8 +65,8 @@ public class HttpExecutor implements StepExecutor {
 	@Override
 	public Result execute(Step step, Context context) {
 		ResultBuilder resultBuilder = Result.builder().name(step.getName()).start(currentTimeMillis());
-		String stepUrl = step.requiredAttribute("url");
-		String methodUrl = step.requiredAttribute("method");
+		String stepUrl = step.requiredAttribute("url", String.class);
+		String methodUrl = step.requiredAttribute("method", String.class);
 		Optional<Long> maybeTimeout = step.optionalAttribute("timeout", Long.class);
 		Optional<HttpContents> maybeContents = executeWithTimeout(
 				() -> executeRequest(stepUrl, methodUrl, step.optionalAttribute("body", String.class)), maybeTimeout);

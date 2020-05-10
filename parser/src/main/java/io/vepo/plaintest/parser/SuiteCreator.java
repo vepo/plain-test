@@ -111,6 +111,8 @@ public class SuiteCreator extends TestSuiteBaseListener {
 				consumer.accept(ctx.IDENTIFIER().getText(), processMultiLineString(ctx.value().getText()));
 			} else if (nonNull(ctx.value().NUMBER())) {
 				consumer.accept(ctx.IDENTIFIER().getText(), Long.valueOf((ctx.value().getText())));
+			} else if (nonNull(ctx.value().BOOLEAN())) {
+				consumer.accept(ctx.IDENTIFIER().getText(), Boolean.valueOf((ctx.value().getText())));
 			}
 		} else if (nonNull(ctx.propertyReference())) {
 			consumer.accept(ctx.IDENTIFIER().getText(),

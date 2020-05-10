@@ -105,7 +105,7 @@ public class HttpExporter implements StepExporter {
 	}
 
 	private String removeProtocol(Step step) {
-		String url = step.requiredAttribute("url");
+		String url = step.requiredAttribute("url", String.class);
 		if (url.toLowerCase().startsWith(HTTP_PROTOCOL)) {
 			url = url.substring(HTTP_PROTOCOL.length());
 		} else if (url.toLowerCase().startsWith(HTTPS_PROTOCOL)) {

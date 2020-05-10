@@ -6,6 +6,8 @@ import static io.vepo.plaintest.runner.executor.FailReason.TIMED_OUT;
 import static io.vepo.plaintest.runner.utils.Os.OS.WINDOWS;
 import static io.vepo.plaintest.runner.utils.Timeout.executeWithTimeout;
 import static java.lang.System.currentTimeMillis;
+import static java.util.regex.Matcher.quoteReplacement;
+import static java.util.regex.Pattern.quote;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,7 +32,9 @@ public class ProcessExecutor implements StepExecutor {
 	private static final Logger logger = LoggerFactory.getLogger(ProcessExecutor.class);
 	public static final String COMMAND_EXECUTOR_PLUGIN_NAME = "Process";
 
+	private static final String CMD_ATTRIBUTE_KEY = "cmd";
 	private static final String TIMEOUT_ATTRIBUTE_KEY = "timeout";
+	private static final String ADJUST_FILE_SEPARATOR_ATTRIBUTE_KEY = "adjustFileSeparator";
 
 	private static final String PROPERTY_STDERR_KEY = "stderr";
 	private static final String PROPERTY_STDOUT_KEY = "stdout";
@@ -46,7 +50,16 @@ public class ProcessExecutor implements StepExecutor {
 		long start = currentTimeMillis();
 		ResultBuilder resultBuilder = Result.builder().name(step.getName()).start(start);
 		try {
-			String executionCommand = step.requiredAttribute("cmd");
+			String executionCommand = step.requiredAttribute(CMD_ATTRIBUTE_KEY, String.class);
+			Optional<Boolean> maybeAdjustFileSeparator = step.optionalAttribute(ADJUST_FILE_SEPARATOR_ATTRIBUTE_KEY,
+					Boolean.class);
+			if (maybeAdjustFileSeparator.isPresent() && maybeAdjustFileSeparator.get()) {
+				if (Os.getOS() == WINDOWS) {
+					executionCommand = executionCommand.replaceAll(quote("/"), quoteReplacement("\\"));
+				} else {
+					executionCommand = executionCommand.replaceAll(quote("\\"), quoteReplacement("/"));
+				}
+			}
 			String[] cmd = Os.getOS() == WINDOWS ? new String[] { "cmd.exe", "/c", executionCommand }
 					: new String[] { "/bin/sh", "-c", executionCommand };
 			ProcessBuilder pb = new ProcessBuilder(cmd);
@@ -98,8 +111,9 @@ public class ProcessExecutor implements StepExecutor {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Stream<Attribute<?>> requiredAttribute() {
-		return Stream.of(createAttribute("cmd", String.class, true),
-				createAttribute(TIMEOUT_ATTRIBUTE_KEY, Long.class, false));
+		return Stream.of(createAttribute(CMD_ATTRIBUTE_KEY, String.class, true),
+				createAttribute(TIMEOUT_ATTRIBUTE_KEY, Long.class, false),
+				createAttribute(ADJUST_FILE_SEPARATOR_ATTRIBUTE_KEY, Boolean.class, false));
 	}
 
 }

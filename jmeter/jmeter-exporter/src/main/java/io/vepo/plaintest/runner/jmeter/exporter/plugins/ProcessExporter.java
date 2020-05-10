@@ -18,7 +18,7 @@ public class ProcessExporter implements StepExporter {
 	@Override
 	public AbstractSampler createSampler(Step step) {
 		SystemSampler systemSampler = new SystemSampler();
-		systemSampler.setCommand(step.requiredAttribute("cmd"));
+		systemSampler.setCommand(step.requiredAttribute("cmd", String.class));
 		systemSampler.setProperty(TestElement.TEST_CLASS, SystemSampler.class.getName());
 		systemSampler.setProperty(TestElement.GUI_CLASS, SystemSamplerGui.class.getName());
 		return systemSampler;

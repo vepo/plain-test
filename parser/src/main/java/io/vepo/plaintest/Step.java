@@ -106,11 +106,18 @@ public class Step extends NamedSuiteChild {
 		if (value instanceof PropertyReference) {
 			return findOptionalPropertyValue(((PropertyReference) value).getName());
 		}
+		if (!requiredClass.isAssignableFrom(value.getClass())) {
+			if (value instanceof String) {
+				if (requiredClass == Boolean.class) {
+					return Optional.of((T) Boolean.valueOf((String) value));
+				}
+			}
+		}
 		return Optional.of((T) value);
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T> T requiredAttribute(String key) {
+	public <T> T requiredAttribute(String key, Class<T> requiredClass) {
 		if (!attributes.containsKey(key)) {
 			throw new IllegalStateException("Missing attribute: " + key);
 		}
@@ -131,6 +138,9 @@ public class Step extends NamedSuiteChild {
 					start = propertyMatcher.end();
 				}
 				propertyMatcher = PropertyReference.regex.matcher(changedValue);
+			}
+			if (requiredClass == Boolean.class) {
+				return (T) Boolean.valueOf(changedValue);
 			}
 			return (T) changedValue;
 		}

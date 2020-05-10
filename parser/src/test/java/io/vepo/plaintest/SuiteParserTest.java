@@ -278,8 +278,7 @@ public class SuiteParserTest {
 		assertEquals(Suite.builder().index(0).name("T1")
 				.child(Step.builder().index(0).plugin("HTTP").name("Step1").attribute("method", "GET")
 						.attribute("timeout", 1000L).attribute("minValue", -5L).attribute("maxValue", 1500000000L)
-
-						.assertion(new Assertion<>("responseCode", "Equals", 200L))
+						.attribute("ignoreSomething", true).assertion(new Assertion<>("responseCode", "Equals", 200L))
 						.assertion(new Assertion<>("responseMessage", "Equals", "OK"))
 						.assertion(new Assertion<>("body", "Equals", null)).build())
 				.build(), parseSuite("Suite T1 {\n" + //
@@ -288,6 +287,7 @@ public class SuiteParserTest {
 						"        timeout : 1000\n" + //
 						"        minValue: -5\n" + //
 						"        maxValue: 1500000000\n" + //
+						"        ignoreSomething: true\n" + //
 						"        assert responseCode    Equals 200\n" + //
 						"        assert responseMessage Equals \"OK\"\n" + //
 						"        assert body Equals null\n" + //
@@ -336,8 +336,8 @@ public class SuiteParserTest {
 					.build(), suite);
 
 			Step command = (Step) suite.getChild(1);
-			assertEquals("ls", command.requiredAttribute("cmd"));
-			assertEquals(150L, (Long) command.requiredAttribute("timeout"));
+			assertEquals("ls", command.requiredAttribute("cmd", String.class));
+			assertEquals(150L, command.requiredAttribute("timeout", Long.class));
 		}
 
 		@Test
@@ -388,16 +388,16 @@ public class SuiteParserTest {
 					.build(), suite);
 
 			Step step1 = (Step) suite.getChild(1);
-			assertEquals("ls", step1.requiredAttribute("cmd"));
-			assertEquals(150L, (Long) step1.requiredAttribute("timeout"));
+			assertEquals("ls", step1.requiredAttribute("cmd", String.class));
+			assertEquals(150L, step1.requiredAttribute("timeout", Long.class));
 
 			Step step2 = (Step) ((Suite) suite.getChild(2)).getChild(1);
-			assertEquals("dir", step2.requiredAttribute("cmd"));
-			assertEquals(50L, (Long) step2.requiredAttribute("timeout"));
-			assertEquals("xxxx", step2.requiredAttribute("otherValue"));
-			assertThrows(PropertyNotDefinedException.class, () -> step2.requiredAttribute("notDefined"));
+			assertEquals("dir", step2.requiredAttribute("cmd", String.class));
+			assertEquals(50L, step2.requiredAttribute("timeout", Long.class));
+			assertEquals("xxxx", step2.requiredAttribute("otherValue", String.class));
+			assertThrows(PropertyNotDefinedException.class, () -> step2.requiredAttribute("notDefined", String.class));
 			assertEquals("The dir should be \"dir\", xxxx should be \"xxxx\". But ${yyy} should remain!",
-					step2.requiredAttribute("replace"));
+					step2.requiredAttribute("replace", String.class));
 		}
 	}
 
@@ -409,10 +409,10 @@ public class SuiteParserTest {
 		public void attributeTest() {
 			Step step = Step.builder().index(0).plugin("HTTP").name("Step1").attribute("method", "GET")
 					.attribute("timeout", 1000L).attribute("minValue", -5L).attribute("maxValue", 1500000000L).build();
-			assertEquals(-5L, (Long) step.requiredAttribute("minValue"));
+			assertEquals(-5L, step.requiredAttribute("minValue", Long.class));
 
 			assertFalse(step.hasAttribute("notFoundAttribute"));
-			assertThrows(IllegalStateException.class, () -> step.requiredAttribute("notFoundAttribute"));
+			assertThrows(IllegalStateException.class, () -> step.requiredAttribute("notFoundAttribute", String.class));
 
 			assertThat(step.optionalAttribute("notFoundAttribute", String.class)).isEmpty();
 			assertThat(step.optionalAttribute("minValue", Long.class)).isNotEmpty().hasValue(-5L);
@@ -424,10 +424,10 @@ public class SuiteParserTest {
 			Step step = Step.builder().index(0).plugin("HTTP").name("Step1").attribute("method", "GET")
 					.attribute("xyz", new PropertyReference("property1")).attribute("timeout", 1000L)
 					.attribute("minValue", -5L).attribute("maxValue", 1500000000L).build();
-			assertEquals(-5L, (Long) step.requiredAttribute("minValue"));
+			assertEquals(-5L, step.requiredAttribute("minValue", Long.class));
 
 			assertFalse(step.hasAttribute("notFoundAttribute"));
-			assertThrows(IllegalStateException.class, () -> step.requiredAttribute("notFoundAttribute"));
+			assertThrows(IllegalStateException.class, () -> step.requiredAttribute("notFoundAttribute", String.class));
 
 			assertThat(step.optionalAttribute("notFoundAttribute", String.class)).isEmpty();
 			assertThat(step.optionalAttribute("minValue", Long.class)).isNotEmpty().hasValue(-5L);
@@ -447,7 +447,7 @@ public class SuiteParserTest {
 				}
 			});
 
-			assertThat((String) step.requiredAttribute("xyz")).isEqualTo("xyz.value");
+			assertThat(step.requiredAttribute("xyz", String.class)).isEqualTo("xyz.value");
 			assertThat(step.optionalAttribute("xyz", String.class)).isNotEmpty().hasValue("xyz.value");
 
 			step.setPropertiesResolver(new PropertiesResolver() {
@@ -477,10 +477,10 @@ public class SuiteParserTest {
 			Suite main = mainBuilder.child(firstSuiteBuilder.child(step).build()).build();
 			Suite first = firstSuiteBuilder.build();
 
-			assertEquals(-5L, (Long) step.requiredAttribute("minValue"));
+			assertEquals(-5L, step.requiredAttribute("minValue", Long.class));
 
 			assertFalse(step.hasAttribute("notFoundAttribute"));
-			assertThrows(IllegalStateException.class, () -> step.requiredAttribute("notFoundAttribute"));
+			assertThrows(IllegalStateException.class, () -> step.requiredAttribute("notFoundAttribute", String.class));
 
 			assertThat(step.optionalAttribute("notFoundAttribute", String.class)).isEmpty();
 			assertThat(step.optionalAttribute("minValue", Long.class)).isNotEmpty().hasValue(-5L);
@@ -501,12 +501,12 @@ public class SuiteParserTest {
 			};
 			main.setPropertiesResolver(propertiesResolver);
 
-			assertThat((String) step.requiredAttribute("xyz")).isEqualTo("xyz.value");
+			assertThat(step.requiredAttribute("xyz", String.class)).isEqualTo("xyz.value");
 			assertThat(step.optionalAttribute("xyz", String.class)).isNotEmpty().hasValue("xyz.value");
 
 			main.setPropertiesResolver(null);
 			first.setPropertiesResolver(propertiesResolver);
-			assertThat((String) step.requiredAttribute("xyz")).isEqualTo("xyz.value");
+			assertThat(step.requiredAttribute("xyz", String.class)).isEqualTo("xyz.value");
 			assertThat(step.optionalAttribute("xyz", String.class)).isNotEmpty().hasValue("xyz.value");
 
 			first.setPropertiesResolver(null);
