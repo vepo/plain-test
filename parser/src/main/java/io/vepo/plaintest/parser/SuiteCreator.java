@@ -1,13 +1,13 @@
 package io.vepo.plaintest.parser;
 
 import static io.vepo.plaintest.SuiteAttributes.EXECUTION_PATH;
+import static java.util.Arrays.copyOfRange;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.stream.IntStream.range;
 import static org.apache.commons.text.StringEscapeUtils.unescapeJava;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.Optional;
@@ -15,6 +15,7 @@ import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -192,16 +193,21 @@ public class SuiteCreator extends TestSuiteBaseListener {
         if (lines.length > 0) {
 
             if (lines[0].trim().isEmpty()) {
-                lines = Arrays.copyOfRange(lines, 1, lines.length);
+                lines = copyOfRange(lines, 1, lines.length);
             }
 
             if (lines[lines.length - 1].trim().isEmpty()) {
-                lines = Arrays.copyOfRange(lines, 0, lines.length - 1);
+                lines = copyOfRange(lines, 0, lines.length - 1);
             }
 
             removeTabs(lines);
+            removeCarriageReturn(lines);
         }
         return Stream.of(lines).collect(Collectors.joining("\n"));
+    }
+
+    private void removeCarriageReturn(String[] lines) {
+        IntStream.range(0, lines.length).forEach(index -> lines[index] = lines[index].replaceAll("\\s+$", ""));
     }
 
     private void removeTabs(String[] lines) {

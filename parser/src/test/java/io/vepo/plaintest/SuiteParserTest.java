@@ -573,12 +573,12 @@ public class SuiteParserTest {
                                     .plugin("HTTP")
                                     .attribute("url", "http://127.0.0.1")
                                     .attribute("method", "POST")
-                                    .attribute("body", "{\r\n" +
-                                            "    \"username\": \"${username}\",\r\n" +
-                                            "    \"firstName\": \"${firstName}\",\r\n" +
-                                            "    \"lastName\": \"${lastName}\",\r\n" +
-                                            "    \"age\": ${age}\r\n" +
-                                            "}\r")
+                                    .attribute("body", "{\n" +
+                                            "    \"username\": \"${username}\",\n" +
+                                            "    \"firstName\": \"${firstName}\",\n" +
+                                            "    \"lastName\": \"${lastName}\",\n" +
+                                            "    \"age\": ${age}\n" +
+                                            "}")
                                     .assertion(new Assertion<>("responseCode", "Equals", 201L))
                                     .build())
                             .build());

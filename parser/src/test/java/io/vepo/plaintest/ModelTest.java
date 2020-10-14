@@ -17,7 +17,7 @@ import nl.jqno.equalsverifier.Warning;
 public class ModelTest {
 
 	@ParameterizedTest
-	@ValueSource(classes = { Suite.class, Step.class, Assertion.class, Properties.class, PropertyReference.class })
+	@ValueSource(classes = { Suite.class, Step.class, Assertion.class, Properties.class, PropertyReference.class, PropertiesSource.class })
 	public void checkModelTest(Class<?> checkClass) {
 		ToStringVerifier toStringVerifier = ToStringVerifier.forClass(checkClass);
 		if (SuiteChild.class.isAssignableFrom(checkClass)) {

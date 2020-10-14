@@ -7,6 +7,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
 import io.vepo.plaintest.Suite.SuiteBuilder;
 
 public class PropertiesSource extends SuiteChild {
@@ -101,13 +106,8 @@ public class PropertiesSource extends SuiteChild {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + ((file == null) ? 0 : file.hashCode());
-        result = prime * result + ((headers == null) ? 0 : headers.hashCode());
-        result = prime * result + ((separator == null) ? 0 : separator.hashCode());
-        result = prime * result + ((type == null) ? 0 : type.hashCode());
-        return result;
+        return new HashCodeBuilder().appendSuper(super.hashCode()).append(type).append(file).append(separator)
+                .append(headers).hashCode();
     }
 
     @Override
@@ -115,44 +115,22 @@ public class PropertiesSource extends SuiteChild {
         if (this == obj) {
             return true;
         }
-        if (!super.equals(obj)) {
+        if (obj == null) {
             return false;
         }
         if (getClass() != obj.getClass()) {
             return false;
         }
         PropertiesSource other = (PropertiesSource) obj;
-        if (file == null) {
-            if (other.file != null) {
-                return false;
-            }
-        } else if (!file.equals(other.file)) {
-            return false;
-        }
-        if (headers == null) {
-            if (other.headers != null) {
-                return false;
-            }
-        } else if (!headers.equals(other.headers)) {
-            return false;
-        }
-        if (separator == null) {
-            if (other.separator != null) {
-                return false;
-            }
-        } else if (!separator.equals(other.separator)) {
-            return false;
-        }
-        if (type != other.type) {
-            return false;
-        }
-        return true;
+        return new EqualsBuilder().appendSuper(super.equals(obj)).append(type, other.type).append(file, other.file)
+                .append(separator, other.separator).append(headers, other.headers).isEquals();
     }
 
     @Override
     public String toString() {
-        return "PropertiesSource [type=" + type + ", file=" + file + ", separator=" + separator + ", headers=" + headers
-                + "]";
+        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).appendSuper(super.toString())
+                .append("type", type).append("file", file).append("separator", separator).append("headers", headers)
+                .toString();
     }
 
 }
