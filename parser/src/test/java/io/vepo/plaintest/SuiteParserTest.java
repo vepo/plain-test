@@ -535,6 +535,47 @@ public class SuiteParserTest {
     public class MultiThreadTest {
 
         @Test
+        @DisplayName("It should accept times")
+        public void timesTest() {
+            Suite suite = parseSuite("Suite UserTest {\r\n" +
+                    "    times: 100\r\n" +
+                    "    HTTP CreateUser {\r\n" +
+                    "        url   : \"http://127.0.0.1\"\r\n" +
+                    "        method: \"POST\"\r\n" +
+                    "        body  : \"\"\"\r\n" +
+                    "              {\r\n" +
+                    "                  \"username\": \"${username[${index}]}\",\r\n" +
+                    "                  \"firstName\": \"${firstName[${index}]}\",\r\n" +
+                    "                  \"lastName\": \"${lastName[${index}]}\",\r\n" +
+                    "                  \"age\": ${age[${index}]}\r\n" +
+                    "              }\r\n" +
+                    "              \"\"\"\r\n" +
+                    "        assert responseCode Equals 201\r\n" +
+                    "    }\r\n" +
+                    "}");
+
+            assertThat(suite)
+                    .isEqualTo(Suite.builder().name("UserTest")
+                            .times(100)
+                            .child(Step.builder()
+                                    .index(0)
+                                    .name("CreateUser")
+                                    .plugin("HTTP")
+                                    .attribute("url", "http://127.0.0.1")
+                                    .attribute("method", "POST")
+                                    .attribute("body", "{\n" +
+                                            "    \"username\": \"${username[${index}]}\",\n" +
+                                            "    \"firstName\": \"${firstName[${index}]}\",\n" +
+                                            "    \"lastName\": \"${lastName[${index}]}\",\n" +
+                                            "    \"age\": ${age[${index}]}\n" +
+                                            "}")
+                                    .assertion(new Assertion<>("responseCode", "Equals", 201L))
+                                    .build())
+                            .build());
+        }
+
+        @Test
+        @DisplayName("It should accept CSV Input")
         public void fromCsvTest() {
             Suite suite = parseSuite("Suite UserTest {\r\n" +
                     "    PropertiesSource {\r\n" +

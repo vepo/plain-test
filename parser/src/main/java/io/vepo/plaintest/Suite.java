@@ -16,152 +16,166 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class Suite extends NamedSuiteChild {
-	public static final class SuiteBuilder {
-		private int index;
-		private String name;
-		private List<SuiteChild> children;
-		private Map<SuiteAttributes, Object> attributes;
-		private SuiteBuilder parent;
-		private Suite instance;
+    public static final class SuiteBuilder {
+        private int index;
+        private int times;
+        private String name;
+        private List<SuiteChild> children;
+        private Map<SuiteAttributes, Object> attributes;
+        private SuiteBuilder parent;
+        private Suite instance;
 
-		private SuiteBuilder() {
-			attributes = new HashMap<>();
-			children = new ArrayList<>();
-		}
+        private SuiteBuilder() {
+            times = 1;
+            attributes = new HashMap<>();
+            children = new ArrayList<>();
+        }
 
-		public SuiteBuilder index(int index) {
-			this.index = index;
-			return this;
-		}
+        public SuiteBuilder index(int index) {
+            this.index = index;
+            return this;
+        }
 
-		public SuiteBuilder name(String name) {
-			this.name = name;
-			return this;
-		}
+        public SuiteBuilder times(int times) {
+            this.times = times;
+            return this;
+        }
 
-		public SuiteBuilder child(SuiteChild child) {
-			children.add(child);
-			return this;
-		}
+        public SuiteBuilder name(String name) {
+            this.name = name;
+            return this;
+        }
 
-		public SuiteBuilder attribute(SuiteAttributes key, Object value) {
-			attributes.put(key, value);
-			return this;
-		}
+        public SuiteBuilder child(SuiteChild child) {
+            children.add(child);
+            return this;
+        }
 
-		public SuiteBuilder parent(SuiteBuilder parent) {
-			this.parent = parent;
-			return this;
-		}
+        public SuiteBuilder attribute(SuiteAttributes key, Object value) {
+            attributes.put(key, value);
+            return this;
+        }
 
-		public Suite build() {
-			if (isNull(instance)) {
-				instance = new Suite(this);
-			}
-			return instance;
-		}
+        public SuiteBuilder parent(SuiteBuilder parent) {
+            this.parent = parent;
+            return this;
+        }
 
-		public int nextIndex() {
-			return children.stream().mapToInt(SuiteChild::getIndex).max().orElse(-1) + 1;
+        public Suite build() {
+            if (isNull(instance)) {
+                instance = new Suite(this);
+            }
+            return instance;
+        }
 
-		}
-	}
+        public int nextIndex() {
+            return children.stream().mapToInt(SuiteChild::getIndex).max().orElse(-1) + 1;
 
-	public static final SuiteBuilder builder() {
-		return new SuiteBuilder();
-	}
+        }
+    }
 
-	private final List<SuiteChild> children;
-	private final Map<SuiteAttributes, Object> attributes;
+    public static final SuiteBuilder builder() {
+        return new SuiteBuilder();
+    }
 
-	private Suite(SuiteBuilder builder) {
-		super(builder.index, builder.name, Optional.ofNullable(builder.parent).map(SuiteBuilder::build).orElse(null));
-		children = builder.children;
-		attributes = builder.attributes;
-	}
+    private int times;
+    private final List<SuiteChild> children;
+    private final Map<SuiteAttributes, Object> attributes;
 
-	public List<SuiteChild> getChildren() {
-		return children;
-	}
+    private Suite(SuiteBuilder builder) {
+        super(builder.index, builder.name, Optional.ofNullable(builder.parent).map(SuiteBuilder::build).orElse(null));
+        times = builder.times;
+        children = builder.children;
+        attributes = builder.attributes;
+    }
 
-	public SuiteChild getChild(int index) {
-		return children.get(index);
-	}
+    public int getTimes() {
+        return times;
+    }
 
-	public Map<SuiteAttributes, Object> getAttributes() {
-		return attributes;
-	}
+    public List<SuiteChild> getChildren() {
+        return children;
+    }
 
-	@SuppressWarnings("unchecked")
-	public <T> Optional<T> attribute(SuiteAttributes key) {
-		if (attributes.containsKey(key)) {
-			return Optional.of((T) attributes.get(key));
-		} else {
-			return Optional.empty();
-		}
-	}
+    public SuiteChild getChild(int index) {
+        return children.get(index);
+    }
 
-	@SuppressWarnings("unchecked")
-	public <T> Optional<T> attribute(SuiteAttributes key, Class<T> requiredClass) {
-		if (attributes.containsKey(key)) {
-			Object value = attributes.get(key);
-			if (value.getClass().isAssignableFrom(requiredClass)) {
-				return Optional.of((T) value);
-			} else {
-				throw new IllegalStateException("Invalid type!");
-			}
-		} else {
-			return Optional.empty();
-		}
-	}
+    public Map<SuiteAttributes, Object> getAttributes() {
+        return attributes;
+    }
 
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder().appendSuper(super.hashCode()).append(attributes).append(children).hashCode();
-	}
+    @SuppressWarnings("unchecked")
+    public <T> Optional<T> attribute(SuiteAttributes key) {
+        if (attributes.containsKey(key)) {
+            return Optional.of((T) attributes.get(key));
+        } else {
+            return Optional.empty();
+        }
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		Suite other = (Suite) obj;
-		return new EqualsBuilder().appendSuper(super.equals(obj)).append(attributes, other.attributes)
-				.append(children, other.children).isEquals();
-	}
+    @SuppressWarnings("unchecked")
+    public <T> Optional<T> attribute(SuiteAttributes key, Class<T> requiredClass) {
+        if (attributes.containsKey(key)) {
+            Object value = attributes.get(key);
+            if (value.getClass().isAssignableFrom(requiredClass)) {
+                return Optional.of((T) value);
+            } else {
+                throw new IllegalStateException("Invalid type!");
+            }
+        } else {
+            return Optional.empty();
+        }
+    }
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this, SHORT_PREFIX_STYLE).appendSuper(super.toString())
-				.append("attributes", attributes).append("children", children).toString();
-	}
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder().appendSuper(super.hashCode()).append(times).append(attributes).append(children)
+                .hashCode();
+    }
 
-	public void forEachOrdered(Consumer<Suite> suiteConsumer, Consumer<Step> stepConsumer) {
-		children.stream().sorted(comparingInt(SuiteChild::getIndex)).forEachOrdered(child -> {
-			if (child instanceof Step) {
-				stepConsumer.accept((Step) child);
-			} else if (child instanceof Suite) {
-				suiteConsumer.accept((Suite) child);
-			}
-		});
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        Suite other = (Suite) obj;
+        return new EqualsBuilder().appendSuper(super.equals(obj)).append(times, other.times)
+                .append(attributes, other.attributes).append(children, other.children).isEquals();
+    }
 
-	public void forEachOrdered(Consumer<Suite> suiteConsumer, Consumer<Step> stepConsumer,
-			Consumer<Properties> propertiesConsumer) {
-		children.stream().sorted(comparingInt(SuiteChild::getIndex)).forEachOrdered(child -> {
-			if (child instanceof Step) {
-				stepConsumer.accept((Step) child);
-			} else if (child instanceof Suite) {
-				suiteConsumer.accept((Suite) child);
-			} else if (child instanceof Properties) {
-				propertiesConsumer.accept((Properties) child);
-			}
-		});
-	}
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this, SHORT_PREFIX_STYLE).appendSuper(super.toString()).append("times", times)
+                .append("attributes", attributes).append("children", children).toString();
+    }
+
+    public void forEachOrdered(Consumer<Suite> suiteConsumer, Consumer<Step> stepConsumer) {
+        children.stream().sorted(comparingInt(SuiteChild::getIndex)).forEachOrdered(child -> {
+            if (child instanceof Step) {
+                stepConsumer.accept((Step) child);
+            } else if (child instanceof Suite) {
+                suiteConsumer.accept((Suite) child);
+            }
+        });
+    }
+
+    public void forEachOrdered(Consumer<Suite> suiteConsumer, Consumer<Step> stepConsumer,
+            Consumer<Properties> propertiesConsumer) {
+        children.stream().sorted(comparingInt(SuiteChild::getIndex)).forEachOrdered(child -> {
+            if (child instanceof Step) {
+                stepConsumer.accept((Step) child);
+            } else if (child instanceof Suite) {
+                suiteConsumer.accept((Suite) child);
+            } else if (child instanceof Properties) {
+                propertiesConsumer.accept((Properties) child);
+            }
+        });
+    }
 }

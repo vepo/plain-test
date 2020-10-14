@@ -44,6 +44,7 @@ import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.PropertiesSourc
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.SeparatorAttributeContext;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.StepContext;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.SuiteContext;
+import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.TimesAttributeContext;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.TypeAttributeContext;
 
 public class SuiteCreator extends TestSuiteBaseListener {
@@ -111,7 +112,11 @@ public class SuiteCreator extends TestSuiteBaseListener {
     @Override
     public void exitStep(StepContext ctx) {
         logger.trace("Exit Step: {}", ctx);
-        suiteQueue.peekLast().child(currentStepBuilder.build());
+        if (nonNull(currentStepBuilder)) {
+            suiteQueue.peekLast().child(currentStepBuilder.build());
+        } else {
+            logger.warn("Something got wrong!");
+        }
         currentStepBuilder = null;
     }
 
@@ -240,6 +245,12 @@ public class SuiteCreator extends TestSuiteBaseListener {
     @Override
     public void enterExecDirectory(ExecDirectoryContext ctx) {
         logger.trace("Enter ExecDirectory: {}", ctx);
+    }
+
+    @Override
+    public void exitTimesAttribute(TimesAttributeContext ctx) {
+        logger.trace("Exit ExecDirectory: {}", ctx);
+        suiteQueue.peekLast().times(Integer.valueOf(ctx.NUMBER().getText()));
     }
 
     @Override

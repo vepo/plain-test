@@ -2,7 +2,8 @@ grammar TestSuite;
 
 suite
     :     'Suite' IDENTIFIER '{'
-            execDirectory?
+            (execDirectory | timesAttribute | execDirectory timesAttribute | timesAttribute execDirectory)?
+            ?
             (suite | step | propertiesSource | properties )*
         '}'
     ;
@@ -42,6 +43,10 @@ propertiesSource
 			headersAttribute separatorAttribute typeAttribute fileAttribute |
 			headersAttribute separatorAttribute fileAttribute typeAttribute) 
 		'}'
+	;
+
+timesAttribute
+	: 'times' ':' NUMBER
 	;
 
 properties
