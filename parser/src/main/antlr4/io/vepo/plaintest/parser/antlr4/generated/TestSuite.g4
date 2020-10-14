@@ -3,7 +3,7 @@ grammar TestSuite;
 suite
     :     'Suite' IDENTIFIER '{'
             execDirectory?
-            (suite | step | properties)*
+            (suite | step | propertiesSource | properties )*
         '}'
     ;
 
@@ -12,6 +12,37 @@ step
             (attribute | assertion)*
       '}'
     ;
+
+propertiesSource
+	: 	'PropertiesSource' '{' 
+			(typeAttribute fileAttribute separatorAttribute headersAttribute |
+			fileAttribute typeAttribute separatorAttribute headersAttribute |
+			typeAttribute separatorAttribute fileAttribute headersAttribute |
+			fileAttribute separatorAttribute typeAttribute headersAttribute |
+			separatorAttribute typeAttribute fileAttribute headersAttribute |
+			separatorAttribute fileAttribute typeAttribute headersAttribute |
+			
+			typeAttribute fileAttribute headersAttribute separatorAttribute |
+			fileAttribute typeAttribute headersAttribute separatorAttribute |
+			typeAttribute separatorAttribute headersAttribute fileAttribute |
+			fileAttribute separatorAttribute headersAttribute typeAttribute |
+			separatorAttribute typeAttribute headersAttribute fileAttribute |
+			separatorAttribute fileAttribute headersAttribute typeAttribute |
+			
+			typeAttribute headersAttribute fileAttribute separatorAttribute |
+			fileAttribute headersAttribute typeAttribute separatorAttribute |
+			typeAttribute headersAttribute separatorAttribute fileAttribute |
+			fileAttribute headersAttribute separatorAttribute typeAttribute |
+			separatorAttribute headersAttribute typeAttribute fileAttribute |
+			separatorAttribute headersAttribute fileAttribute typeAttribute |
+			
+			headersAttribute fileAttribute typeAttribute separatorAttribute |
+			headersAttribute typeAttribute separatorAttribute fileAttribute |
+			headersAttribute fileAttribute separatorAttribute typeAttribute |
+			headersAttribute separatorAttribute typeAttribute fileAttribute |
+			headersAttribute separatorAttribute fileAttribute typeAttribute) 
+		'}'
+	;
 
 properties
     :    'Properties' '{'
@@ -26,6 +57,22 @@ execDirectory
 assertion
     : 'assert' IDENTIFIER VERB value
     ;
+
+separatorAttribute
+	: 'separator' ':' STRING
+	;
+
+typeAttribute
+	: 'type' ':' IDENTIFIER
+	;
+	
+fileAttribute
+	: 'file' ':' FILE_PATH
+	;
+	
+headersAttribute
+	: 'headers' ':' IDENTIFIER (',' IDENTIFIER)*
+	;
 
 attribute
     : IDENTIFIER ':' (value | propertyReference)

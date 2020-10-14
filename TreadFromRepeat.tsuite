@@ -1,0 +1,16 @@
+Suite UserTest {
+    times: 100
+    HTTP CreateUser {
+        url   : "http://127.0.0.1"
+        method: "POST"
+        body  : """
+              {
+                  "username": "${username[${index}]}",
+                  "firstName": "${firstName[${index}]}",
+                  "lastName": "${lastName[${index}]}",
+                  "age": ${age[${index}]}
+              }
+              """
+        assert responseCode Equals 201
+    }
+}

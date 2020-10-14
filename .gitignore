@@ -1,4 +1,12 @@
 **/target/
+**/.antlr
+# Eclipse
+
 **/.classpath
 **/.project
 **/.settings
+
+# IntelliJ
+
+**/.idea
+**/*.iml
