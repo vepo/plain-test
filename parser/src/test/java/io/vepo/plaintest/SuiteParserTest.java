@@ -534,6 +534,8 @@ class SuiteParserTest {
             Suite suite = parseSuite("Suite UserTest {\r\n" +
                     "    Parallel {\r\n" +
                     "        times: 100\r\n" +
+                    "        rampUp: 10\r\n" +
+                    "        maxThreads: 10\r\n" +
                     "        HTTP CreateUser {\r\n" +
                     "            url   : \"http://127.0.0.1\"\r\n" +
                     "            method: \"POST\"\r\n" +
@@ -549,11 +551,13 @@ class SuiteParserTest {
                     "        }\r\n" +
                     "    }\r\n" +
                     "}");
-
             assertThat(suite)
                     .isEqualTo(Suite.builder().name("UserTest")
-                            .child(Parallel.builder().times(100).child(
-                                    Step.builder()
+                            .child(Parallel.builder()
+                                    .times(100)
+                                    .rampUp(10)
+                                    .maxThreads(10)
+                                    .child(Step.builder()
                                             .index(0)
                                             .name("CreateUser")
                                             .plugin("HTTP")
