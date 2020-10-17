@@ -14,6 +14,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Optional;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -55,6 +56,7 @@ public class SuiteParserTest {
         }
 
         @Test
+        @Disabled("Working only on Windows")
         @DisplayName("It SHOULD parse a Suite with execution directory relative Windows Path")
         public void relativeWindowsPathTest() {
             assertEquals(
@@ -74,6 +76,7 @@ public class SuiteParserTest {
         }
 
         @Test
+        @Disabled("Working only on Windows")
         @DisplayName("It SHOULD parse a Suite with execution directory Windows Path")
         public void windowsPathTest() {
             assertEquals(Suite.builder().index(0).name("T1").executionPath(Paths.get("src", "main", "java")).build(),
