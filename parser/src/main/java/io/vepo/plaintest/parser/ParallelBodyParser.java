@@ -6,15 +6,21 @@ import io.vepo.plaintest.Parallel;
 
 class ParallelBodyParser extends BodyParser<Parallel> {
     enum ParallelAttributes {
-        times, rampUp, maxThreads
+        maxThreads, rampUp, times
     }
 
-    private int times;
     private int maxThreads;
     private int rampUp;
+    private int times;
 
-    public ParallelBodyParser(int index) {
+    ParallelBodyParser(int index) {
         super(index);
+    }
+
+    @Override
+    <J extends BodyParser<?>> J acceptChild(J child) {
+        addChild(child);
+        return child;
     }
 
     @Override
@@ -45,15 +51,9 @@ class ParallelBodyParser extends BodyParser<Parallel> {
     }
 
     @Override
-    Parallel construct() {
+    Parallel build() {
         return Parallel.builder().index(getIndex()).times(times).rampUp(rampUp).maxThreads(maxThreads)
                 .children(getChildren().stream().map(BodyParser::build).collect(toList())).build();
-    }
-
-    @Override
-    <J extends BodyParser<?>> J acceptChild(J child) {
-        addChild(child);
-        return child;
     }
 
 }

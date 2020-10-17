@@ -12,7 +12,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 public class PropertiesSource extends TestItem {
     public enum SourceType {
         CSV
-    };
+    }
 
     public static class PropertiesSourceBuilder {
         private int index;

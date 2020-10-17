@@ -15,15 +15,15 @@ class SuiteBodyParser extends BodyParser<Suite> {
     private String name;
     private Path path;
 
-    public SuiteBodyParser(int index, String name) {
+    SuiteBodyParser(int index, String name) {
         super(index);
         this.name = name;
     }
 
     @Override
-    Suite construct() {
-        return Suite.builder().index(getIndex()).name(name).executionPath(path)
-                .children(getChildren().stream().map(BodyParser::build).collect(toList())).build();
+    <J extends BodyParser<?>> J acceptChild(J child) {
+        addChild(child);
+        return child;
     }
 
     @Override
@@ -46,8 +46,8 @@ class SuiteBodyParser extends BodyParser<Suite> {
     }
 
     @Override
-    <J extends BodyParser<?>> J acceptChild(J child) {
-        addChild(child);
-        return child;
+    Suite build() {
+        return Suite.builder().index(getIndex()).name(name).executionPath(path)
+                .children(getChildren().stream().map(BodyParser::build).collect(toList())).build();
     }
 }

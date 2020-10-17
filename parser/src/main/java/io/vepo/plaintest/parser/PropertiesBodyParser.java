@@ -9,9 +9,14 @@ class PropertiesBodyParser extends BodyParser<Properties> {
 
     private Map<String, Object> values;
 
-    public PropertiesBodyParser(int index) {
+    PropertiesBodyParser(int index) {
         super(index);
         values = new HashMap<>();
+    }
+
+    @Override
+    <J extends BodyParser<?>> J acceptChild(J child) {
+        throw new ParserException();
     }
 
     @Override
@@ -20,13 +25,8 @@ class PropertiesBodyParser extends BodyParser<Properties> {
     }
 
     @Override
-    Properties construct() {
+    Properties build() {
         return Properties.builder().index(getIndex()).values(values).build();
-    }
-
-    @Override
-    <J extends BodyParser<?>> J acceptChild(J child) {
-        throw new ParserException();
     }
 
 }

@@ -102,15 +102,12 @@ public class Step extends NamedTestItem {
         Object value = attributes.get(key);
         if (value instanceof PropertyReference) {
             return findOptionalPropertyValue(((PropertyReference) value).getName());
+        } else if (!requiredClass.isAssignableFrom(value.getClass()) && value instanceof String
+                && requiredClass == Boolean.class) {
+            return Optional.of((T) Boolean.valueOf((String) value));
+        } else {
+            return Optional.of((T) value);
         }
-        if (!requiredClass.isAssignableFrom(value.getClass())) {
-            if (value instanceof String) {
-                if (requiredClass == Boolean.class) {
-                    return Optional.of((T) Boolean.valueOf((String) value));
-                }
-            }
-        }
-        return Optional.of((T) value);
     }
 
     @SuppressWarnings("unchecked")

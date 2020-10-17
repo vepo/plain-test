@@ -51,13 +51,8 @@ public class SuiteCreator extends TestSuiteBaseListener {
                 throw new ParserException();
             }
 
-            int nextIndex;
-            if (bodyQueue.isEmpty()) {
-                nextIndex = 0;
-            } else {
-                nextIndex = parent.nextIndex();
-            }
-            SuiteBodyParser suite = BodyParser.suite(nextIndex, ctx.IDENTIFIER().getText(), parent);
+            SuiteBodyParser suite =
+                    BodyParser.suite(isNull(parent) ? 0 : parent.nextIndex(), ctx.IDENTIFIER().getText(), parent);
             bodyQueue.addLast(suite);
 
             if (isNull(mainSuite)) {

@@ -1,6 +1,5 @@
 package io.vepo.plaintest.parser;
 
-import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 
 import java.util.ArrayList;
@@ -44,12 +43,9 @@ abstract class BodyParser<T extends TestItem> {
     }
 
     private List<BodyParser<?>> children;
-
     private int index;
 
-    private T instance = null;
-
-    public BodyParser(int index) {
+    BodyParser(int index) {
         this.index = index;
         this.children = new ArrayList<>();
     }
@@ -66,14 +62,7 @@ abstract class BodyParser<T extends TestItem> {
 
     abstract void attribute(String key, Object value);
 
-    public final T build() {
-        if (isNull(instance)) {
-            instance = construct();
-        }
-        return instance;
-    }
-
-    abstract T construct();
+    abstract T build();
 
     List<BodyParser<? extends TestItem>> getChildren() {
         return children;

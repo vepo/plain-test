@@ -13,17 +13,22 @@ import io.vepo.plaintest.PropertiesSource.SourceType;
 class PropertiesSourceBodyParser extends BodyParser<PropertiesSource> {
 
     enum PropertiesSourceAttributes {
-        type, file, separator, headers
+        file, headers, separator, type
     }
 
-    private SourceType type;
     private Path file;
-    private String separator;
     private List<String> headers;
+    private String separator;
+    private SourceType type;
 
-    public PropertiesSourceBodyParser(int index) {
+    PropertiesSourceBodyParser(int index) {
         super(index);
         headers = emptyList();
+    }
+
+    @Override
+    <J extends BodyParser<?>> J acceptChild(J child) {
+        throw new ParserException();
     }
 
     @Override
@@ -63,14 +68,9 @@ class PropertiesSourceBodyParser extends BodyParser<PropertiesSource> {
     }
 
     @Override
-    PropertiesSource construct() {
+    PropertiesSource build() {
         return PropertiesSource.builder().index(getIndex()).type(type).file(file).separator(separator).headers(headers)
                 .build();
-    }
-
-    @Override
-    <J extends BodyParser<?>> J acceptChild(J child) {
-        throw new ParserException();
     }
 
 }
