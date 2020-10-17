@@ -14,7 +14,7 @@ import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.EqualsVerifierApi;
 import nl.jqno.equalsverifier.Warning;
 
-public class ModelTest {
+class ModelTest {
 
     @ParameterizedTest
     @ValueSource(classes = {
@@ -25,7 +25,7 @@ public class ModelTest {
         PropertyReference.class,
         PropertiesSource.class,
         Parallel.class })
-    public void checkModelTest(Class<?> checkClass) {
+    void checkModelTest(Class<?> checkClass) {
         ToStringVerifier toStringVerifier = ToStringVerifier.forClass(checkClass);
         if (TestItem.class.isAssignableFrom(checkClass)) {
             toStringVerifier.withIgnoredFields("parent", "propertiesResolver");
@@ -44,7 +44,7 @@ public class ModelTest {
 
     @DisplayName("It should match correctly the PropertyReference")
     @Test
-    public void checkPropertyReferenceTest() {
+    void checkPropertyReferenceTest() {
         assertFalse(PropertyReference.matches("${}"));
         assertTrue(PropertyReference.matches("${property}"));
         assertFalse(PropertyReference.matches("some field ${property} some data"));

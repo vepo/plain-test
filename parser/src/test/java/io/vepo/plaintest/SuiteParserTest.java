@@ -22,13 +22,13 @@ import org.junit.jupiter.api.Test;
 import io.vepo.plaintest.PropertiesSource.SourceType;
 import io.vepo.plaintest.exceptions.PropertyNotDefinedException;
 
-public class SuiteParserTest {
+class SuiteParserTest {
 
     @Nested
-    public class ExecutionDirectoryTest {
+    class ExecutionDirectoryTest {
         @Test
         @DisplayName("It SHOULD parse a Suite with execution directory absolute Unix Path")
-        public void absoluteUnixPathTest() {
+        void absoluteUnixPathTest() {
             assertEquals(Suite.builder().index(0).name("T1").executionPath(new File("/opt/xyz/qasd").toPath()).build(),
                     parseSuite("Suite T1 {\n" + //
                             "    path: /opt/xyz/qasd\n" + //
@@ -37,7 +37,7 @@ public class SuiteParserTest {
 
         @Test
         @DisplayName("It SHOULD parse a Suite with execution directory absolute Windows Path")
-        public void absoluteWindowsPathTest() {
+        void absoluteWindowsPathTest() {
             assertEquals(Suite.builder().index(0).name("T1").executionPath(new File("C:\\user\\xyx").toPath()).build(),
                     parseSuite("Suite T1 {\n" + //
                             "    path: C:\\user\\xyx\n" + //
@@ -47,7 +47,7 @@ public class SuiteParserTest {
 
         @Test
         @DisplayName("It SHOULD parse a Suite with execution directory relative Unix Path")
-        public void relativeUnixPathTest() {
+        void relativeUnixPathTest() {
             assertEquals(
                     Suite.builder().index(0).name("T1").executionPath(Paths.get(".", "src", "main", "java")).build(),
                     parseSuite("Suite T1 {\n" + //
@@ -58,7 +58,7 @@ public class SuiteParserTest {
         @Test
         @Disabled("Working only on Windows")
         @DisplayName("It SHOULD parse a Suite with execution directory relative Windows Path")
-        public void relativeWindowsPathTest() {
+        void relativeWindowsPathTest() {
             assertEquals(
                     Suite.builder().index(0).name("T1").executionPath(Paths.get(".", "src", "main", "java")).build(),
                     parseSuite("Suite T1 {\n" + //
@@ -68,7 +68,7 @@ public class SuiteParserTest {
 
         @Test
         @DisplayName("It SHOULD parse a Suite with execution directory  Unix Path")
-        public void unixPathTest() {
+        void unixPathTest() {
             assertEquals(Suite.builder().index(0).name("T1").executionPath(Paths.get("src", "main", "java")).build(),
                     parseSuite("Suite T1 {\n" + //
                             "    path: src/main/java\n" + //
@@ -78,7 +78,7 @@ public class SuiteParserTest {
         @Test
         @Disabled("Working only on Windows")
         @DisplayName("It SHOULD parse a Suite with execution directory Windows Path")
-        public void windowsPathTest() {
+        void windowsPathTest() {
             assertEquals(Suite.builder().index(0).name("T1").executionPath(Paths.get("src", "main", "java")).build(),
                     parseSuite("Suite T1 {\n" + //
                             "    path: src\\main\\java\n" + //
@@ -87,7 +87,7 @@ public class SuiteParserTest {
 
         @Test
         @DisplayName("It SHOULD parse a Suite with execution directory simple filename")
-        public void simpleTest() {
+        void simpleTest() {
             assertEquals(Suite.builder().index(0).name("T1").executionPath(Paths.get("src")).build(),
                     parseSuite("Suite T1 {\n" + //
                             "    path: src\n" + //
@@ -98,19 +98,19 @@ public class SuiteParserTest {
 
     @Test
     @DisplayName("It SHOULD parse an empty Suite")
-    public void emptySuiteParseTest() {
+    void emptySuiteParseTest() {
         assertEquals(Suite.builder().index(0).name("T1").build(), parseSuite("Suite T1 { }"));
     }
 
     @Test
     @DisplayName("It SHOULD parse no Suite")
-    public void noSuiteParseTest() {
+    void noSuiteParseTest() {
         assertNull(parseSuite(""));
     }
 
     @Test
     @DisplayName("It SHOULD parse index of inner Steps")
-    public void indexTest() {
+    void indexTest() {
         Suite suite = parseSuite("Suite T1 {\n" + //
                 "    HTTP Step1 {\n" + //
                 "        method  : \"GET\"\n" + //
@@ -165,7 +165,7 @@ public class SuiteParserTest {
 
     @Test
     @DisplayName("It SHOULD parse Suite with inner Suites")
-    public void innerSuiteTest() {
+    void innerSuiteTest() {
         Suite suite = parseSuite("Suite T1 {\n" + //
                 "    Properties {\n" + //
                 "        method_get: \"GET\"\n" + //
@@ -249,7 +249,7 @@ public class SuiteParserTest {
 
     @Test
     @DisplayName("It SHOULD parse parameter value Multi Line String")
-    public void multilineStringTest() {
+    void multilineStringTest() {
         assertEquals(Suite.builder().index(0).name("T1").child(Step.builder().index(0).plugin("HTTP").name("Step1")
                 .attribute("method", "POST").attribute("body", "{\n" + //
                         "    \"id\": 1,\n" + //
@@ -272,7 +272,7 @@ public class SuiteParserTest {
 
     @Test
     @DisplayName("It SHOULD parse Step assertion")
-    public void stepWithAssertionTest() {
+    void stepWithAssertionTest() {
         assertEquals(Suite.builder().index(0).name("T1")
                 .child(Step.builder().index(0).plugin("HTTP").name("Step1").attribute("method", "GET")
                         .attribute("timeout", 1000L).attribute("minValue", -5L).attribute("maxValue", 1500000000L)
@@ -296,7 +296,7 @@ public class SuiteParserTest {
 
     @Test
     @DisplayName("It SHOULD parse a Suite with a Plugin")
-    public void suiteWithPluginParseTest() {
+    void suiteWithPluginParseTest() {
         assertEquals(Suite.builder().index(0).name("T1")
                 .child(Step.builder().index(0).plugin("HTTP").name("Step1").attribute("method", "GET")
                         .attribute("timeout", 1000L).attribute("minValue", -5L).attribute("maxValue", 1500000000L)
@@ -314,10 +314,10 @@ public class SuiteParserTest {
 
     @Nested
     @DisplayName("Properties")
-    public class PropertiesTest {
+    class PropertiesTest {
         @Test
         @DisplayName("It should allow Properties")
-        public void parsePropertiesTest() {
+        void parsePropertiesTest() {
             Suite suite = parseSuite("Suite T1 {\n" + //
                     "    Properties {\n" + //
                     "        command: \"ls\"\n" + //
@@ -342,7 +342,7 @@ public class SuiteParserTest {
 
         @Test
         @DisplayName("It should allow Properties in inner Suites")
-        public void parsePropertiesInnerSuiteTest() {
+        void parsePropertiesInnerSuiteTest() {
             Suite suite = parseSuite("Suite T1 {\n" + //
                     "    Properties {\n" + //
                     "        command: \"ls\"\n" + //
@@ -403,10 +403,10 @@ public class SuiteParserTest {
 
     @Nested
     @DisplayName("Step")
-    public class StepTest {
+    class StepTest {
         @Test
         @DisplayName("It SHOULD allow access attributes")
-        public void attributeTest() {
+        void attributeTest() {
             Step step = Step.builder().index(0).plugin("HTTP").name("Step1").attribute("method", "GET")
                     .attribute("timeout", 1000L).attribute("minValue", -5L).attribute("maxValue", 1500000000L).build();
             assertEquals(-5L, step.requiredAttribute("minValue", Long.class));
@@ -420,7 +420,7 @@ public class SuiteParserTest {
 
         @Test
         @DisplayName("It SHOULD allow access attributes from external")
-        public void attributeWithExternalPropertiesTest() {
+        void attributeWithExternalPropertiesTest() {
             Step step = Step.builder().index(0).plugin("HTTP").name("Step1").attribute("method", "GET")
                     .attribute("xyz", new PropertyReference("property1")).attribute("timeout", 1000L)
                     .attribute("minValue", -5L).attribute("maxValue", 1500000000L).build();
@@ -467,7 +467,7 @@ public class SuiteParserTest {
 
         @Test
         @DisplayName("It SHOULD allow access attributes from external from parent")
-        public void attributeWithExternalPropertiesFromParentTest() {
+        void attributeWithExternalPropertiesFromParentTest() {
 
             Step step = Step.builder().index(0).plugin("HTTP").name("Step1").attribute("method", "GET")
                     .attribute("xyz", new PropertyReference("property1")).attribute("timeout", 1000L)
@@ -526,11 +526,11 @@ public class SuiteParserTest {
 
     @Nested
     @DisplayName("Multi Thread")
-    public class MultiThreadTest {
+    class MultiThreadTest {
 
         @Test
         @DisplayName("It should accept times")
-        public void timesTest() {
+        void timesTest() {
             Suite suite = parseSuite("Suite UserTest {\r\n" +
                     "    Parallel {\r\n" +
                     "        times: 100\r\n" +
@@ -573,7 +573,7 @@ public class SuiteParserTest {
 
         @Test
         @DisplayName("It should accept CSV Input")
-        public void fromCsvTest() {
+        void fromCsvTest() {
             Suite suite = parseSuite("Suite UserTest {\r\n" +
                     "    Parallel {\r\n" +
                     "        PropertiesSource {\r\n" +

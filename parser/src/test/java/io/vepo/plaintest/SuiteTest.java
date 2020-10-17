@@ -11,10 +11,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-public class SuiteTest {
+class SuiteTest {
 
     @Test
-    public void builderTest() {
+    void builderTest() {
         Suite suite = Suite.builder().index(0).name("NAME").child(Suite.builder().index(1).name("S1").build())
                 .child(Step.builder().name("Step1").build()).executionPath(Paths.get(".", "value1")).build();
         assertEquals(0, suite.getIndex());
@@ -26,7 +26,7 @@ public class SuiteTest {
 
     @Test
     @DisplayName("It should consume all elements ordered")
-    public void consumeOrderedTest() {
+    void consumeOrderedTest() {
         Deque<Object> elements = new LinkedList<>();
         elements.offerFirst(Step.builder().index(0).name("Step0").build());
         elements.offerFirst(Suite.builder().index(1).name("Suite1").build());
@@ -64,7 +64,7 @@ public class SuiteTest {
 
     @Test
     @DisplayName("It should consume all elements ordered with properties")
-    public void consumeOrderedWithPropertiesTest() {
+    void consumeOrderedWithPropertiesTest() {
         Deque<TestItem> elements = new LinkedList<>();
         elements.offerFirst(Step.builder().index(0).name("Step0").build());
         elements.offerFirst(Suite.builder().index(1).name("Suite1").build());
