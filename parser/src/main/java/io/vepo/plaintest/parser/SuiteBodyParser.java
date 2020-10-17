@@ -8,9 +8,6 @@ import java.nio.file.Path;
 import io.vepo.plaintest.Suite;
 
 class SuiteBodyParser extends BodyParser<Suite> {
-    enum SuiteAttributes {
-        path
-    }
 
     private String name;
     private Path path;
@@ -29,8 +26,8 @@ class SuiteBodyParser extends BodyParser<Suite> {
     @Override
     void attribute(String key, Object value) {
         try {
-            switch (SuiteAttributes.valueOf(key)) {
-                case path:
+            switch (key) {
+                case "path":
                     if (value instanceof String) {
                         path = new File((String) value).toPath();
                     } else {

@@ -10,9 +10,6 @@ import io.vepo.plaintest.Suite;
 import io.vepo.plaintest.TestItem;
 
 abstract class BodyParser<T extends TestItem> {
-    enum Type {
-        Parallel, Properties, PropertiesSource
-    }
 
     static StepBodyParser step(int index, String plugin, String name, BodyParser<Suite> parent) {
         return parent.acceptChild(new StepBodyParser(index, plugin, name));
@@ -28,12 +25,12 @@ abstract class BodyParser<T extends TestItem> {
 
     static BodyParser<?> typed(int index, String type, BodyParser<?> parent) {
         try {
-            switch (Type.valueOf(type)) {
-                case Parallel:
+            switch (type) {
+                case "Parallel":
                     return parent.acceptChild(new ParallelBodyParser(index));
-                case Properties:
+                case "Properties":
                     return parent.acceptChild(new PropertiesBodyParser(index));
-                case PropertiesSource:
+                case "PropertiesSource":
                     return parent.acceptChild(new PropertiesSourceBodyParser(index));
             }
         } catch (IllegalArgumentException iae) {

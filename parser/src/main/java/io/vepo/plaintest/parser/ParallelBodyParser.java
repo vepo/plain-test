@@ -5,9 +5,6 @@ import static java.util.stream.Collectors.toList;
 import io.vepo.plaintest.Parallel;
 
 class ParallelBodyParser extends BodyParser<Parallel> {
-    enum ParallelAttributes {
-        maxThreads, rampUp, times
-    }
 
     private int maxThreads;
     private int rampUp;
@@ -25,22 +22,22 @@ class ParallelBodyParser extends BodyParser<Parallel> {
 
     @Override
     void attribute(String key, Object value) {
-        switch (ParallelAttributes.valueOf(key)) {
-            case times:
+        switch (key) {
+            case "times":
                 if (value instanceof Number) {
                     times = ((Number) value).intValue();
                 } else {
                     throw new ParserException();
                 }
                 break;
-            case rampUp:
+            case "rampUp":
                 if (value instanceof Number) {
                     rampUp = ((Number) value).intValue();
                 } else {
                     throw new ParserException();
                 }
                 break;
-            case maxThreads:
+            case "maxThreads":
                 if (value instanceof Number) {
                     maxThreads = ((Number) value).intValue();
                 } else {

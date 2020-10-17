@@ -12,10 +12,6 @@ import io.vepo.plaintest.PropertiesSource.SourceType;
 
 class PropertiesSourceBodyParser extends BodyParser<PropertiesSource> {
 
-    enum PropertiesSourceAttributes {
-        file, headers, separator, type
-    }
-
     private Path file;
     private List<String> headers;
     private String separator;
@@ -34,25 +30,25 @@ class PropertiesSourceBodyParser extends BodyParser<PropertiesSource> {
     @Override
     void attribute(String key, Object value) {
         try {
-            switch (PropertiesSourceAttributes.valueOf(key)) {
-                case type:
+            switch (key) {
+                case "type":
                     type = SourceType.valueOf(value.toString());
                     break;
-                case file:
+                case "file":
                     if (value instanceof String) {
                         file = new File((String) value).toPath();
                     } else {
                         throw new ParserException();
                     }
                     break;
-                case separator:
+                case "separator":
                     if (value instanceof String) {
                         separator = (String) value;
                     } else {
                         throw new ParserException();
                     }
                     break;
-                case headers:
+                case "headers":
                     if (value instanceof List<?>) {
                         headers = ((List<?>) value).stream().map(Object::toString).collect(toList());
                     } else {
