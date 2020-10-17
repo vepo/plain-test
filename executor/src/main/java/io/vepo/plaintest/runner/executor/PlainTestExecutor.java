@@ -1,6 +1,5 @@
 package io.vepo.plaintest.runner.executor;
 
-import static io.vepo.plaintest.SuiteAttributes.EXECUTION_PATH;
 import static io.vepo.plaintest.runner.executor.FailReason.ASSERTION;
 import static io.vepo.plaintest.runner.executor.FailReason.MISSING_ATTRIBUTES;
 import static io.vepo.plaintest.runner.executor.FailReason.PLUGIN_NOT_FOUND;
@@ -47,8 +46,8 @@ public class PlainTestExecutor implements PropertiesResolver {
 
     public Result execute(Suite suite) {
         suite.setPropertiesResolver(this);
-        return executeSuite(suite, new RootSuiteContext(
-                Paths.get(suite.attribute(EXECUTION_PATH, String.class).orElse(".")).toAbsolutePath()));
+        return executeSuite(suite,
+                new RootSuiteContext(Optional.ofNullable(suite.getExecutionPath()).orElseGet(() -> Paths.get("."))));
     }
 
     private Result executeSuite(Suite suite, Context context) {
@@ -56,9 +55,7 @@ public class PlainTestExecutor implements PropertiesResolver {
         ResultBuilder resultBuilder = Result.builder().name(suite.getName()).start(currentTimeMillis());
         suite.forEachOrdered(innerSuite -> {
             Context innerContext = new InnerSuiteContext(context,
-                    innerSuite.attribute(EXECUTION_PATH, String.class)
-                            .map(path -> context.getWorkingDirectory().resolve(path).toAbsolutePath())
-                            .orElse(context.getWorkingDirectory()));
+                    context.getWorkingDirectory().resolve(innerSuite.getExecutionPath()).toAbsolutePath());
             Result suiteResult = executeSuite(innerSuite, innerContext);
             logger.debug("Suite Executed! results={}", suiteResult);
             successReference.set(successReference.get() && suiteResult.isSuccess());

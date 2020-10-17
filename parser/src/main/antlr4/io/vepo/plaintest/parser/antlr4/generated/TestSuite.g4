@@ -1,95 +1,47 @@
 grammar TestSuite;
 
-suite
-    :     'Suite' IDENTIFIER '{'
-            (execDirectory | timesAttribute | execDirectory timesAttribute | timesAttribute execDirectory)?
-            ?
-            (suite | step | propertiesSource | properties )*
-        '}'
+suiteBody
+    : 'Suite' IDENTIFIER '{'
+            (attribute | suiteBody | stepBody | typedBody )*
+      '}'
     ;
 
-step
+stepBody
     : IDENTIFIER IDENTIFIER '{'
             (attribute | assertion)*
       '}'
     ;
 
-propertiesSource
-	: 	'PropertiesSource' '{' 
-			(typeAttribute fileAttribute separatorAttribute headersAttribute |
-			fileAttribute typeAttribute separatorAttribute headersAttribute |
-			typeAttribute separatorAttribute fileAttribute headersAttribute |
-			fileAttribute separatorAttribute typeAttribute headersAttribute |
-			separatorAttribute typeAttribute fileAttribute headersAttribute |
-			separatorAttribute fileAttribute typeAttribute headersAttribute |
-			
-			typeAttribute fileAttribute headersAttribute separatorAttribute |
-			fileAttribute typeAttribute headersAttribute separatorAttribute |
-			typeAttribute separatorAttribute headersAttribute fileAttribute |
-			fileAttribute separatorAttribute headersAttribute typeAttribute |
-			separatorAttribute typeAttribute headersAttribute fileAttribute |
-			separatorAttribute fileAttribute headersAttribute typeAttribute |
-			
-			typeAttribute headersAttribute fileAttribute separatorAttribute |
-			fileAttribute headersAttribute typeAttribute separatorAttribute |
-			typeAttribute headersAttribute separatorAttribute fileAttribute |
-			fileAttribute headersAttribute separatorAttribute typeAttribute |
-			separatorAttribute headersAttribute typeAttribute fileAttribute |
-			separatorAttribute headersAttribute fileAttribute typeAttribute |
-			
-			headersAttribute fileAttribute typeAttribute separatorAttribute |
-			headersAttribute typeAttribute separatorAttribute fileAttribute |
-			headersAttribute fileAttribute separatorAttribute typeAttribute |
-			headersAttribute separatorAttribute typeAttribute fileAttribute |
-			headersAttribute separatorAttribute fileAttribute typeAttribute) 
-		'}'
-	;
-
-timesAttribute
-	: 'times' ':' NUMBER
-	;
-
-properties
-    :    'Properties' '{'
-             attribute*
-         '}'
-    ;
-
-execDirectory
-	: 'exec-dir' ':' (FILE_PATH | IDENTIFIER)
+typedBody
+	: TYPE '{'
+            (suiteBody | stepBody | typedBody | attribute)*
+      '}'
 	;
 
 assertion
     : 'assert' IDENTIFIER VERB value
     ;
 
-separatorAttribute
-	: 'separator' ':' STRING
-	;
-
-typeAttribute
-	: 'type' ':' IDENTIFIER
-	;
-	
-fileAttribute
-	: 'file' ':' FILE_PATH
-	;
-	
-headersAttribute
-	: 'headers' ':' IDENTIFIER (',' IDENTIFIER)*
-	;
-
 attribute
-    : IDENTIFIER ':' (value | propertyReference)
+    : IDENTIFIER ':' (identifierList | value | propertyReference)
     ;
+
+identifierList
+	: '[' IDENTIFIER (',' IDENTIFIER)* ']'
+	;
 
 propertyReference
     : '${' IDENTIFIER '}'
     ;
 
 value
-    : NUMBER | BOOLEAN | MULTILINE_STRING | STRING | NULL
+    : NUMBER | BOOLEAN | FILE_PATH | IDENTIFIER | MULTILINE_STRING | STRING | NULL
     ;
+
+TYPE
+	:
+		'Parallel' | 'PropertiesSource' | 'Properties'
+	;
 
 VERB
     : 'Contains'

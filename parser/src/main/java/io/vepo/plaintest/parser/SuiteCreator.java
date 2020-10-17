@@ -1,17 +1,15 @@
 package io.vepo.plaintest.parser;
 
-import static io.vepo.plaintest.SuiteAttributes.EXECUTION_PATH;
 import static java.util.Arrays.copyOfRange;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
 import static org.apache.commons.text.StringEscapeUtils.unescapeJava;
 
-import java.io.File;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.Optional;
-import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -23,170 +21,114 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.vepo.plaintest.Assertion;
-import io.vepo.plaintest.Properties;
-import io.vepo.plaintest.Properties.PropertiesBuilder;
-import io.vepo.plaintest.PropertiesSource;
-import io.vepo.plaintest.PropertiesSource.PropertiesSourceBuilder;
-import io.vepo.plaintest.PropertiesSource.SourceType;
 import io.vepo.plaintest.PropertyReference;
-import io.vepo.plaintest.Step;
-import io.vepo.plaintest.Step.StepBuilder;
 import io.vepo.plaintest.Suite;
-import io.vepo.plaintest.Suite.SuiteBuilder;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteBaseListener;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.AssertionContext;
 import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.AttributeContext;
-import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.ExecDirectoryContext;
-import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.FileAttributeContext;
-import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.HeadersAttributeContext;
-import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.PropertiesContext;
-import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.PropertiesSourceContext;
-import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.SeparatorAttributeContext;
-import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.StepContext;
-import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.SuiteContext;
-import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.TimesAttributeContext;
-import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.TypeAttributeContext;
+import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.StepBodyContext;
+import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.SuiteBodyContext;
+import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser.TypedBodyContext;
 
 public class SuiteCreator extends TestSuiteBaseListener {
     private static final Logger logger = LoggerFactory.getLogger(SuiteCreator.class);
     private static final Pattern LINE_START_PATTERN = Pattern.compile("^(\\s+)");
-    private SuiteBuilder mainSuite;
-    private Deque<SuiteBuilder> suiteQueue;
-    private StepBuilder currentStepBuilder;
-    private PropertiesBuilder currentPropertiesBuilder;
-    private PropertiesSourceBuilder propertySourceBuilder;
+    private SuiteBodyParser mainSuite;
+    private Deque<BodyParser<?>> bodyQueue;
 
     public SuiteCreator() {
         mainSuite = null;
-        suiteQueue = new LinkedList<>();
+        bodyQueue = new LinkedList<>();
     }
 
     @Override
-    public void enterSuite(SuiteContext ctx) {
+    public void enterSuiteBody(SuiteBodyContext ctx) {
         if (nonNull(ctx.IDENTIFIER())) {
             logger.trace("Enter Suite: {}", ctx);
 
+            BodyParser<?> parent = bodyQueue.peekLast();
+            if (nonNull(parent) && !(parent instanceof SuiteBodyParser)) {
+                throw new ParserException();
+            }
+
             int nextIndex;
-            if (suiteQueue.isEmpty()) {
+            if (bodyQueue.isEmpty()) {
                 nextIndex = 0;
             } else {
-                nextIndex = suiteQueue.peekLast().nextIndex();
+                nextIndex = parent.nextIndex();
             }
-            suiteQueue.addLast(
-                    Suite.builder().index(nextIndex).name(ctx.IDENTIFIER().getText()).parent(suiteQueue.peekLast()));
+            SuiteBodyParser suite = BodyParser.suite(nextIndex, ctx.IDENTIFIER().getText(), parent);
+            bodyQueue.addLast(suite);
 
             if (isNull(mainSuite)) {
-                mainSuite = suiteQueue.peekLast();
+                mainSuite = suite;
             }
         }
     }
 
     @Override
-    public void exitSuite(SuiteContext ctx) {
+    public void exitSuiteBody(SuiteBodyContext ctx) {
         if (!ctx.isEmpty()) {
             logger.trace("Exit Suite: {}", ctx);
-
-            Suite builtSuite = suiteQueue.pollLast().build();
-
-            if (!suiteQueue.isEmpty()) {
-                suiteQueue.peekLast().child(builtSuite);
-            }
+            bodyQueue.removeLast();
         }
     }
 
     public Suite getTestSuite() {
-        return Optional.ofNullable(mainSuite).map(SuiteBuilder::build).orElse(null);
+        return Optional.ofNullable(mainSuite).map(SuiteBodyParser::build).orElse(null);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public void enterStep(StepContext ctx) {
+    public void enterStepBody(StepBodyContext ctx) {
         logger.trace("Enter Step: {}", ctx);
-
-        int lastIndex = suiteQueue.peekLast().nextIndex();
-        if (ctx.IDENTIFIER().size() == 2) {
-            currentStepBuilder = Step.builder().index(lastIndex).plugin(ctx.IDENTIFIER(0).getText())
-                    .name(ctx.IDENTIFIER(1).getText()).parent(suiteQueue.peekLast());
-        }
+        bodyQueue.addLast(BodyParser.step(bodyQueue.peekLast().nextIndex(), ctx.IDENTIFIER(0).getText(),
+                ctx.IDENTIFIER(1).getText(), (BodyParser<Suite>) bodyQueue.peekLast()));
     }
 
     @Override
-    public void exitStep(StepContext ctx) {
+    public void exitStepBody(StepBodyContext ctx) {
         logger.trace("Exit Step: {}", ctx);
-        if (nonNull(currentStepBuilder)) {
-            suiteQueue.peekLast().child(currentStepBuilder.build());
-        } else {
-            logger.warn("Something got wrong!");
-        }
-        currentStepBuilder = null;
+        bodyQueue.removeLast();
     }
 
-    private void consumeAttribute(AttributeContext ctx, BiConsumer<String, Object> consumer) {
-        if (nonNull(ctx.value())) {
-            if (nonNull(ctx.value().STRING())) {
-                consumer.accept(ctx.IDENTIFIER().getText(), processString(ctx.value().getText()));
-            } else if (nonNull(ctx.value().MULTILINE_STRING())) {
-                consumer.accept(ctx.IDENTIFIER().getText(), processMultiLineString(ctx.value().getText()));
-            } else if (nonNull(ctx.value().NUMBER())) {
-                consumer.accept(ctx.IDENTIFIER().getText(), Long.valueOf((ctx.value().getText())));
-            } else if (nonNull(ctx.value().BOOLEAN())) {
-                consumer.accept(ctx.IDENTIFIER().getText(), Boolean.valueOf((ctx.value().getText())));
-            }
-        } else if (nonNull(ctx.propertyReference())) {
-            consumer.accept(ctx.IDENTIFIER().getText(),
-                    new PropertyReference(ctx.propertyReference().IDENTIFIER().getText()));
-        }
+    @Override
+    public void enterTypedBody(TypedBodyContext ctx) {
+        bodyQueue.addLast(
+                BodyParser.typed(bodyQueue.peekLast().nextIndex(), ctx.TYPE().getText(), bodyQueue.peekLast()));
+    }
+
+    @Override
+    public void exitTypedBody(TypedBodyContext ctx) {
+        logger.trace("Exit Typed: {}", ctx);
+        bodyQueue.removeLast();
     }
 
     @Override
     public void exitAttribute(AttributeContext ctx) {
         logger.trace("Exit Attribute: {}", ctx);
-
-        if (ctx.getParent() instanceof StepContext) {
-            consumeAttribute(ctx, currentStepBuilder::attribute);
-        } else if (ctx.getParent() instanceof PropertiesContext) {
-            consumeAttribute(ctx, currentPropertiesBuilder::value);
+        if (nonNull(ctx.value())) {
+            if (nonNull(ctx.value().STRING())) {
+                bodyQueue.peekLast().attribute(ctx.IDENTIFIER().getText(), processString(ctx.value().getText()));
+            } else if (nonNull(ctx.value().MULTILINE_STRING())) {
+                bodyQueue.peekLast().attribute(ctx.IDENTIFIER().getText(),
+                        processMultiLineString(ctx.value().getText()));
+            } else if (nonNull(ctx.value().NUMBER())) {
+                bodyQueue.peekLast().attribute(ctx.IDENTIFIER().getText(), Long.valueOf((ctx.value().getText())));
+            } else if (nonNull(ctx.value().BOOLEAN())) {
+                bodyQueue.peekLast().attribute(ctx.IDENTIFIER().getText(), Boolean.valueOf((ctx.value().getText())));
+            } else if (nonNull(ctx.value().FILE_PATH())) {
+                bodyQueue.peekLast().attribute(ctx.IDENTIFIER().getText(), ctx.value().FILE_PATH().getText());
+            } else if (nonNull(ctx.value().IDENTIFIER())) {
+                bodyQueue.peekLast().attribute(ctx.IDENTIFIER().getText(), ctx.value().IDENTIFIER().getText());
+            }
+        } else if (nonNull(ctx.propertyReference())) {
+            bodyQueue.peekLast().attribute(ctx.IDENTIFIER().getText(),
+                    new PropertyReference(ctx.propertyReference().IDENTIFIER().getText()));
+        } else if (nonNull(ctx.identifierList())) {
+            bodyQueue.peekLast().attribute(ctx.IDENTIFIER().getText(),
+                    ctx.identifierList().IDENTIFIER().stream().map(TerminalNode::getText).collect(toList()));
         }
-    }
-
-    @Override
-    public void enterPropertiesSource(PropertiesSourceContext ctx) {
-        propertySourceBuilder = PropertiesSource.builder();
-    }
-
-    @Override
-    public void enterTypeAttribute(TypeAttributeContext ctx) {
-        if (ctx.getParent() instanceof PropertiesSourceContext) {
-            propertySourceBuilder.type(SourceType.valueOf(ctx.IDENTIFIER().getText()));
-        }
-    }
-
-    @Override
-    public void enterSeparatorAttribute(SeparatorAttributeContext ctx) {
-        if (ctx.getParent() instanceof PropertiesSourceContext) {
-            propertySourceBuilder.separator(processString(ctx.STRING().getText()));
-        }
-    }
-
-    @Override
-    public void enterHeadersAttribute(HeadersAttributeContext ctx) {
-        if (ctx.getParent() instanceof PropertiesSourceContext) {
-            propertySourceBuilder
-                    .headers(ctx.IDENTIFIER().stream().map(TerminalNode::getText).collect(Collectors.toList()));
-        }
-    }
-
-    @Override
-    public void enterFileAttribute(FileAttributeContext ctx) {
-        if (ctx.getParent() instanceof PropertiesSourceContext) {
-            propertySourceBuilder.file(new File(ctx.FILE_PATH().getText()));
-        }
-    }
-
-    @Override
-    public void exitPropertiesSource(PropertiesSourceContext ctx) {
-        logger.trace("Exit PropertiesSource: {}", ctx);
-        suiteQueue.peekLast().child(propertySourceBuilder.build());
-        propertySourceBuilder = null;
     }
 
     private String processString(String text) {
@@ -227,53 +169,18 @@ public class SuiteCreator extends TestSuiteBaseListener {
     @Override
     public void exitAssertion(AssertionContext ctx) {
         logger.trace("Enter Assertion: {}", ctx);
-
         if (nonNull(ctx.value().STRING())) {
-            currentStepBuilder.assertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
+            bodyQueue.peekLast().assertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
                     processString(ctx.value().getText())));
         } else if (nonNull(ctx.value().MULTILINE_STRING())) {
-            currentStepBuilder.assertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
+            bodyQueue.peekLast().assertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
                     processMultiLineString(ctx.value().getText())));
         } else if (nonNull(ctx.value().NUMBER())) {
-            currentStepBuilder.assertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
+            bodyQueue.peekLast().assertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(),
                     Long.valueOf((ctx.value().getText()))));
         } else if (nonNull(ctx.value().NULL())) {
-            currentStepBuilder.assertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(), null));
+            bodyQueue.peekLast().assertion(new Assertion<>(ctx.IDENTIFIER().getText(), ctx.VERB().getText(), null));
         }
-    }
-
-    @Override
-    public void enterExecDirectory(ExecDirectoryContext ctx) {
-        logger.trace("Enter ExecDirectory: {}", ctx);
-    }
-
-    @Override
-    public void exitTimesAttribute(TimesAttributeContext ctx) {
-        logger.trace("Exit ExecDirectory: {}", ctx);
-        suiteQueue.peekLast().times(Integer.valueOf(ctx.NUMBER().getText()));
-    }
-
-    @Override
-    public void exitExecDirectory(ExecDirectoryContext ctx) {
-        logger.trace("Exit ExecDirectory: {}", ctx);
-        if (nonNull(ctx.FILE_PATH())) {
-            suiteQueue.peekLast().attribute(EXECUTION_PATH, ctx.FILE_PATH().toString());
-        } else if (nonNull(ctx.IDENTIFIER())) {
-            suiteQueue.peekLast().attribute(EXECUTION_PATH, ctx.IDENTIFIER().toString());
-        }
-    }
-
-    @Override
-    public void enterProperties(PropertiesContext ctx) {
-        logger.trace("Enter Properties: {}", ctx);
-        currentPropertiesBuilder = Properties.builder().parent(suiteQueue.peekLast());
-    }
-
-    @Override
-    public void exitProperties(PropertiesContext ctx) {
-        logger.trace("Exit Properties: {}", ctx);
-        suiteQueue.peekLast().child(currentPropertiesBuilder.build());
-        currentPropertiesBuilder = null;
     }
 
 }

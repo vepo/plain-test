@@ -2,20 +2,16 @@ package io.vepo.plaintest;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
-import io.vepo.plaintest.Suite.SuiteBuilder;
-
-public class Properties extends SuiteChild {
+public class Properties extends TestItem {
     public static final class PropertiesBuilder {
         private int index;
         private Map<String, Object> values;
-        private SuiteBuilder parent;
 
         private PropertiesBuilder() {
             values = new HashMap<>();
@@ -31,8 +27,8 @@ public class Properties extends SuiteChild {
             return this;
         }
 
-        public PropertiesBuilder parent(SuiteBuilder parent) {
-            this.parent = parent;
+        public PropertiesBuilder values(Map<String, Object> values) {
+            this.values.putAll(values);
             return this;
         }
 
@@ -48,7 +44,7 @@ public class Properties extends SuiteChild {
     private final Map<String, Object> values;
 
     private Properties(PropertiesBuilder builder) {
-        super(builder.index, Optional.ofNullable(builder.parent).map(SuiteBuilder::build).orElse(null));
+        super(builder.index);
         values = builder.values;
     }
 

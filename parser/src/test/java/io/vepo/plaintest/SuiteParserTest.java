@@ -1,6 +1,5 @@
 package io.vepo.plaintest;
 
-import static io.vepo.plaintest.SuiteAttributes.EXECUTION_PATH;
 import static io.vepo.plaintest.SuiteFactory.parseSuite;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonMap;
@@ -10,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.io.File;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Optional;
@@ -19,7 +19,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import io.vepo.plaintest.PropertiesSource.SourceType;
-import io.vepo.plaintest.Suite.SuiteBuilder;
 import io.vepo.plaintest.exceptions.PropertyNotDefinedException;
 
 public class SuiteParserTest {
@@ -29,18 +28,18 @@ public class SuiteParserTest {
         @Test
         @DisplayName("It SHOULD parse a Suite with execution directory absolute Unix Path")
         public void absoluteUnixPathTest() {
-            assertEquals(Suite.builder().index(0).name("T1").attribute(EXECUTION_PATH, "/opt/xyz/qasd").build(),
+            assertEquals(Suite.builder().index(0).name("T1").executionPath(new File("/opt/xyz/qasd").toPath()).build(),
                     parseSuite("Suite T1 {\n" + //
-                            "    exec-dir: /opt/xyz/qasd\n" + //
+                            "    path: /opt/xyz/qasd\n" + //
                             "}"));
         }
 
         @Test
         @DisplayName("It SHOULD parse a Suite with execution directory absolute Windows Path")
         public void absoluteWindowsPathTest() {
-            assertEquals(Suite.builder().index(0).name("T1").attribute(EXECUTION_PATH, "C:\\user\\xyx").build(),
+            assertEquals(Suite.builder().index(0).name("T1").executionPath(new File("C:\\user\\xyx").toPath()).build(),
                     parseSuite("Suite T1 {\n" + //
-                            "    exec-dir: C:\\user\\xyx\n" + //
+                            "    path: C:\\user\\xyx\n" + //
                             "}"));
             ;
         }
@@ -48,45 +47,47 @@ public class SuiteParserTest {
         @Test
         @DisplayName("It SHOULD parse a Suite with execution directory relative Unix Path")
         public void relativeUnixPathTest() {
-            assertEquals(Suite.builder().index(0).name("T1").attribute(EXECUTION_PATH, "./src/main/java").build(),
+            assertEquals(
+                    Suite.builder().index(0).name("T1").executionPath(Paths.get(".", "src", "main", "java")).build(),
                     parseSuite("Suite T1 {\n" + //
-                            "    exec-dir: ./src/main/java\n" + //
+                            "    path: ./src/main/java\n" + //
                             "}"));
         }
 
         @Test
         @DisplayName("It SHOULD parse a Suite with execution directory relative Windows Path")
         public void relativeWindowsPathTest() {
-            assertEquals(Suite.builder().index(0).name("T1").attribute(EXECUTION_PATH, ".\\src\\main\\java").build(),
+            assertEquals(
+                    Suite.builder().index(0).name("T1").executionPath(Paths.get(".", "src", "main", "java")).build(),
                     parseSuite("Suite T1 {\n" + //
-                            "    exec-dir: .\\src\\main\\java\n" + //
+                            "    path: .\\src\\main\\java\n" + //
                             "}"));
         }
 
         @Test
         @DisplayName("It SHOULD parse a Suite with execution directory  Unix Path")
         public void unixPathTest() {
-            assertEquals(Suite.builder().index(0).name("T1").attribute(EXECUTION_PATH, "src/main/java").build(),
+            assertEquals(Suite.builder().index(0).name("T1").executionPath(Paths.get("src", "main", "java")).build(),
                     parseSuite("Suite T1 {\n" + //
-                            "    exec-dir: src/main/java\n" + //
+                            "    path: src/main/java\n" + //
                             "}"));
         }
 
         @Test
         @DisplayName("It SHOULD parse a Suite with execution directory Windows Path")
         public void windowsPathTest() {
-            assertEquals(Suite.builder().index(0).name("T1").attribute(EXECUTION_PATH, "src\\main\\java").build(),
+            assertEquals(Suite.builder().index(0).name("T1").executionPath(Paths.get("src", "main", "java")).build(),
                     parseSuite("Suite T1 {\n" + //
-                            "    exec-dir: src\\main\\java\n" + //
+                            "    path: src\\main\\java\n" + //
                             "}"));
         }
 
         @Test
         @DisplayName("It SHOULD parse a Suite with execution directory simple filename")
         public void simpleTest() {
-            assertEquals(Suite.builder().index(0).name("T1").attribute(EXECUTION_PATH, "src").build(),
+            assertEquals(Suite.builder().index(0).name("T1").executionPath(Paths.get("src")).build(),
                     parseSuite("Suite T1 {\n" + //
-                            "    exec-dir: src\n" + //
+                            "    path: src\n" + //
                             "}"));
         }
 
@@ -107,7 +108,6 @@ public class SuiteParserTest {
     @Test
     @DisplayName("It SHOULD parse index of inner Steps")
     public void indexTest() {
-        SuiteBuilder t1Builder = Suite.builder().index(0).name("T1");
         Suite suite = parseSuite("Suite T1 {\n" + //
                 "    HTTP Step1 {\n" + //
                 "        method  : \"GET\"\n" + //
@@ -130,19 +130,17 @@ public class SuiteParserTest {
                 "        cmd: \"ls *.txt\"\n" + //
                 "    }\n" + //
                 "}");
-        assertEquals(t1Builder
-                .child(Step.builder().parent(t1Builder).index(0).plugin("HTTP").name("Step1").attribute("method", "GET")
+        assertEquals(Suite.builder().index(0).name("T1")
+                .child(Step.builder().index(0).plugin("HTTP").name("Step1").attribute("method", "GET")
                         .assertion(new Assertion<>("responseCode", "Equals", 200L))
                         .assertion(new Assertion<>("body", "Equals", "Hello World!")).build())
-                .child(Step.builder().parent(t1Builder).index(1).plugin("Process").name("Step2").attribute("cmd", "ls")
+                .child(Step.builder().index(1).plugin("Process").name("Step2").attribute("cmd", "ls").build())
+                .child(Step.builder().index(2).plugin("Process").name("Step3").attribute("cmd", "cd new-folder")
                         .build())
-                .child(Step.builder().parent(t1Builder).index(2).plugin("Process").name("Step3")
-                        .attribute("cmd", "cd new-folder").build())
-                .child(Suite.builder().parent(t1Builder).index(3).name("T2")
+                .child(Suite.builder().index(3).name("T2")
                         .child(Step.builder().index(0).plugin("Process").name("Step2.1").attribute("cmd", "ls").build())
                         .build())
-                .child(Step.builder().parent(t1Builder).index(4).plugin("Process").name("Step4")
-                        .attribute("cmd", "ls *.txt").build())
+                .child(Step.builder().index(4).plugin("Process").name("Step4").attribute("cmd", "ls *.txt").build())
                 .build(), suite);
         assertEquals(0, suite.getIndex());
         assertEquals("T1", suite.getName());
@@ -165,9 +163,6 @@ public class SuiteParserTest {
     @Test
     @DisplayName("It SHOULD parse Suite with inner Suites")
     public void innerSuiteTest() {
-        SuiteBuilder t1Builder = Suite.builder();
-        SuiteBuilder t2Builder = Suite.builder();
-        SuiteBuilder t3Builder = Suite.builder();
         Suite suite = parseSuite("Suite T1 {\n" + //
                 "    Properties {\n" + //
                 "        method_get: \"GET\"\n" + //
@@ -189,17 +184,15 @@ public class SuiteParserTest {
                 "        }\n" + //
                 "    }\n" + //
                 "}");
-        assertEquals(t1Builder.index(0).name("T1")
-                .child(Properties.builder().index(0).parent(t1Builder).value("method_get", "GET").build())
-                .child(Step.builder().parent(t1Builder).index(1).plugin("HTTP").name("Step1")
+        assertEquals(Suite.builder().index(0).name("T1")
+                .child(Properties.builder().index(0).value("method_get", "GET").build())
+                .child(Step.builder().index(1).plugin("HTTP").name("Step1")
                         .attribute("method", new PropertyReference("method_get")).build())
-                .child(t2Builder.parent(t1Builder).index(2).name("T2")
-                        .child(Step.builder().parent(t2Builder).index(0).plugin("HTTP").name("Step2")
-                                .attribute("method", "POST").build())
-                        .child(t3Builder.parent(t2Builder).index(1).name("T3")
-                                .child(Properties.builder().parent(t3Builder).index(0).value("method_put", "PUT")
-                                        .build())
-                                .child(Step.builder().parent(t3Builder).index(1).plugin("HTTP").name("Step3")
+                .child(Suite.builder().index(2).name("T2")
+                        .child(Step.builder().index(0).plugin("HTTP").name("Step2").attribute("method", "POST").build())
+                        .child(Suite.builder().index(1).name("T3")
+                                .child(Properties.builder().index(0).value("method_put", "PUT").build())
+                                .child(Step.builder().index(1).plugin("HTTP").name("Step3")
                                         .attribute("method", new PropertyReference("method_put")).build())
                                 .build())
                         .build())
@@ -472,14 +465,12 @@ public class SuiteParserTest {
         @Test
         @DisplayName("It SHOULD allow access attributes from external from parent")
         public void attributeWithExternalPropertiesFromParentTest() {
-            SuiteBuilder mainBuilder = Suite.builder().index(0).name("Main");
-            SuiteBuilder firstSuiteBuilder = Suite.builder().index(0).name("SubMain").parent(mainBuilder);
 
             Step step = Step.builder().index(0).plugin("HTTP").name("Step1").attribute("method", "GET")
                     .attribute("xyz", new PropertyReference("property1")).attribute("timeout", 1000L)
-                    .attribute("minValue", -5L).attribute("maxValue", 1500000000L).parent(firstSuiteBuilder).build();
-            Suite main = mainBuilder.child(firstSuiteBuilder.child(step).build()).build();
-            Suite first = firstSuiteBuilder.build();
+                    .attribute("minValue", -5L).attribute("maxValue", 1500000000L).build();
+            Suite first = Suite.builder().index(0).name("SubMain").child(step).build();
+            Suite main = Suite.builder().index(0).name("Main").child(first).build();
 
             assertEquals(-5L, step.requiredAttribute("minValue", Long.class));
 
@@ -538,38 +529,41 @@ public class SuiteParserTest {
         @DisplayName("It should accept times")
         public void timesTest() {
             Suite suite = parseSuite("Suite UserTest {\r\n" +
-                    "    times: 100\r\n" +
-                    "    HTTP CreateUser {\r\n" +
-                    "        url   : \"http://127.0.0.1\"\r\n" +
-                    "        method: \"POST\"\r\n" +
-                    "        body  : \"\"\"\r\n" +
-                    "              {\r\n" +
-                    "                  \"username\": \"${username[${index}]}\",\r\n" +
-                    "                  \"firstName\": \"${firstName[${index}]}\",\r\n" +
-                    "                  \"lastName\": \"${lastName[${index}]}\",\r\n" +
-                    "                  \"age\": ${age[${index}]}\r\n" +
-                    "              }\r\n" +
-                    "              \"\"\"\r\n" +
-                    "        assert responseCode Equals 201\r\n" +
+                    "    Parallel {\r\n" +
+                    "        times: 100\r\n" +
+                    "        HTTP CreateUser {\r\n" +
+                    "            url   : \"http://127.0.0.1\"\r\n" +
+                    "            method: \"POST\"\r\n" +
+                    "            body  : \"\"\"\r\n" +
+                    "                  {\r\n" +
+                    "                      \"username\": \"${username[${index}]}\",\r\n" +
+                    "                      \"firstName\": \"${firstName[${index}]}\",\r\n" +
+                    "                      \"lastName\": \"${lastName[${index}]}\",\r\n" +
+                    "                      \"age\": ${age[${index}]}\r\n" +
+                    "                  }\r\n" +
+                    "                  \"\"\"\r\n" +
+                    "            assert responseCode Equals 201\r\n" +
+                    "        }\r\n" +
                     "    }\r\n" +
                     "}");
 
             assertThat(suite)
                     .isEqualTo(Suite.builder().name("UserTest")
-                            .times(100)
-                            .child(Step.builder()
-                                    .index(0)
-                                    .name("CreateUser")
-                                    .plugin("HTTP")
-                                    .attribute("url", "http://127.0.0.1")
-                                    .attribute("method", "POST")
-                                    .attribute("body", "{\n" +
-                                            "    \"username\": \"${username[${index}]}\",\n" +
-                                            "    \"firstName\": \"${firstName[${index}]}\",\n" +
-                                            "    \"lastName\": \"${lastName[${index}]}\",\n" +
-                                            "    \"age\": ${age[${index}]}\n" +
-                                            "}")
-                                    .assertion(new Assertion<>("responseCode", "Equals", 201L))
+                            .child(Parallel.builder().times(100).child(
+                                    Step.builder()
+                                            .index(0)
+                                            .name("CreateUser")
+                                            .plugin("HTTP")
+                                            .attribute("url", "http://127.0.0.1")
+                                            .attribute("method", "POST")
+                                            .attribute("body", "{\n" +
+                                                    "    \"username\": \"${username[${index}]}\",\n" +
+                                                    "    \"firstName\": \"${firstName[${index}]}\",\n" +
+                                                    "    \"lastName\": \"${lastName[${index}]}\",\n" +
+                                                    "    \"age\": ${age[${index}]}\n" +
+                                                    "}")
+                                            .assertion(new Assertion<>("responseCode", "Equals", 201L))
+                                            .build())
                                     .build())
                             .build());
         }
@@ -578,49 +572,53 @@ public class SuiteParserTest {
         @DisplayName("It should accept CSV Input")
         public void fromCsvTest() {
             Suite suite = parseSuite("Suite UserTest {\r\n" +
-                    "    PropertiesSource {\r\n" +
-                    "        type: CSV\r\n" +
-                    "        file: ./users.csv\r\n" +
-                    "        separator: \",\"\r\n" +
-                    "        headers: username, firstName, lastName, age\r\n" +
-                    "    }\r\n" +
-                    "    HTTP CreateUser {\r\n" +
-                    "        url   : \"http://127.0.0.1\"\r\n" +
-                    "        method: \"POST\"\r\n" +
-                    "        body  : \"\"\"\r\n" +
-                    "              {\r\n" +
-                    "                  \"username\": \"${username}\",\r\n" +
-                    "                  \"firstName\": \"${firstName}\",\r\n" +
-                    "                  \"lastName\": \"${lastName}\",\r\n" +
-                    "                  \"age\": ${age}\r\n" +
-                    "              }\r\n" +
-                    "              \"\"\"\r\n" +
-                    "        assert responseCode Equals 201\r\n" +
+                    "    Parallel {\r\n" +
+                    "        PropertiesSource {\r\n" +
+                    "            type: CSV\r\n" +
+                    "            file: ./users.csv\r\n" +
+                    "            separator: \",\"\r\n" +
+                    "            headers: [username, firstName, lastName, age]\r\n" +
+                    "        }\r\n" +
+                    "        HTTP CreateUser {\r\n" +
+                    "            url   : \"http://127.0.0.1\"\r\n" +
+                    "            method: \"POST\"\r\n" +
+                    "            body  : \"\"\"\r\n" +
+                    "                  {\r\n" +
+                    "                      \"username\": \"${username}\",\r\n" +
+                    "                      \"firstName\": \"${firstName}\",\r\n" +
+                    "                      \"lastName\": \"${lastName}\",\r\n" +
+                    "                      \"age\": ${age}\r\n" +
+                    "                  }\r\n" +
+                    "                  \"\"\"\r\n" +
+                    "            assert responseCode Equals 201\r\n" +
+                    "        }\r\n" +
                     "    }\r\n" +
                     "}");
 
             assertThat(suite)
                     .isEqualTo(Suite.builder().name("UserTest")
-                            .child(PropertiesSource.builder()
-                                    .index(0)
-                                    .type(SourceType.CSV)
-                                    .file(Paths.get(".", "users.csv").toFile())
-                                    .separator(",")
-                                    .headers(asList("username", "firstName", "lastName", "age"))
-                                    .build())
-                            .child(Step.builder()
-                                    .index(1)
-                                    .name("CreateUser")
-                                    .plugin("HTTP")
-                                    .attribute("url", "http://127.0.0.1")
-                                    .attribute("method", "POST")
-                                    .attribute("body", "{\n" +
-                                            "    \"username\": \"${username}\",\n" +
-                                            "    \"firstName\": \"${firstName}\",\n" +
-                                            "    \"lastName\": \"${lastName}\",\n" +
-                                            "    \"age\": ${age}\n" +
-                                            "}")
-                                    .assertion(new Assertion<>("responseCode", "Equals", 201L))
+                            .child(Parallel.builder().child(
+                                    PropertiesSource.builder()
+                                            .index(0)
+                                            .type(SourceType.CSV)
+                                            .file(Paths.get(".", "users.csv"))
+                                            .separator(",")
+                                            .headers(asList("username", "firstName", "lastName", "age"))
+                                            .build())
+                                    .child(Step.builder()
+                                            .index(1)
+                                            .name("CreateUser")
+                                            .plugin("HTTP")
+                                            .attribute("url", "http://127.0.0.1")
+                                            .attribute("method", "POST")
+                                            .attribute("body", "{\n" +
+                                                    "    \"username\": \"${username}\",\n" +
+                                                    "    \"firstName\": \"${firstName}\",\n" +
+                                                    "    \"lastName\": \"${lastName}\",\n" +
+                                                    "    \"age\": ${age}\n" +
+                                                    "}")
+                                            .assertion(new Assertion<>("responseCode", "Equals", 201L))
+                                            .build())
                                     .build())
                             .build());
         }

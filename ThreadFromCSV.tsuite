@@ -1,21 +1,23 @@
 Suite UserTest {
-    PropertiesSource {
-        type: CSV
-        file: ./users.csv
-        separator: ","
-        headers: username, firstName, lastName, age
-    }
-    HTTP CreateUser {
-        url   : "http://127.0.0.1"
-        method: "POST"
-        body  : """
-              {
-                  "username": "${username}",
-                  "firstName": "${firstName}",
-                  "lastName": "${lastName}",
-                  "age": ${age}
-              }
-              """
-        assert responseCode Equals 201
+	Parallel {
+	    PropertiesSource {
+	        type: CSV
+	        file: ./users.csv
+	        separator: ","
+	        headers: username, firstName, lastName, age
+	    }
+	    HTTP CreateUser {
+	        url   : "http://127.0.0.1"
+	        method: "POST"
+	        body  : """
+	              {
+	                  "username": "${username}",
+	                  "firstName": "${firstName}",
+	                  "lastName": "${lastName}",
+	                  "age": ${age}
+	              }
+	              """
+	        assert responseCode Equals 201
+	    }
     }
 }

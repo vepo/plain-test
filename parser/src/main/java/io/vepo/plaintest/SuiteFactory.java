@@ -10,15 +10,15 @@ import io.vepo.plaintest.parser.antlr4.generated.TestSuiteParser;
 
 public class SuiteFactory {
 
-	private SuiteFactory() {
-	}
+    private SuiteFactory() {
+    }
 
-	public static Suite parseSuite(String contents) {
-		TestSuiteParser parser = new TestSuiteParser(
-				new CommonTokenStream(new TestSuiteLexer(CharStreams.fromString(contents))));
-		ParseTreeWalker walker = new ParseTreeWalker();
-		SuiteCreator creator = new SuiteCreator();
-		walker.walk(creator, parser.suite());
-		return creator.getTestSuite();
-	}
+    public static Suite parseSuite(String contents) {
+        TestSuiteParser parser = new TestSuiteParser(
+                new CommonTokenStream(new TestSuiteLexer(CharStreams.fromString(contents))));
+        ParseTreeWalker walker = new ParseTreeWalker();
+        SuiteCreator creator = new SuiteCreator();
+        walker.walk(creator, parser.suiteBody());
+        return creator.getTestSuite();
+    }
 }

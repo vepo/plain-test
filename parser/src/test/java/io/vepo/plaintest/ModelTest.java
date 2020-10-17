@@ -16,30 +16,37 @@ import nl.jqno.equalsverifier.Warning;
 
 public class ModelTest {
 
-	@ParameterizedTest
-	@ValueSource(classes = { Suite.class, Step.class, Assertion.class, Properties.class, PropertyReference.class, PropertiesSource.class })
-	public void checkModelTest(Class<?> checkClass) {
-		ToStringVerifier toStringVerifier = ToStringVerifier.forClass(checkClass);
-		if (SuiteChild.class.isAssignableFrom(checkClass)) {
-			toStringVerifier.withIgnoredFields("parent", "propertiesResolver");
-		}
-		toStringVerifier.verify();
+    @ParameterizedTest
+    @ValueSource(classes = {
+        Suite.class,
+        Step.class,
+        Assertion.class,
+        Properties.class,
+        PropertyReference.class,
+        PropertiesSource.class,
+        Parallel.class })
+    public void checkModelTest(Class<?> checkClass) {
+        ToStringVerifier toStringVerifier = ToStringVerifier.forClass(checkClass);
+        if (TestItem.class.isAssignableFrom(checkClass)) {
+            toStringVerifier.withIgnoredFields("parent", "propertiesResolver");
+        }
+        toStringVerifier.verify();
 
-		EqualsVerifierApi<?> equalsVerifier = EqualsVerifier
-				.forClass(checkClass).usingGetClass().withPrefabValues(Suite.class,
-						Suite.builder().index(0).name("S1").build(), Suite.builder().index(1).name("S2").build())
-				.suppress(Warning.NONFINAL_FIELDS);
-		if (SuiteChild.class.isAssignableFrom(checkClass)) {
-			equalsVerifier.withIgnoredFields("parent", "propertiesResolver");
-		}
-		equalsVerifier.verify();
-	}
+        EqualsVerifierApi<?> equalsVerifier = EqualsVerifier
+                .forClass(checkClass).usingGetClass().withPrefabValues(TestItem.class,
+                        Suite.builder().index(0).name("S1").build(), Suite.builder().index(1).name("S2").build())
+                .suppress(Warning.NONFINAL_FIELDS);
+        if (TestItem.class.isAssignableFrom(checkClass)) {
+            equalsVerifier.withIgnoredFields("parent", "propertiesResolver");
+        }
+        equalsVerifier.verify();
+    }
 
-	@DisplayName("It should match correctly the PropertyReference")
-	@Test
-	public void checkPropertyReferenceTest() {
-		assertFalse(PropertyReference.matches("${}"));
-		assertTrue(PropertyReference.matches("${property}"));
-		assertFalse(PropertyReference.matches("some field ${property} some data"));
-	}
+    @DisplayName("It should match correctly the PropertyReference")
+    @Test
+    public void checkPropertyReferenceTest() {
+        assertFalse(PropertyReference.matches("${}"));
+        assertTrue(PropertyReference.matches("${property}"));
+        assertFalse(PropertyReference.matches("some field ${property} some data"));
+    }
 }

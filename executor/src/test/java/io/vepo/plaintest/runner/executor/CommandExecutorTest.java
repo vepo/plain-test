@@ -19,7 +19,7 @@ import io.vepo.plaintest.runner.utils.Os.OS;
 public class CommandExecutorTest extends AbstractTest {
 
 	private static final String BASH_SUCCESS_TEST = Os.getOS() == OS.WINDOWS ? "Suite BashTest {\n" + //
-			"    exec-dir: src\n" + //
+			"    path: src\n" + //
 			"\n" + //
 			"    Process EnterDir {\n" + //
 			"        cmd    : \"dir\"\n" + //
@@ -28,7 +28,7 @@ public class CommandExecutorTest extends AbstractTest {
 			"    }\n" + //
 			"\n" + //
 			"    Suite MainTest {\n" + //
-			"        exec-dir: main\n" + //
+			"        path: main\n" + //
 			"        Process EnterSubFolder {\n" + //
 			"            cmd    : \"dir\"\n" + //
 			"            timeout: 500\n" + //
@@ -36,7 +36,7 @@ public class CommandExecutorTest extends AbstractTest {
 			"        }\n" + //
 			"    }\n" + //
 			"}" : "Suite BashTest {\n" + //
-					"    exec-dir: src\n" + //
+					"    path: src\n" + //
 					"\n" + //
 					"    Process EnterDir {\n" + //
 					"        cmd    : \"ls\"\n" + //
@@ -45,7 +45,7 @@ public class CommandExecutorTest extends AbstractTest {
 					"    }\n" + //
 					"\n" + //
 					"    Suite MainTest {\n" + //
-					"        exec-dir: main\n" + //
+					"        path: main\n" + //
 					"        Process EnterSubFolder {\n" + //
 					"            cmd    : \"ls\"\n" + //
 					"            timeout: 500\n" + //

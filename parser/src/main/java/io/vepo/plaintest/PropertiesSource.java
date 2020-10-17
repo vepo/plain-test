@@ -1,30 +1,23 @@
 package io.vepo.plaintest;
 
-import static java.util.Objects.isNull;
-
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
-import io.vepo.plaintest.Suite.SuiteBuilder;
-
-public class PropertiesSource extends SuiteChild {
+public class PropertiesSource extends TestItem {
     public enum SourceType {
         CSV
     };
 
     public static class PropertiesSourceBuilder {
         private int index;
-        private SuiteBuilder parent;
-        private PropertiesSource instance;
         private SourceType type;
-        private File file;
+        private Path file;
         private String separator;
         private List<String> headers;
 
@@ -42,12 +35,7 @@ public class PropertiesSource extends SuiteChild {
             return this;
         }
 
-        public PropertiesSourceBuilder parent(SuiteBuilder parent) {
-            this.parent = parent;
-            return this;
-        }
-
-        public PropertiesSourceBuilder file(File file) {
+        public PropertiesSourceBuilder file(Path file) {
             this.file = file;
             return this;
         }
@@ -63,10 +51,7 @@ public class PropertiesSource extends SuiteChild {
         }
 
         public PropertiesSource build() {
-            if (isNull(instance)) {
-                instance = new PropertiesSource(this);
-            }
-            return instance;
+            return new PropertiesSource(this);
         }
 
     }
@@ -76,12 +61,12 @@ public class PropertiesSource extends SuiteChild {
     }
 
     private final SourceType type;
-    private final File file;
+    private final Path file;
     private final String separator;
     private final List<String> headers;
 
     private PropertiesSource(PropertiesSourceBuilder builder) {
-        super(builder.index, Optional.ofNullable(builder.parent).map(SuiteBuilder::build).orElse(null));
+        super(builder.index);
         type = builder.type;
         file = builder.file;
         separator = builder.separator;
@@ -92,7 +77,7 @@ public class PropertiesSource extends SuiteChild {
         return type;
     }
 
-    public File getFile() {
+    public Path getFile() {
         return file;
     }
 
